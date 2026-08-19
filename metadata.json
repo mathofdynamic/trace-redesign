@@ -1,0 +1,6 @@
+{
+  "name": "TRACE",
+  "description": "Repository-native change intelligence and engineering governance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
