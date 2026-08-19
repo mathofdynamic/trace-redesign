@@ -6,24 +6,35 @@ import { schema } from '@trace/db';
 import { OnboardingForm } from '../components/onboarding-form';
 import { SetupProgress } from '../components/setup-progress';
 import { createRequestDatabase } from '../../lib/request-database';
+import { isMockModeEnabled, mockDataProvider } from '../../lib/mock';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Onboarding — TRACE', robots: { index: false, follow: false } };
 
 export default async function OnboardingPage() {
-  const session = await getTraceSession(await headers());
+  const rawSession = await getTraceSession(await headers());
+  const session = isMockModeEnabled() ? (rawSession ?? mockDataProvider.getSession()) : rawSession;
   if (!session?.user) redirect('/sign-in?next=/onboarding');
 
-  const { db, client } = await createRequestDatabase();
-  try {
-    const [profile] = await db
-      .select({ completed: schema.onboardingProfiles.completed })
-      .from(schema.onboardingProfiles)
-      .where(eq(schema.onboardingProfiles.userId, session.user.id))
-      .limit(1);
-    if (profile?.completed) redirect('/app/repositories');
-  } finally {
-    await client.end();
+  if (isMockModeEnabled()) {
+    const summary = mockDataProvider.getDashboardSummary();
+    if (summary.workspace.profileComplete) redirect('/app/repositories');
+  } else {
+    try {
+      const { db, client } = await createRequestDatabase();
+      try {
+        const [profile] = await db
+          .select({ completed: schema.onboardingProfiles.completed })
+          .from(schema.onboardingProfiles)
+          .where(eq(schema.onboardingProfiles.userId, session.user.id))
+          .limit(1);
+        if (profile?.completed) redirect('/app/repositories');
+      } finally {
+        await client.end().catch(() => {});
+      }
+    } catch {
+      // If database is unavailable, don't crash onboarding page
+    }
   }
 
   return (

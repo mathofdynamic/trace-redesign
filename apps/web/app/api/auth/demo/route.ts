@@ -6,18 +6,19 @@ import {
   sessionCookieName,
   safeAuthNext,
 } from '@trace/auth';
+import { isMockModeEnabled, MOCK_PRIMARY_USER } from '../../../../lib/mock';
 
 export async function GET(request: Request) {
+  if (!isMockModeEnabled() && process.env.NODE_ENV === 'production') {
+    return Response.json(
+      { error: 'Demo authentication is disabled in production environments.' },
+      { status: 403 },
+    );
+  }
+
   const url = new URL(request.url);
   const next = safeAuthNext(url.searchParams.get('next') || '/app');
-  const demoUser = {
-    id: '00000000-0000-0000-0000-000000000001',
-    name: 'Demo Engineer',
-    email: 'engineer@trace.dev',
-    image: null,
-    githubLogin: 'trace-demo',
-  };
-  const sessionCookie = await createSessionCookie(demoUser);
+  const sessionCookie = await createSessionCookie(MOCK_PRIMARY_USER);
   const attributes = cookieAttributes(60 * 60 * 24 * 7, isSecurePublicUrl());
   const response = new Response(null, {
     status: 302,

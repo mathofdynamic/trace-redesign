@@ -15,9 +15,15 @@ import {
   stateToneClass,
 } from '../../../lib/dashboard-state';
 
-export default async function DashboardOverviewPage() {
+export default async function DashboardOverviewPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ repo?: string }>;
+}) {
+  const params = await searchParams;
   const { summary } = await getAuthenticatedDashboardSummary();
   const repository =
+    (params?.repo ? summary.repositories.find((item) => item.id === params.repo) : null) ??
     summary.repositories.find((item) => item.id === summary.preferredRepositoryId) ??
     summary.repositories[0] ??
     null;

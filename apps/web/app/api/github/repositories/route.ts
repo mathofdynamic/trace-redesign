@@ -6,6 +6,7 @@ import { getGitHubRepositoryHead, type GitHubAppConfig } from '@trace/github';
 import { createRequestDatabase } from '../../../../lib/request-database';
 import { getUserOrganizationIds } from '../../../../lib/workspace';
 import { isTrustedBrowserMutation } from '../../../../lib/browser-origin';
+import { isMockModeEnabled, mockDataProvider } from '../../../../lib/mock';
 
 function isUuid(value: unknown): value is string {
   return (
@@ -15,7 +16,8 @@ function isUuid(value: unknown): value is string {
 }
 
 export async function POST(request: Request) {
-  const session = await getTraceSession(request.headers);
+  const rawSession = await getTraceSession(request.headers);
+  const session = isMockModeEnabled() ? (rawSession ?? mockDataProvider.getSession()) : rawSession;
   if (!session?.user) return Response.json({ error: 'Authentication required.' }, { status: 401 });
   if (!isTrustedBrowserMutation(request))
     return Response.json({ error: 'Cross-origin request rejected.' }, { status: 403 });
@@ -26,6 +28,14 @@ export async function POST(request: Request) {
   } catch {
     return Response.json({ error: 'Invalid JSON payload.' }, { status: 400 });
   }
+
+  if (isMockModeEnabled()) {
+    if (!Array.isArray(body.repositoryIds) || body.repositoryIds.length > 500) {
+      return Response.json({ error: 'Repository selection is invalid.' }, { status: 400 });
+    }
+    return Response.json({ ok: true, count: body.repositoryIds.length });
+  }
+
   if (
     !Array.isArray(body.repositoryIds) ||
     body.repositoryIds.length > 500 ||

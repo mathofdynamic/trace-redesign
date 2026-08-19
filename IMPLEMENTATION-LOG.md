@@ -1,6 +1,55 @@
 # TRACE Implementation Log
 
-### Staging hardening and merge readiness
+### Phase 2: Populate Login, Workspace, Overview, Repositories, and Repository Pages
+
+- Status: Phase 2 implemented, verified, and unit-tested. Primary product journey populated with coherent, interconnected mock data across the 5 core repositories and Northstar Engineering workspace.
+- Date: 2026-08-19
+- Goal: Populate login/entry, workspace identity, overview, repositories list, repository switcher, repository command center, and core repository states with complete, realistic, evidence-backed engineering data without redesigning the UI.
+- Populated Entities & Coherence:
+  - Workspace: "Northstar Engineering" with 9 team members (Lead, Security Architect, Platform Tech Lead, Systems Engineers, Full Stack, Data Engineer, QA).
+  - Primary User: Mohammad Mohammadi (Engineering Lead).
+  - 5 Core Repositories & States:
+    - `TRACE` (`repo-trace-001`): `needs-refresh` state (commit `4953addc8992` vs remote `8c74d21054a3`), 14 findings, 5 reports, 3 PRs.
+    - `Radar` (`repo-radar-002`): `current` state (commit `1e9b8a4746f3` matching remote), 3 findings, 2 reports, 1 PR.
+    - `Atlas` (`repo-atlas-003`): `current` / schema collision attention (commit `f3c2a7789012`), 8 findings, 3 reports, 3 PRs, 1 flagged conflict.
+    - `Orbit` (`repo-orbit-004`): `sync-failed` state (manifest version mismatch), 6 findings, 2 reports, 2 PRs.
+    - `Nova` (`repo-nova-005`): `not-started` state (connected, no sync or analysis run), 0 findings, 0 reports, 0 PRs.
+  - Reconcilable Counts: 31 total attention items (14+3+8+6+0), 12 reports (5+2+3+2+0), 9 pull requests (3+1+3+2+0), 10 activity log entries.
+- UI & Route Integrations:
+  - Overview page (`/app`) supports repo selection via `searchParams` (`?repo=<id>`) and defaults to preferred repository (`TRACE`).
+  - Repository Command Center (`/app/repositories/[id]`) correctly reflects repository lifecycle states (`TraceRail`), metrics, findings disclosures, reports, and change snapshots.
+  - Repository Switcher dynamically filters and marks repository states with appropriate tone badges.
+  - Repositories management page (`/app/repositories`) maps active mock repositories and installations.
+  - Demo authentication route guarded against production environments.
+- Verification:
+  - Unit tests added in `apps/web/lib/mock/__tests__/phase2-mock-universe.test.ts` validating entity definitions, counts, and state derivations.
+  - TypeScript build and vitest test suite passing.
+
+### Phase 1: TRACE Mock Data Foundation
+
+- Status: Phase 1 implemented, verified, and unit-tested. Centralized mock data system created in `apps/web/lib/mock/` with zero visual regressions, no UI redesign, and strict development-only security guards.
+- Date: 2026-08-19
+- Goal: Establish a coherent, typed, centralized mock-data foundation for the TRACE web application that enables full UI preview and testing without database or external GitHub dependencies, preparing for subsequent phases.
+- Mock Universe & Entities:
+  - Workspace: "Northstar Engineering" (`ws-northstar-001`, slug `northstar-engineering`, `intendedUsage: 'team'`, `executionMode: 'Local TRACE'`, `profileComplete: true`).
+  - Current User: Mohammad Mohammadi (`00000000-0000-0000-0000-000000000001`, `mohammad@northstar.engineering`, `mohammadm`, role: `lead_maintainer`).
+  - Team: Sarah Chen (Security Architect), Marcus Vance (Platform Tech Lead), Elena Rostova (Systems Engineer), David Park (Full Stack Engineer).
+  - Repositories: 5 distinct repositories (`TRACE`, `Radar`, `Atlas`, `Orbit`, `Nova`) covering the required state model:
+    - TRACE: mature, analyzed, synchronized, stale (`needs-refresh`).
+    - Radar: high-throughput, analyzed, synchronized, clean (`current`).
+    - Atlas: monorepo with concurrent change collision (`flagged` conflict).
+    - Orbit: ingestion service with sync failure attention requirement (`sync-attention`).
+    - Nova: newly connected repository (`connected-not-analyzed`).
+  - Synced Records: Daily/weekly reports, schema conflict reports, architectural decision records (ADRs), and repository invariants.
+  - Authorized Devices: Workstation, build machine, and revoked travel laptop.
+- Scenario Registry:
+  - Supported scenarios: `default`, `github-unavailable`, `permission-missing`, `analysis-running`, `analysis-failed`, `sync-running`, `sync-failed`, `freshness-unavailable`, `no-analysis`.
+- Integration Layer:
+  - Data provider cleanly integrated into `apps/web/lib/dashboard-server.ts`, `apps/web/app/api/dashboard/summary/route.ts`, and app pages (`settings`, `repositories`, `onboarding`, `cli/authorize`).
+  - Protected by `isMockModeEnabled()`, preventing any silent production mock activation.
+- Verification:
+  - 19 new unit tests in `apps/web/lib/mock/mock.test.ts` (39/39 passing across web suite).
+  - Full TypeScript typecheck verified clean across workspace packages.
 
 - Status: Hardening is implemented, deployed to staging, and regression-tested locally. Immutable Worker version `4817dae0-dd68-4e7b-9a7a-51ef00260882` is serving 100% of staging traffic; GitHub-backed freshness refresh and the completion-race fix are live.
 - Date: 2026-08-14

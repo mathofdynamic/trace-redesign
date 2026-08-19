@@ -1,0 +1,43 @@
+import type { MockCliDevice } from './types';
+
+export const MOCK_CLI_DEVICES: MockCliDevice[] = [
+  {
+    id: 'cli-dev-001',
+    organizationId: 'ws-northstar-001',
+    userId: '00000000-0000-0000-0000-000000000001',
+    label: 'MacBook Pro (16-inch, M3 Max) — Workstation',
+    tokenHash: 'sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069',
+    scopes: ['discovery:read', 'artifact:sync'],
+    expiresAt: '2026-11-01T08:00:00.000Z',
+    lastUsedAt: '2026-08-19T10:45:00.000Z',
+    createdAt: '2026-08-01T08:00:00.000Z',
+    updatedAt: '2026-08-01T08:00:00.000Z',
+    revokedAt: null,
+  },
+  {
+    id: 'cli-dev-002',
+    organizationId: 'ws-northstar-001',
+    userId: '00000000-0000-0000-0000-000000000001',
+    label: 'Linux Desktop (Threadripper PRO) — Build Machine',
+    tokenHash: 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    scopes: ['discovery:read', 'artifact:sync'],
+    expiresAt: '2026-11-05T11:30:00.000Z',
+    lastUsedAt: '2026-08-18T16:20:00.000Z',
+    createdAt: '2026-08-05T11:30:00.000Z',
+    updatedAt: '2026-08-05T11:30:00.000Z',
+    revokedAt: null,
+  },
+  {
+    id: 'cli-dev-003',
+    organizationId: 'ws-northstar-001',
+    userId: '00000000-0000-0000-0000-000000000001',
+    label: 'MacBook Air (M2) — Travel Device',
+    tokenHash: 'sha256:9f83c1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9070',
+    scopes: ['discovery:read', 'artifact:sync'],
+    expiresAt: '2026-10-15T14:00:00.000Z',
+    lastUsedAt: '2026-07-20T09:15:00.000Z',
+    createdAt: '2026-07-15T14:00:00.000Z',
+    updatedAt: '2026-08-10T12:00:00.000Z',
+    revokedAt: '2026-08-10T12:00:00.000Z',
+  },
+];

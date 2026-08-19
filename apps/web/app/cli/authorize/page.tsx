@@ -5,6 +5,7 @@ import { getTraceSession, safeAuthNext } from '@trace/auth';
 import { schema } from '@trace/db';
 import { headers } from 'next/headers';
 import { createRequestDatabase } from '../../../lib/request-database';
+import { isMockModeEnabled, mockDataProvider } from '../../../lib/mock';
 
 export default async function CliAuthorizePage({
   searchParams,
@@ -15,22 +16,40 @@ export default async function CliAuthorizePage({
   const code = typeof parameters.code === 'string' ? parameters.code.toUpperCase() : '';
   const approved = parameters.approved === '1';
   const error = typeof parameters.error === 'string' ? parameters.error : null;
-  const session = await getTraceSession(await headers());
+  const rawSession = await getTraceSession(await headers());
+  const session = isMockModeEnabled() ? (rawSession ?? mockDataProvider.getSession()) : rawSession;
   if (!session?.user) {
     redirect(`/sign-in?next=${encodeURIComponent(safeAuthNext(`/cli/authorize?code=${code}`))}`);
   }
-  const { db, client } = await createRequestDatabase();
-  try {
-    const organizations = await db
-      .select({ id: schema.organizations.id, name: schema.organizations.name })
-      .from(schema.memberships)
-      .innerJoin(
-        schema.organizations,
-        eq(schema.memberships.organizationId, schema.organizations.id),
-      )
-      .where(eq(schema.memberships.userId, session.user.id));
-    return (
-      <main className="auth-page">
+
+  let organizations: Array<{ id: string; name: string }> = [];
+
+  if (isMockModeEnabled()) {
+    const universe = mockDataProvider.getUniverse();
+    organizations = [{ id: universe.workspace.id, name: universe.workspace.name }];
+  } else {
+    try {
+      const { db, client } = await createRequestDatabase();
+      try {
+        organizations = await db
+          .select({ id: schema.organizations.id, name: schema.organizations.name })
+          .from(schema.memberships)
+          .innerJoin(
+            schema.organizations,
+            eq(schema.memberships.organizationId, schema.organizations.id),
+          )
+          .where(eq(schema.memberships.userId, session.user.id));
+      } finally {
+        await client.end().catch(() => {});
+      }
+    } catch {
+      const universe = mockDataProvider.getUniverse();
+      organizations = [{ id: universe.workspace.id, name: universe.workspace.name }];
+    }
+  }
+
+  return (
+    <main className="auth-page">
         <section className="auth-card cli-auth-card">
           <p className="section-label">TRACE CLI</p>
           <h1>{approved ? 'Connection approved.' : 'Connect this terminal.'}</h1>
@@ -89,7 +108,4 @@ export default async function CliAuthorizePage({
         </section>
       </main>
     );
-  } finally {
-    await client.end();
-  }
 }

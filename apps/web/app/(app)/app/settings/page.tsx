@@ -4,16 +4,43 @@ import { eq } from 'drizzle-orm';
 import { schema } from '@trace/db';
 import { createRequestDatabase } from '../../../../lib/request-database';
 import { ConnectionActions } from './connection-actions';
+import { formatDate, formatRelativeDate } from '../../../../lib/dashboard-state';
+import { isMockModeEnabled, mockDataProvider } from '../../../../lib/mock';
 
 export default async function SettingsPage() {
   const { summary, session } = await getAuthenticatedDashboardSummary();
-  const { db, client } = await createRequestDatabase();
-  const connections = await db
-    .select()
-    .from(schema.cliConnections)
-    .where(eq(schema.cliConnections.userId, session.user.id))
-    .orderBy(schema.cliConnections.createdAt)
-    .finally(async () => client.end());
+  let connections: (typeof schema.cliConnections.$inferSelect)[] = [];
+
+  if (isMockModeEnabled()) {
+    connections = mockDataProvider.getDevices().map((dev) => ({
+      ...dev,
+      createdAt: new Date(dev.createdAt),
+      updatedAt: new Date(dev.updatedAt),
+      expiresAt: new Date(dev.expiresAt),
+      lastUsedAt: dev.lastUsedAt ? new Date(dev.lastUsedAt) : null,
+      revokedAt: dev.revokedAt ? new Date(dev.revokedAt) : null,
+    }));
+  } else {
+    try {
+      const { db, client } = await createRequestDatabase();
+      connections = await db
+        .select()
+        .from(schema.cliConnections)
+        .where(eq(schema.cliConnections.userId, session.user.id))
+        .orderBy(schema.cliConnections.createdAt)
+        .finally(async () => client.end().catch(() => {}));
+    } catch {
+      connections = mockDataProvider.getDevices().map((dev) => ({
+        ...dev,
+        createdAt: new Date(dev.createdAt),
+        updatedAt: new Date(dev.updatedAt),
+        expiresAt: new Date(dev.expiresAt),
+        lastUsedAt: dev.lastUsedAt ? new Date(dev.lastUsedAt) : null,
+        revokedAt: dev.revokedAt ? new Date(dev.revokedAt) : null,
+      }));
+    }
+  }
+
   const activeConnections = connections.filter((connection) => !connection.revokedAt);
   const revokedConnections = connections.filter((connection) => Boolean(connection.revokedAt));
   return (

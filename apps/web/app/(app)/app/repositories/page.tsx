@@ -8,6 +8,7 @@ import { RepositorySelector } from '../../../components/repository-selector';
 import { SetupProgress } from '../../../components/setup-progress';
 import { createRequestDatabase } from '../../../../lib/request-database';
 import { getUserOrganizationIds } from '../../../../lib/workspace';
+import { getActiveMockScenario, isMockModeEnabled, mockDataProvider } from '../../../../lib/mock';
 
 type RepositoriesPageProps = {
   searchParams: Promise<{ setup?: string | string[] }>;
@@ -27,38 +28,97 @@ function setupMessage(value: string | string[] | undefined) {
 }
 
 export default async function RepositoriesPage({ searchParams }: RepositoriesPageProps) {
-  const session = await getTraceSession(await headers());
+  const rawSession = await getTraceSession(await headers());
+  const session = isMockModeEnabled() ? (rawSession ?? mockDataProvider.getSession()) : rawSession;
   if (!session?.user) redirect('/sign-in?next=/app/repositories');
   const query = await searchParams;
   const message = setupMessage(query.setup);
-  const { db, client } = await createRequestDatabase();
-  try {
-    const organizationIds = await getUserOrganizationIds(db, session.user.id);
-    const installations = organizationIds.length
-      ? await db
-          .select({
-            id: schema.githubInstallations.id,
-            accountLogin: schema.githubInstallations.accountLogin,
-            accountType: schema.githubInstallations.accountType,
-            state: schema.githubInstallations.state,
-          })
-          .from(schema.githubInstallations)
-          .where(inArray(schema.githubInstallations.organizationId, organizationIds))
-      : [];
-    const repositories = organizationIds.length
-      ? await db
-          .select({
-            id: schema.githubRepositories.id,
-            fullName: schema.githubRepositories.fullName,
-            defaultBranch: schema.githubRepositories.defaultBranch,
-            visibility: schema.githubRepositories.visibility,
-            state: schema.githubRepositories.state,
-          })
-          .from(schema.githubRepositories)
-          .where(inArray(schema.githubRepositories.organizationId, organizationIds))
-      : [];
-    const activeRepositories = repositories.filter((repository) => repository.state === 'active');
-    const currentStep = activeRepositories.length ? 4 : installations.length ? 3 : 2;
+
+  let installations: Array<{
+    id: string;
+    accountLogin: string;
+    accountType: string;
+    state: string;
+  }> = [];
+
+  let repositories: Array<{
+    id: string;
+    fullName: string;
+    defaultBranch: string | null;
+    visibility: string | null;
+    state: string;
+  }> = [];
+
+  if (isMockModeEnabled()) {
+    const mockRepos = mockDataProvider.getRepositories(getActiveMockScenario());
+    installations = [
+      {
+        id: 'mock-gh-inst-001',
+        accountLogin: 'northstar-engineering',
+        accountType: 'Organization',
+        state: 'active',
+      },
+    ];
+    repositories = mockRepos.map((repo) => ({
+      id: repo.id,
+      fullName: repo.fullName,
+      defaultBranch: repo.defaultBranch,
+      visibility: repo.visibility,
+      state: repo.state,
+    }));
+  } else {
+    try {
+      const { db, client } = await createRequestDatabase();
+      try {
+        const organizationIds = await getUserOrganizationIds(db, session.user.id);
+        installations = organizationIds.length
+          ? await db
+              .select({
+                id: schema.githubInstallations.id,
+                accountLogin: schema.githubInstallations.accountLogin,
+                accountType: schema.githubInstallations.accountType,
+                state: schema.githubInstallations.state,
+              })
+              .from(schema.githubInstallations)
+              .where(inArray(schema.githubInstallations.organizationId, organizationIds))
+          : [];
+        repositories = organizationIds.length
+          ? await db
+              .select({
+                id: schema.githubRepositories.id,
+                fullName: schema.githubRepositories.fullName,
+                defaultBranch: schema.githubRepositories.defaultBranch,
+                visibility: schema.githubRepositories.visibility,
+                state: schema.githubRepositories.state,
+              })
+              .from(schema.githubRepositories)
+              .where(inArray(schema.githubRepositories.organizationId, organizationIds))
+          : [];
+      } finally {
+        await client.end().catch(() => {});
+      }
+    } catch {
+      const mockRepos = mockDataProvider.getRepositories(getActiveMockScenario());
+      installations = [
+        {
+          id: 'mock-gh-inst-001',
+          accountLogin: 'northstar-engineering',
+          accountType: 'Organization',
+          state: 'active',
+        },
+      ];
+      repositories = mockRepos.map((repo) => ({
+        id: repo.id,
+        fullName: repo.fullName,
+        defaultBranch: repo.defaultBranch,
+        visibility: repo.visibility,
+        state: repo.state,
+      }));
+    }
+  }
+
+  const activeRepositories = repositories.filter((repository) => repository.state === 'active');
+  const currentStep = activeRepositories.length ? 4 : installations.length ? 3 : 2;
     return (
       <div className="dashboard-page">
         <SetupProgress current={currentStep} />
@@ -165,7 +225,4 @@ export default async function RepositoriesPage({ searchParams }: RepositoriesPag
         )}
       </div>
     );
-  } finally {
-    await client.end();
-  }
 }
