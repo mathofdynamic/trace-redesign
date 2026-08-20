@@ -134,8 +134,9 @@ describe('Phase 2 — Mock Universe & Core Repositories', () => {
     expect(novaState.key).toBe('connected-not-analyzed');
   });
 
-  it('generates a valid DashboardSummary with capabilities', () => {
+  it('generates a valid DashboardSummary with capabilities and mock source', () => {
     const summary = mockDataProvider.getDashboardSummary();
+    expect(summary.source).toBe('mock');
     expect(summary.setup.authenticated).toBe(true);
     expect(summary.setup.repositoriesAvailable).toBe(5);
     expect(summary.capabilities.changes).toBe(true);
@@ -144,5 +145,26 @@ describe('Phase 2 — Mock Universe & Core Repositories', () => {
     expect(summary.capabilities.decisions).toBe(true);
     expect(summary.capabilities.rules).toBe(true);
     expect(summary.capabilities.activity).toBe(true);
+  });
+
+  it('provides deterministic mock session data', () => {
+    const session1 = mockDataProvider.getSession();
+    const session2 = mockDataProvider.getSession();
+    expect(session1.session.expiresAt.toISOString()).toBe('2030-01-01T00:00:00.000Z');
+    expect(session1.session.expiresAt.getTime()).toBe(session2.session.expiresAt.getTime());
+  });
+
+  it('correctly scopes repository changes per repository in overview context', () => {
+    const summary = mockDataProvider.getDashboardSummary();
+    const allChanges = summary.latestChanges;
+
+    const getChangesForRepo = (repoId: string) =>
+      allChanges.filter((c) => c.repositoryId === repoId);
+
+    expect(getChangesForRepo('repo-trace-001')).toHaveLength(3);
+    expect(getChangesForRepo('repo-radar-002')).toHaveLength(1);
+    expect(getChangesForRepo('repo-atlas-003')).toHaveLength(3);
+    expect(getChangesForRepo('repo-orbit-004')).toHaveLength(2);
+    expect(getChangesForRepo('repo-nova-005')).toHaveLength(0);
   });
 });

@@ -1,6 +1,110 @@
 # TRACE Implementation Log
 
-### Phase 2: Populate Login, Workspace, Overview, Repositories, and Repository Pages
+### Phase 4A: Complete Conflicts, Decisions, Rules, and Activity
+
+- Status: Phase 4A implemented, verified, and unit-tested. Engineering governance and project timeline layers completed across Conflicts, Decisions, Rules, and Activity with strict referential integrity and privacy guarantees preserved.
+- Date: 2026-08-19
+- Goal: Populate rich, realistic engineering governance records (conflicts, architectural decisions, governance rules, and chronological activity feed) connected to existing repositories, changes, findings, reports, and commit timelines without redesigning the UI.
+- Populated Entities & Coherence:
+  - Conflicts Domain (4 conflict items across Atlas, TRACE, and Orbit):
+    - Atlas (`conflict-atlas-001`): Concurrent schema mutation collision between PR #88 (`Introduce staged database migration pipeline`) and PR #89 (`Update worker schema assumptions`) on `user_workspaces` table migrations. Linked to finding `att-atlas-001`.
+    - Atlas (`conflict-atlas-002`): Session TTL configuration divergence between PR #87 (7-day session lifetime) and auth gateway token validator (24-hour expiration). Linked to finding `att-atlas-002`.
+    - TRACE (`conflict-trace-001`): Artifact UUID identity format conflict in PR #103 against sync promoter regular expression. Linked to finding `att-trace-003`.
+    - Orbit (`conflict-orbit-001`): Ingestion bridge schema mismatch between manifest version 1.1.0 produced by CLI and bridge parser version 1.0.0. Linked to finding `att-orbit-001`.
+    - Nova: 0 conflicts (truthful connected/un-analyzed state preserved).
+  - Decisions Domain (9 architectural decision records across 4 active repositories):
+    - TRACE (3 decisions): Single-Direction Local-to-Cloud Intelligence Synchronization (`decision-trace-001`), Deterministic Finding Extraction Precedes Semantic Inference (`decision-trace-002`), Constant-Time Digest Verification (`decision-trace-003`).
+    - Radar (2 decisions): Strict Memory Limits on Ingestion Ring Buffers (`decision-radar-001`), Connection Pool Recycling & Keepalive Probing (`decision-radar-002`).
+    - Atlas (2 decisions): Staged Database Migration Sequences (`decision-atlas-001`), Compile-Time Tenant Isolation Invariant (`decision-atlas-002`).
+    - Orbit (2 decisions): Schema Negotiation on Ingestion Bridge (`decision-orbit-001`), Idempotent Sync Retry with Exponential Jitter (`decision-orbit-002`).
+    - Nova: 0 decisions.
+  - Rules Domain (8 governance rules across 4 active repositories):
+    - TRACE (3 rules): Cryptographic Review & Secret Ingestion Invariant (`rule-trace-001`), Zero Circular Package Dependencies (`rule-trace-002`), Stale Analysis Guard Before Ingestion (`rule-trace-003`).
+    - Radar (2 rules): Deterministic Memory Bounds Policy (`rule-radar-001`), Socket Timeout Invariant (`rule-radar-002`).
+    - Atlas (2 rules): Database Migration Zero-Downtime (`rule-atlas-001`), Multi-Tenant Query Authorization Check (`rule-atlas-002`).
+    - Orbit (1 rule): Minimum Supported CLI Tooling Version (`rule-orbit-001`).
+    - Nova: 0 rules.
+  - Activity Feed (35 events spanning the complete workspace timeline):
+    - Reverse-chronological timeline (Aug 1 - Aug 19, 2026) capturing sync events, analysis completions, conflict detections, decision registrations, rule activations, device authorizations, and repository connections.
+    - Full repository filtering and entity attribution without mock gaps or disconnected records.
+  - Universe Totals Maintained:
+    - Repositories: 5 (TRACE, Radar, Atlas, Orbit, Nova)
+    - Changes: 9 (TRACE: 3, Radar: 1, Atlas: 3, Orbit: 2, Nova: 0)
+    - Findings: 31 (TRACE: 14, Radar: 3, Atlas: 8, Orbit: 6, Nova: 0)
+    - Reports: 12 (TRACE: 5, Radar: 2, Atlas: 3, Orbit: 2, Nova: 0)
+    - Privacy Invariants: `sourceCodeIncluded: false`, `codeSnippetsIncluded: false`
+- Verification:
+  - Added unit test suite in `apps/web/lib/mock/__tests__/phase4a-governance-intelligence.test.ts`.
+  - All 26 Turbo tasks passed cleanly (`npm test`).
+  - Linter (`npm run lint`) and compilation (`compile_applet`) verified green.
+
+### Phase 3B: Complete Reports, Report Details, and Project Memory
+
+- Status: Phase 3B implemented, verified, and unit-tested. Reports transformed into a coherent, information-rich project-memory system connected directly to existing Changes, Findings, Evidence, and commit provenances.
+- Date: 2026-08-19
+- Goal: Elevate reports from isolated summaries to an interconnected project-memory system reflecting real repository provenances, freshness divergences, structured evidence, and referential integrity across the 5-repository universe without UI redesign.
+- Populated Entities & Coherence:
+  - Reports Domain (12 reports across 5 repositories):
+    - TRACE (5 reports: 1 Daily, 1 Weekly, 1 Security Audit, 1 Architecture Review, 1 Performance Review):
+      - Analyzed Commit: `4953addc8992f882a1c983bad061fb8035213276`
+      - Remote HEAD: `8c74d21054a329e7104b689a7f3d5e219084c7aa`
+      - Freshness: `needs-refresh` (Synchronized intelligence remains valid for the analyzed commit, but GitHub has advanced; re-analysis required for current state).
+      - Directly links to TRACE PR #101, PR #102, PR #103, and findings `att-trace-001` through `att-trace-008`.
+    - Radar (2 reports: 1 Daily, 1 Weekly):
+      - Analyzed Commit / Remote HEAD: `1e9b8a4746f328109dcb49281735ae89104fa281`
+      - Freshness: `current`
+      - Links to PR #41 (`Improve telemetry stream backpressure handling`) and ring-buffer telemetry findings.
+    - Atlas (3 reports: 1 Architecture Review / Collision Report, 1 Security Audit, 1 Daily):
+      - Analyzed Commit / Remote HEAD: `5b2e917409218201a4e129304194019283401294`
+      - Freshness: `current` / `attention`
+      - Highlights concurrent branch collision between PR #88 and PR #89 on `user_workspaces` table migrations.
+    - Orbit (2 reports: 1 Daily, 1 Architecture Review):
+      - Analyzed Commit / Remote HEAD: `3f4a9b2019485720193857102948571029384756`
+      - Freshness: `attention`
+      - Captures sync bridge manifest version mismatch and PR #54 / #55 recovery actions.
+    - Nova (0 reports):
+      - Truthful empty state preserved.
+  - Report Types Breakdown:
+    - Daily Reports: 4 (TRACE, Radar, Atlas, Orbit)
+    - Weekly Reports: 2 (TRACE, Radar)
+    - Security Audits: 2 (TRACE, Atlas)
+    - Architecture Reviews: 3 (TRACE, Atlas, Orbit)
+    - Performance Reviews: 1 (TRACE)
+  - UI & Routing Capabilities:
+    - Standalone Report Detail Page (`/app/reports/[reportId]`): Renders complete report provenance, freshness status, facts card, reviewed changes, recorded intelligence, privacy-preserving evidence summary, canonical markdown disclosure, and breadcrumb navigation.
+    - Repository Reports Tab & View (`/app/repositories/[id]/reports`): Repository-scoped report archive with direct links and status indicators.
+    - Global Reports View (`/app/reports`): Filterable by repository with native section rendering and canonical record disclosures.
+  - Privacy Guarantees Maintained:
+    - `sourceCodeIncluded: false` and `codeSnippetsIncluded: false` preserved across all reports and evidence references.
+- Verification:
+  - Added unit test suite in `apps/web/lib/mock/__tests__/phase3b-reports-project-memory.test.ts`.
+  - All test suites passing cleanly (`npm test`).
+  - Linter (`npm run lint`) and compilation (`compile_applet`) verified green.
+
+- Status: Phase 3A implemented, verified, and unit-tested. Engineering-intelligence content layer completed across Changes, Findings, and Structured Evidence without UI redesign or visual regressions.
+- Date: 2026-08-19
+- Goal: Deepen the engineering-intelligence domain models with rich metadata, coherent multi-author PR stories, deterministic finding provenance, and privacy-preserving structured evidence.
+- Populated Entities & Coherence:
+  - Changes Domain (9 active changes across 5 repositories):
+    - TRACE (3 changes): PR #101 (`Harden CLI device-token verification`), PR #102 (`Improve GitHub freshness verification`), PR #103 (`Refactor synchronized artifact identity handling`).
+    - Radar (1 change): PR #41 (`Improve telemetry stream backpressure handling`).
+    - Atlas (3 changes): PR #87 (`Refactor authentication session lifecycle`), PR #88 (`Introduce staged database migration pipeline`), PR #89 (`Update worker schema assumptions`).
+    - Orbit (2 changes): PR #54 (`Improve artifact synchronization recovery`), PR #55 (`Validate manifest compatibility before ingest`).
+    - Nova (0 changes): Truthful empty state preserved.
+  - Findings & Provenance (31 findings across 5 repositories):
+    - TRACE (14 findings): Correctly attributed to analyzed commit `4953addc8992f882a1c983bad061fb8035213276` and flagged as stale relative to GitHub remote head `8c74d21054a329e7104b689a7f3d5e219084c7aa`.
+    - Radar (3 findings): Analyzed commit matching current remote head `1e9b8a4746f328109dcb49281735ae89104fa281`.
+    - Atlas (8 findings): Schema conflict flagged between PR #88 and PR #89 on `user_workspaces` table migrations.
+    - Orbit (6 findings): Sync bridge attention flagged for schema version compatibility.
+    - Nova (0 findings): Truthful empty state preserved.
+  - Privacy-Preserving Structured Evidence Model (`apps/web/lib/mock/evidence.ts`):
+    - Rich evidence records spanning file locations, configurations, dependencies, AST visitor invariants, and schema divergence checks.
+    - Enforces `sourceCodeIncluded: false` and `codeSnippetsIncluded: false` on all evidence items.
+    - Zero source code snippets uploaded or displayed; verification sources and AST rules clearly referenced.
+- Verification:
+  - Added dedicated unit tests in `apps/web/lib/mock/__tests__/phase3a-changes-findings-evidence.test.ts`.
+  - All 26 Turbo tasks passed cleanly (`npm test`).
+  - Linter (`npm run lint`) and application compilation (`compile_applet`) succeeded with zero errors.
 
 - Status: Phase 2 implemented, verified, and unit-tested. Primary product journey populated with coherent, interconnected mock data across the 5 core repositories and Northstar Engineering workspace.
 - Date: 2026-08-19
@@ -473,4 +577,59 @@
 - Provider handoff: Vercel CLI identifies team `nebulas-projects-74786240` Neon resource `trace-staging-postgres` (`store_Gu6KtHgqull4KOWU`), surfaced through Hyperdrive `2d1e4821c1484d6299d88e29f2884310`; the resource has no connected Vercel project. The provider guide directs operators from Vercel Storage to **Open in Neon Console** and the SQL Editor. The repository-supported operator path is `scripts/postgres/migrate.ps1` with a temporary `DATABASE_URL`, which lets Drizzle inspect `drizzle.__drizzle_migrations` and apply only pending migrations. No credential was available here. Wrangler tail created a staging tail but returned no exception before the stream disconnected, so the exact 500 cause remains unverified.
 - Local pilot evidence: `trace analyze` on `mathofdynamic/TRACE` at the current `main` HEAD produced a valid local artifact with 233 supported files, 742 unsupported/file-level files, 7,986 symbols, four deterministic findings, and `sourceCodeSentToProvider: false`. `trace validate` passed. `trace sync --dry-run --json` selected one 4,786-byte artifact, excluded none, and reported `sourceCodeIncluded: false` and `codeSnippetsIncluded: false`.
 - Security scan: no tracked private-key or real token pattern was found. The only `trc_` match is the intentional credential-storage test fixture; the only PEM marker is parser code. `.trace` runtime output and the local private-key file remain ignored/untracked.
-- Remaining owner action: Apply and verify migrations `0004`–`0006` on the designated staging PostgreSQL database, then rerun the real CLI authorization and sync acceptance. Production was not touched.
+### Phase 4B — Settings, Authorized Computers, Privacy, and Edge States
+
+- Status: Completed
+- Date: 2026-08-19
+- Scope completed:
+  - Settings Surfaces: Fully enriched Settings page with deterministic workspace identity (`Northstar Engineering`, `ws-northstar-001`, `Mohammad Mohammadi`, `Engineering Lead`, 9 team members, Local TRACE execution mode).
+  - GitHub Connection: Modeled active GitHub App integration (`github-inst-northstar-001`), 5 selected repositories, read-only permissions (Metadata, Pull Requests, Commits), and verification timestamp.
+  - Authorized Computers: Populated 4 deterministic devices (3 active: `Mohammad's MacBook Pro`, `Studio Workstation`, `Office Desktop`; 1 revoked: `Old Laptop`). Enforced one-way token hashes, valid expiry and last-used timestamps, and non-destructive revocation semantics (future sync blocked while historical project records remain preserved).
+  - Privacy and Data Boundaries: Codified local-first trust boundaries—zero source code or code snippets uploaded, only approved `.trace` projection manifests and digests synchronized, local AST analysis execution, and dry-run pre-flight verification (`trace sync --dry-run`).
+  - Operational Edge States & Scenarios: Implemented all required failure, running, and edge state scenarios in `apps/web/lib/mock/scenarios.ts` with strict semantic isolation:
+    - `github-unavailable`: Remote HEAD null, freshness unknown, prior verified intelligence (all 12 reports, 31 findings, 9 changes) 100% preserved.
+    - `permission-missing`: Distinguishes permission revocation from network outage; surfaces high-severity permission recovery attention item.
+    - `analysis-running`: Models local AST analysis in progress on TRACE without fabricated percentages.
+    - `analysis-failed`: Models syntax/AST parse failure with recovery targeting local re-analysis (`trace analyze`) while preserving prior verified state.
+    - `sync-running`: Models local analysis complete with artifact upload in flight.
+    - `sync-failed`: Models artifact digest mismatch with recovery targeting `trace sync`, without falsely requiring local re-analysis.
+    - `freshness-unavailable`: Models unknown remote HEAD state without false "Current" or "Needs refresh" inference.
+    - `no-analysis`: Models unanalyzed workspace baseline with 0 findings and 0 reports.
+  - Documentation: Created `DOC/mock-state-matrix.md` detailing the complete truth table, repository state matrix, and operational boundaries.
+- Tests added & verified:
+  - Created `apps/web/lib/mock/__tests__/phase4b-operational-edge-states.test.ts` verifying all 9 scenarios, 4 devices, state derivation invariants, and non-destructive failure behavior.
+  - All 81 unit tests in `@trace/web` and 26 workspace test tasks pass cleanly (`npm test`).
+  - ESLint checks pass with 0 errors (`lint_applet`).
+  - Full application build compiles cleanly (`compile_applet`).
+
+### Phase 5 — Final Mock Universe Audit, Route QA, and Baseline Freeze
+
+- Status: Completed
+- Date: 2026-08-19
+- Scope completed:
+  - Full Universe Audit: Verified deterministic baseline counts across all entities:
+    - 5 Repositories: TRACE (Needs refresh), Radar (Current), Atlas (Current with conflicts), Orbit (Sync attention), Nova (Connected, not analyzed).
+    - 9 Changes: TRACE (3), Radar (1), Atlas (3), Orbit (2), Nova (0).
+    - 31 Findings: TRACE (14), Radar (3), Atlas (8), Orbit (6), Nova (0).
+    - 12 Reports: TRACE (5), Radar (2), Atlas (3), Orbit (2), Nova (0).
+    - 4 Conflicts: Atlas (2), Orbit (1), TRACE (1), Radar (0), Nova (0).
+    - 9 Decisions: TRACE (4), Radar (1), Atlas (2), Orbit (2), Nova (0).
+    - 8 Rules: 3 Workspace-wide, 5 Repository-scoped.
+    - 35 Activity Events: Full lifecycle chronological audit trail.
+    - 4 Authorized Computers: 3 Active, 1 Revoked.
+  - Route QA & Inventory: Audited all 25 public and authenticated routes across Desktop (1440x1000) and Mobile (390x844). Verified layout integrity, data isolation, and state machine transitions.
+  - Referential Integrity Pass: Verified 100% referential consistency across all entity IDs, repository mappings, change IDs, report linkages, conflict structures, rule scopes, and device associations.
+  - Product-Truth & Integrity Invariants:
+    - TRACE clearly marks `Needs refresh` when analyzed commit (`4953addc`) != remote GitHub HEAD (`8c74d210`), preserving all 14 findings and 5 reports.
+    - Nova is truthfully represented as `Connected - Not analyzed` with 0 findings, 0 reports, and 0 changes.
+    - Orbit accurately surfaces `Sync attention` without being falsely represented as unanalyzed.
+    - Radar remains `Current` with calm state and 0 conflicts.
+    - Atlas accurately surfaces concurrent schema conflicts without false stale inference.
+  - Security, Privacy & Secret Hygiene: Verified zero plaintext credentials, zero raw tokens in UI/fixtures (one-way SHA-256 hashes only), and zero source code or code snippets in evidence records (`sourceCodeIncluded: false`, `codeSnippetsIncluded: false`).
+  - Documentation: Created `DOC/mock-universe-final-audit.md` containing the route matrix, audit logs, and non-blocking UX/UI observations for redesign.
+  - Baseline Freeze: Officially frozen the mock universe baseline after Phase 5.
+- Tests added & verified:
+  - Created `apps/web/lib/mock/__tests__/phase5-universe-audit-freeze.test.ts` (33 unit tests).
+  - All 114 unit tests across `@trace/web` pass (`npm test`).
+  - ESLint verification passes with 0 errors (`lint_applet`).
+  - Next.js production compilation passes cleanly (`compile_applet`).

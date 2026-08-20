@@ -51,6 +51,33 @@ export type MockCliDevice = {
   updatedAt: string;
 };
 
+export type MockEvidenceType =
+  | 'file-location'
+  | 'configuration'
+  | 'dependency'
+  | 'test-result'
+  | 'schema'
+  | 'git-change'
+  | 'analysis-record';
+
+export type MockEvidenceRecord = {
+  id: string;
+  repositoryId: string;
+  findingId: string;
+  changeId?: string | null;
+  type: MockEvidenceType;
+  path: string;
+  lineRange?: string | null;
+  label: string;
+  explanation: string;
+  verificationSource: string;
+  classification: 'deterministic' | 'probabilistic';
+  collectedAt: string;
+  analysisCommit: string;
+  sourceCodeIncluded: false;
+  codeSnippetsIncluded: false;
+};
+
 export type MockUniverse = {
   workspace: MockWorkspace;
   currentUser: TraceUser;
@@ -65,6 +92,7 @@ export type MockUniverse = {
   rules: DashboardSyncedRecord[];
   risks: DashboardSyncedRecord[];
   activity: DashboardActivity[];
+  evidence: MockEvidenceRecord[];
 };
 
 export type MockDataProvider = {
@@ -73,4 +101,5 @@ export type MockDataProvider = {
   getSession(): TraceSession;
   getRepositories(scenario?: MockScenarioKey): DashboardRepository[];
   getDevices(): MockCliDevice[];
+  getEvidence(scenario?: MockScenarioKey): MockEvidenceRecord[];
 };

@@ -25,6 +25,8 @@ export default async function ChangesPage() {
                 <h2>{change.title}</h2>
                 <p>
                   {change.state} · {change.authorLogin ?? 'Author unavailable'}
+                  {change.branch ? ` · ${change.branch}` : ''}
+                  {change.affectedAreas?.length ? ` · ${change.affectedAreas.join(', ')}` : ''}
                 </p>
               </div>
               {change.url ? <a href={change.url}>Open on GitHub</a> : null}

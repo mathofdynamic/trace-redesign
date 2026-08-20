@@ -1,7 +1,7 @@
 import type { DashboardAttention } from '../dashboard';
 
 export const MOCK_ATTENTION: DashboardAttention[] = [
-  // --- TRACE (14 findings) ---
+  // --- TRACE (14 findings, analyzed on 4953addc8992f882a1c983bad061fb8035213276) ---
   {
     id: 'att-trace-001',
     kind: 'finding',
@@ -14,6 +14,17 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    relatedChangeId: 'change-trace-101',
+    relatedChangeNumber: 101,
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'Authentication',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'auth/constant-time-token-compare',
+    },
   },
   {
     id: 'att-trace-002',
@@ -27,6 +38,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'Environment Config',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'env/service-key-entropy',
+    },
   },
   {
     id: 'att-trace-003',
@@ -40,6 +60,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'Client Auth',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'privacy/unredacted-client-logging',
+    },
   },
   {
     id: 'att-trace-004',
@@ -53,6 +82,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'Database Layer',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'postgres/missing-composite-index',
+    },
   },
   {
     id: 'att-trace-005',
@@ -66,6 +104,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'Parser Engine',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'ts/deprecated-node-visitor',
+    },
   },
   {
     id: 'att-trace-006',
@@ -79,6 +126,17 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    relatedChangeId: 'change-trace-102',
+    relatedChangeNumber: 102,
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'GitHub Client',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'net/http-client-timeout',
+    },
   },
   {
     id: 'att-trace-007',
@@ -92,6 +150,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'CLI Daemon',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'cli/unbounded-cache-retention',
+    },
   },
   {
     id: 'att-trace-008',
@@ -105,6 +172,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'Rules Engine',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'rules/confidence-calibration',
+    },
   },
   {
     id: 'att-trace-009',
@@ -118,6 +194,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'Testing Suite',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'test/temp-cleanup',
+    },
   },
   {
     id: 'att-trace-010',
@@ -131,6 +216,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'Dependencies',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'pnpm/workspace-version-drift',
+    },
   },
   {
     id: 'att-trace-011',
@@ -144,6 +238,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'Web Security',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'http/csp-frame-ancestors',
+    },
   },
   {
     id: 'att-trace-012',
@@ -157,6 +260,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'CLI Runtime',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'node/synchronous-io-hotpath',
+    },
   },
   {
     id: 'att-trace-013',
@@ -170,6 +282,17 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    relatedChangeId: 'change-trace-103',
+    relatedChangeNumber: 103,
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'Sync Protocol',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'artifact/identity-collision-risk',
+    },
   },
   {
     id: 'att-trace-014',
@@ -183,9 +306,18 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-trace-001',
     repositoryName: 'northstar-engineering/TRACE',
     updatedAt: '2026-08-19T09:00:00.000Z',
+    analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+    affectedArea: 'Web Application',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '4953addc8992f882a1c983bad061fb8035213276',
+      remoteHeadCommit: '8c74d21054a329e7104b689a7f3d5e219084c7aa',
+      isStaleWithRemote: true,
+      ruleId: 'auth/workspace-membership-check',
+    },
   },
 
-  // --- Radar (3 findings) ---
+  // --- Radar (3 findings, analyzed on 1e9b8a4746f328109dcb49281735ae89104fa281) ---
   {
     id: 'att-radar-001',
     kind: 'risk',
@@ -198,6 +330,17 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-radar-002',
     repositoryName: 'northstar-engineering/Radar',
     updatedAt: '2026-08-19T10:15:00.000Z',
+    relatedChangeId: 'change-radar-41',
+    relatedChangeNumber: 41,
+    analyzedCommit: '1e9b8a4746f328109dcb49281735ae89104fa281',
+    affectedArea: 'Stream Ingestion',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '1e9b8a4746f328109dcb49281735ae89104fa281',
+      remoteHeadCommit: '1e9b8a4746f328109dcb49281735ae89104fa281',
+      isStaleWithRemote: false,
+      ruleId: 'stream/buffer-backpressure',
+    },
   },
   {
     id: 'att-radar-002',
@@ -211,6 +354,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-radar-002',
     repositoryName: 'northstar-engineering/Radar',
     updatedAt: '2026-08-19T10:15:00.000Z',
+    analyzedCommit: '1e9b8a4746f328109dcb49281735ae89104fa281',
+    affectedArea: 'Transport Layer',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '1e9b8a4746f328109dcb49281735ae89104fa281',
+      remoteHeadCommit: '1e9b8a4746f328109dcb49281735ae89104fa281',
+      isStaleWithRemote: false,
+      ruleId: 'net/socket-keepalive',
+    },
   },
   {
     id: 'att-radar-003',
@@ -224,21 +376,41 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-radar-002',
     repositoryName: 'northstar-engineering/Radar',
     updatedAt: '2026-08-19T10:15:00.000Z',
+    analyzedCommit: '1e9b8a4746f328109dcb49281735ae89104fa281',
+    affectedArea: 'Batch Pipeline',
+    provenance: {
+      source: 'local',
+      analyzedCommit: '1e9b8a4746f328109dcb49281735ae89104fa281',
+      remoteHeadCommit: '1e9b8a4746f328109dcb49281735ae89104fa281',
+      isStaleWithRemote: false,
+      ruleId: 'pipeline/batcher-idle-spin',
+    },
   },
 
-  // --- Atlas (8 findings) ---
+  // --- Atlas (8 findings, analyzed on f3c2a77890123456789abcdef0123456789a1b2c) ---
   {
     id: 'att-atlas-001',
     kind: 'conflict',
     title: 'Concurrent schema migration collision on user_workspaces table',
     detail:
-      'PR #142 and PR #145 both alter column constraints on user_workspaces with contradictory default values.',
+      'PR #88 and PR #89 both alter column constraints on user_workspaces with contradictory default values.',
     severity: 'high',
     classification: 'deterministic',
     evidence: ['packages/db/src/schema.ts:88', 'migrations/0014_user_workspaces.sql'],
     repositoryId: 'repo-atlas-003',
     repositoryName: 'northstar-engineering/Atlas',
     updatedAt: '2026-08-19T08:45:00.000Z',
+    relatedChangeId: 'change-atlas-88',
+    relatedChangeNumber: 88,
+    analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+    affectedArea: 'Database Migrations',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      remoteHeadCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      isStaleWithRemote: false,
+      ruleId: 'ddl/concurrent-migration-overlap',
+    },
   },
   {
     id: 'att-atlas-002',
@@ -252,6 +424,17 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-atlas-003',
     repositoryName: 'northstar-engineering/Atlas',
     updatedAt: '2026-08-19T08:45:00.000Z',
+    relatedChangeId: 'change-atlas-87',
+    relatedChangeNumber: 87,
+    analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+    affectedArea: 'Auth Services',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      remoteHeadCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      isStaleWithRemote: false,
+      ruleId: 'auth/session-ttl-alignment',
+    },
   },
   {
     id: 'att-atlas-003',
@@ -265,6 +448,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-atlas-003',
     repositoryName: 'northstar-engineering/Atlas',
     updatedAt: '2026-08-19T08:45:00.000Z',
+    analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+    affectedArea: 'Role Calculation',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      remoteHeadCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      isStaleWithRemote: false,
+      ruleId: 'js/bitmask-integer-overflow',
+    },
   },
   {
     id: 'att-atlas-004',
@@ -278,6 +470,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-atlas-003',
     repositoryName: 'northstar-engineering/Atlas',
     updatedAt: '2026-08-19T08:45:00.000Z',
+    analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+    affectedArea: 'Billing Webhooks',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      remoteHeadCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      isStaleWithRemote: false,
+      ruleId: 'payment/idempotent-event-processing',
+    },
   },
   {
     id: 'att-atlas-005',
@@ -291,6 +492,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-atlas-003',
     repositoryName: 'northstar-engineering/Atlas',
     updatedAt: '2026-08-19T08:45:00.000Z',
+    analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+    affectedArea: 'Database Pool',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      remoteHeadCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      isStaleWithRemote: false,
+      ruleId: 'db/pool-saturation-risk',
+    },
   },
   {
     id: 'att-atlas-006',
@@ -304,6 +514,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-atlas-003',
     repositoryName: 'northstar-engineering/Atlas',
     updatedAt: '2026-08-19T08:45:00.000Z',
+    analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+    affectedArea: 'Search Service',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      remoteHeadCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      isStaleWithRemote: false,
+      ruleId: 'tenancy/tenant-id-spoofing-guard',
+    },
   },
   {
     id: 'att-atlas-007',
@@ -317,6 +536,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-atlas-003',
     repositoryName: 'northstar-engineering/Atlas',
     updatedAt: '2026-08-19T08:45:00.000Z',
+    analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+    affectedArea: 'Notifications',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      remoteHeadCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      isStaleWithRemote: false,
+      ruleId: 'retry/exponential-backoff-jitter',
+    },
   },
   {
     id: 'att-atlas-008',
@@ -330,9 +558,18 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-atlas-003',
     repositoryName: 'northstar-engineering/Atlas',
     updatedAt: '2026-08-19T08:45:00.000Z',
+    analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+    affectedArea: 'Schema Integrity',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      remoteHeadCommit: 'f3c2a77890123456789abcdef0123456789a1b2c',
+      isStaleWithRemote: false,
+      ruleId: 'ddl/cascade-delete-consistency',
+    },
   },
 
-  // --- Orbit (6 findings) ---
+  // --- Orbit (6 findings, analyzed on d7e8f90123456789abcdef0123456789ab2c3d4e) ---
   {
     id: 'att-orbit-001',
     kind: 'sync-failed',
@@ -345,6 +582,17 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-orbit-004',
     repositoryName: 'northstar-engineering/Orbit',
     updatedAt: '2026-08-19T07:30:00.000Z',
+    relatedChangeId: 'change-orbit-54',
+    relatedChangeNumber: 54,
+    analyzedCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+    affectedArea: 'Sync Ingestion Bridge',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+      remoteHeadCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+      isStaleWithRemote: false,
+      ruleId: 'sync/schema-version-compatibility',
+    },
   },
   {
     id: 'att-orbit-002',
@@ -358,6 +606,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-orbit-004',
     repositoryName: 'northstar-engineering/Orbit',
     updatedAt: '2026-08-19T07:30:00.000Z',
+    analyzedCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+    affectedArea: 'CLI Tooling',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+      remoteHeadCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+      isStaleWithRemote: false,
+      ruleId: 'cli/minimum-supported-version',
+    },
   },
   {
     id: 'att-orbit-003',
@@ -371,6 +628,17 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-orbit-004',
     repositoryName: 'northstar-engineering/Orbit',
     updatedAt: '2026-08-19T07:30:00.000Z',
+    relatedChangeId: 'change-orbit-54',
+    relatedChangeNumber: 54,
+    analyzedCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+    affectedArea: 'Artifact Integrity',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+      remoteHeadCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+      isStaleWithRemote: false,
+      ruleId: 'artifact/checksum-verification',
+    },
   },
   {
     id: 'att-orbit-004',
@@ -384,6 +652,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-orbit-004',
     repositoryName: 'northstar-engineering/Orbit',
     updatedAt: '2026-08-19T07:30:00.000Z',
+    analyzedCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+    affectedArea: 'Test Fixtures',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+      remoteHeadCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+      isStaleWithRemote: false,
+      ruleId: 'env/test-fixture-presence',
+    },
   },
   {
     id: 'att-orbit-005',
@@ -397,6 +674,15 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-orbit-004',
     repositoryName: 'northstar-engineering/Orbit',
     updatedAt: '2026-08-19T07:30:00.000Z',
+    analyzedCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+    affectedArea: 'Package Graph',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+      remoteHeadCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+      isStaleWithRemote: false,
+      ruleId: 'imports/circular-dependency-cycle',
+    },
   },
   {
     id: 'att-orbit-006',
@@ -410,5 +696,14 @@ export const MOCK_ATTENTION: DashboardAttention[] = [
     repositoryId: 'repo-orbit-004',
     repositoryName: 'northstar-engineering/Orbit',
     updatedAt: '2026-08-19T07:30:00.000Z',
+    analyzedCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+    affectedArea: 'API Gateway',
+    provenance: {
+      source: 'local',
+      analyzedCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+      remoteHeadCommit: 'd7e8f90123456789abcdef0123456789ab2c3d4e',
+      isStaleWithRemote: false,
+      ruleId: 'http/cors-wildcard-origin',
+    },
   },
 ];

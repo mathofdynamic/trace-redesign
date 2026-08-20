@@ -129,13 +129,14 @@ export function deriveTraceProjectState(
     };
   }
 
-  if (analysisStatus === 'failed' && !repository.latestSync) {
+  if (analysisStatus === 'failed') {
     return {
       key: 'analysis-failed',
       label: 'Analysis needs attention',
       shortLabel: 'Analysis failed',
-      description:
-        'Local analysis did not complete. Run it again on your computer; no new dashboard record was created.',
+      description: repository.latestSync
+        ? 'Local analysis did not complete. Fix local errors and run it again; the previous verified dashboard record remains active.'
+        : 'Local analysis did not complete. Run it again on your computer; no dashboard record was created.',
       tone: 'danger',
       actionLabel: 'Review local action',
       actionKind: 'local',

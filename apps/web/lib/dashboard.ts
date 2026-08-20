@@ -47,6 +47,17 @@ export type DashboardAttention = {
   repositoryId: string | null;
   repositoryName: string | null;
   updatedAt: string;
+  relatedChangeId?: string | null;
+  relatedChangeNumber?: number | null;
+  analyzedCommit?: string | null;
+  affectedArea?: string | null;
+  provenance?: {
+    source: 'local' | 'cloud';
+    analyzedCommit: string;
+    remoteHeadCommit?: string | null;
+    isStaleWithRemote?: boolean;
+    ruleId?: string;
+  };
 };
 
 export type DashboardChange = {
@@ -59,6 +70,15 @@ export type DashboardChange = {
   url: string | null;
   authorLogin: string | null;
   updatedAt: string;
+  createdAt?: string;
+  branch?: string | null;
+  baseBranch?: string | null;
+  headSha?: string | null;
+  affectedAreas?: string[];
+  affectedFiles?: string[];
+  relatedFindingIds?: string[];
+  relatedConflictId?: string | null;
+  intent?: string | null;
 };
 
 export type DashboardActivity = {
@@ -71,6 +91,19 @@ export type DashboardActivity = {
   occurredAt: string;
 };
 
+export type DashboardSyncedRecordItem = {
+  id: string;
+  title: string;
+  detail: string;
+  severity?: string;
+  classification?: string;
+  evidence: string[];
+  changeId?: string | null;
+  changeNumber?: number | null;
+  findingId?: string | null;
+  evidenceId?: string | null;
+};
+
 export type DashboardSyncedRecord = {
   id: string;
   artifactId: string;
@@ -80,22 +113,23 @@ export type DashboardSyncedRecord = {
   title: string;
   summary: string;
   status: string | null;
-  items: Array<{
-    id: string;
-    title: string;
-    detail: string;
-    severity?: string;
-    classification?: string;
-    evidence: string[];
-  }>;
+  timeWindow?: string | null;
+  analyzedCommit?: string | null;
+  remoteHeadCommit?: string | null;
+  freshness?: 'current' | 'needs-refresh' | 'stale' | 'attention' | null;
+  relatedChangeIds?: string[];
+  relatedFindingIds?: string[];
+  relatedEvidenceIds?: string[];
+  items: DashboardSyncedRecordItem[];
   generatedAt: string;
   syncedAt: string;
   origin: 'local';
   content: string;
+  metadata?: Record<string, unknown>;
 };
 
 export type DashboardSummary = {
-  source: 'postgresql';
+  source: 'postgresql' | 'mock';
   preferredRepositoryId: string | null;
   workspace: {
     name: string;

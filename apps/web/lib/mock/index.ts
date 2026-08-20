@@ -11,5 +11,6 @@ export * from './conflicts';
 export * from './decisions';
 export * from './rules';
 export * from './activity';
+export * from './evidence';
 export * from './scenarios';
 export * from './adapter';

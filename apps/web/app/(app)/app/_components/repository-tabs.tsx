@@ -7,6 +7,7 @@ const tabs = [
   ['Overview', ''],
   ['Pull requests', '/pull-requests'],
   ['Findings', '/findings'],
+  ['Reports', '/reports'],
 ] as const;
 
 export function RepositoryTabs({ repositoryId }: { repositoryId: string }) {

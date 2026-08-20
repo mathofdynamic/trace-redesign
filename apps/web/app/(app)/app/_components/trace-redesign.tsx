@@ -441,10 +441,24 @@ export function FindingDisclosure({
             </button>
             <div className="finding-drawer__eyebrow">
               <span data-severity={finding.severity}>{finding.severity}</span>
-              <span>{finding.classification}</span>
+              <span>
+                {finding.classification === 'deterministic'
+                  ? 'Verified local evidence'
+                  : 'Probabilistic interpretation'}
+              </span>
+              {finding.affectedArea ? <span>{finding.affectedArea}</span> : null}
             </div>
             <h2 id={`finding-${finding.id}`}>{finding.title}</h2>
             <p className="finding-drawer__lead">{presentFindingDetail(finding.detail)}</p>
+            {finding.relatedChangeNumber ? (
+              <section>
+                <span className="eyebrow">Related change</span>
+                <p>
+                  Observed in context of active pull request{' '}
+                  <strong>#{finding.relatedChangeNumber}</strong>.
+                </p>
+              </section>
+            ) : null}
             <section>
               <span className="eyebrow">Why TRACE flagged this</span>
               <p>{presentFindingDetail(finding.detail)}</p>
@@ -491,9 +505,20 @@ export function FindingDisclosure({
                 {repository?.latestSync?.branch ??
                   repository?.defaultBranch ??
                   'branch unavailable'}{' '}
-                · {repository?.latestSync?.headCommit?.slice(0, 12) ?? 'commit unavailable'}
+                · analyzed @{' '}
+                <code>
+                  {finding.provenance?.analyzedCommit?.slice(0, 12) ??
+                    finding.analyzedCommit?.slice(0, 12) ??
+                    repository?.latestSync?.headCommit?.slice(0, 12) ??
+                    'commit unavailable'}
+                </code>
               </p>
-              <small>Analysis remains local; only approved TRACE records are synchronized.</small>
+              {finding.provenance?.isStaleWithRemote && finding.provenance.remoteHeadCommit ? (
+                <p className="drawer-muted">
+                  Newer commit exists on GitHub (<code>{finding.provenance.remoteHeadCommit.slice(0, 12)}</code>). Run local analysis to refresh findings.
+                </p>
+              ) : null}
+              <small>Analysis remains local; raw source code and snippets are never synchronized to TRACE.</small>
             </section>
             <details className="technical-details">
               <summary>Technical details</summary>

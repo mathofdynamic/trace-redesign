@@ -97,23 +97,10 @@ export default async function RepositoriesPage({ searchParams }: RepositoriesPag
       } finally {
         await client.end().catch(() => {});
       }
-    } catch {
-      const mockRepos = mockDataProvider.getRepositories(getActiveMockScenario());
-      installations = [
-        {
-          id: 'mock-gh-inst-001',
-          accountLogin: 'northstar-engineering',
-          accountType: 'Organization',
-          state: 'active',
-        },
-      ];
-      repositories = mockRepos.map((repo) => ({
-        id: repo.id,
-        fullName: repo.fullName,
-        defaultBranch: repo.defaultBranch,
-        visibility: repo.visibility,
-        state: repo.state,
-      }));
+    } catch (error) {
+      console.warn('[TRACE] Error loading repositories from database:', error);
+      installations = [];
+      repositories = [];
     }
   }
 

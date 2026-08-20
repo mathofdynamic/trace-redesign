@@ -21,7 +21,7 @@ export default async function DashboardOverviewPage({
   searchParams?: Promise<{ repo?: string }>;
 }) {
   const params = await searchParams;
-  const { summary } = await getAuthenticatedDashboardSummary();
+  const { summary, dataMode } = await getAuthenticatedDashboardSummary();
   const repository =
     (params?.repo ? summary.repositories.find((item) => item.id === params.repo) : null) ??
     summary.repositories.find((item) => item.id === summary.preferredRepositoryId) ??
@@ -37,6 +37,9 @@ export default async function DashboardOverviewPage({
   const engineering = repositoryAttention.filter((item) =>
     ['finding', 'risk', 'conflict'].includes(item.kind),
   );
+  const repositoryChanges = summary.latestChanges.filter(
+    (item) => !repository || item.repositoryId === repository.id,
+  );
   const localCommands = localTraceCommandsForState(state.key);
 
   return (
@@ -47,7 +50,9 @@ export default async function DashboardOverviewPage({
           <h1>{repository?.fullName ?? 'Choose a repository'}</h1>
           <p>One clear view of what TRACE knows, when it was generated, and what to do next.</p>
         </div>
-        <span className="source-note">Live workspace data</span>
+        <span className="source-note">
+          {dataMode === 'mock' ? 'Demo workspace' : 'Live workspace data'}
+        </span>
       </header>
 
       <section className="project-command-surface" aria-labelledby="overview-state-title">
@@ -202,8 +207,8 @@ export default async function DashboardOverviewPage({
             </div>
             {summary.capabilities.changes ? <Link href="/app/changes">View changes</Link> : null}
           </div>
-          {summary.latestChanges.length ? (
-            summary.latestChanges.slice(0, 5).map((change) => (
+          {repositoryChanges.length ? (
+            repositoryChanges.slice(0, 5).map((change) => (
               <div className="redesign-list-row" key={change.id}>
                 <div>
                   <strong>{change.title}</strong>

@@ -42,9 +42,9 @@ export default async function CliAuthorizePage({
       } finally {
         await client.end().catch(() => {});
       }
-    } catch {
-      const universe = mockDataProvider.getUniverse();
-      organizations = [{ id: universe.workspace.id, name: universe.workspace.name }];
+    } catch (error) {
+      console.warn('[TRACE] Error loading organizations from database:', error);
+      organizations = [];
     }
   }
 

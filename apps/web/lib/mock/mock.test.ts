@@ -130,14 +130,13 @@ describe('TRACE Mock Data Foundation (Phase 1)', () => {
   describe('Mock Scenarios Registry', () => {
     it('handles github-unavailable scenario', () => {
       const summary = mockDataProvider.getDashboardSummary('github-unavailable');
-      expect(summary.repositories).toHaveLength(0);
-      expect(summary.setup.githubConnected).toBe(false);
-      expect(summary.setup.repositorySelected).toBe(false);
+      expect(summary.repositories).toHaveLength(5);
+      expect(summary.attention.some((a) => a.id === 'att-github-unavailable-001')).toBe(true);
     });
 
     it('handles permission-missing scenario', () => {
       const summary = mockDataProvider.getDashboardSummary('permission-missing');
-      expect(summary.attention.some((a) => a.id === 'att-permission-001')).toBe(true);
+      expect(summary.attention.some((a) => a.id === 'att-permission-missing-001')).toBe(true);
     });
 
     it('handles analysis-running scenario', () => {

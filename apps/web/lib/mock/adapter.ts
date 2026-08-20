@@ -11,6 +11,7 @@ import { MOCK_CONFLICTS } from './conflicts';
 import { MOCK_DECISIONS } from './decisions';
 import { MOCK_RULES } from './rules';
 import { MOCK_ACTIVITY } from './activity';
+import { MOCK_EVIDENCE } from './evidence';
 import { applyScenario } from './scenarios';
 import type { MockDataProvider, MockScenarioKey, MockUniverse } from './types';
 
@@ -29,6 +30,7 @@ export function createBaseUniverse(): MockUniverse {
     rules: [...MOCK_RULES],
     risks: [],
     activity: [...MOCK_ACTIVITY],
+    evidence: [...MOCK_EVIDENCE],
   };
 }
 
@@ -38,7 +40,7 @@ export function buildDashboardSummaryFromUniverse(universe: MockUniverse): Dashb
   const analysisState = preferredRepo?.analysis?.status ?? 'not-started';
 
   return {
-    source: 'postgresql',
+    source: 'mock',
     preferredRepositoryId: preferredRepo?.id ?? null,
     workspace: {
       name: universe.workspace.name,
@@ -90,7 +92,7 @@ export const mockDataProvider: MockDataProvider = {
     return {
       user: { ...MOCK_PRIMARY_USER },
       session: {
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date('2030-01-01T00:00:00.000Z'),
       },
     };
   },
@@ -101,5 +103,9 @@ export const mockDataProvider: MockDataProvider = {
 
   getDevices() {
     return [...MOCK_CLI_DEVICES];
+  },
+
+  getEvidence(scenario: MockScenarioKey = 'default') {
+    return this.getUniverse(scenario).evidence;
   },
 };
