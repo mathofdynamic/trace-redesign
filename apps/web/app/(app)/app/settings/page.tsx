@@ -5,13 +5,14 @@ import { schema } from '@trace/db';
 import { createRequestDatabase } from '../../../../lib/request-database';
 import { ConnectionActions } from './connection-actions';
 import { formatDate, formatRelativeDate } from '../../../../lib/dashboard-state';
-import { isMockModeEnabled, mockDataProvider } from '../../../../lib/mock';
+import { isMockModeEnabled, mockDataProvider, MOCK_PRIMARY_USER } from '../../../../lib/mock';
 
 export default async function SettingsPage() {
   const { summary, session } = await getAuthenticatedDashboardSummary();
   let connections: (typeof schema.cliConnections.$inferSelect)[] = [];
+  const isMock = isMockModeEnabled() || session.user.id === MOCK_PRIMARY_USER.id;
 
-  if (isMockModeEnabled()) {
+  if (isMock) {
     connections = mockDataProvider.getDevices().map((dev) => ({
       ...dev,
       createdAt: new Date(dev.createdAt),

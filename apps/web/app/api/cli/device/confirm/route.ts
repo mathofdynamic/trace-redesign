@@ -5,9 +5,16 @@ import { approveDeviceAuthorization } from '../../../../../lib/cli-auth';
 import { createRequestDatabase } from '../../../../../lib/request-database';
 import { isTrustedBrowserMutation } from '../../../../../lib/browser-origin';
 
+function redirectRelative(location: string, status = 303) {
+  return new Response(null, {
+    status,
+    headers: { location, 'cache-control': 'no-store' },
+  });
+}
+
 export async function POST(request: Request) {
   const session = await getTraceSession(request.headers);
-  if (!session?.user) return Response.redirect(new URL('/sign-in', request.url), 303);
+  if (!session?.user) return redirectRelative('/sign-in');
   if (!isTrustedBrowserMutation(request)) {
     return Response.json({ error: 'Cross-origin request rejected.' }, { status: 403 });
   }
@@ -15,7 +22,7 @@ export async function POST(request: Request) {
   const code = form.get('code');
   const organizationId = form.get('organizationId');
   if (typeof code !== 'string' || typeof organizationId !== 'string') {
-    return Response.redirect(new URL('/cli/authorize?error=invalid', request.url), 303);
+    return redirectRelative('/cli/authorize?error=invalid');
   }
   const { db, client } = await createRequestDatabase();
   try {
@@ -30,7 +37,7 @@ export async function POST(request: Request) {
       )
       .limit(1);
     if (!membership) {
-      return Response.redirect(new URL('/cli/authorize?error=forbidden', request.url), 303);
+      return redirectRelative('/cli/authorize?error=forbidden');
     }
     const approved = await approveDeviceAuthorization(db, {
       code: code.trim().toUpperCase(),
@@ -38,7 +45,7 @@ export async function POST(request: Request) {
       organizationId,
     });
     if (!approved) {
-      return Response.redirect(new URL('/cli/authorize?error=expired', request.url), 303);
+      return redirectRelative('/cli/authorize?error=expired');
     }
     await db.insert(schema.auditEvents).values({
       organizationId,
@@ -47,7 +54,7 @@ export async function POST(request: Request) {
       subjectType: 'cli_connection',
       subjectId: approved.id,
     });
-    return Response.redirect(new URL('/cli/authorize?approved=1', request.url), 303);
+    return redirectRelative('/cli/authorize?approved=1');
   } finally {
     await client.end();
   }

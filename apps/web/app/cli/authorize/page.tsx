@@ -5,7 +5,7 @@ import { getTraceSession, safeAuthNext } from '@trace/auth';
 import { schema } from '@trace/db';
 import { headers } from 'next/headers';
 import { createRequestDatabase } from '../../../lib/request-database';
-import { isMockModeEnabled, mockDataProvider } from '../../../lib/mock';
+import { isMockModeEnabled, mockDataProvider, MOCK_PRIMARY_USER } from '../../../lib/mock';
 
 export default async function CliAuthorizePage({
   searchParams,
@@ -17,14 +17,15 @@ export default async function CliAuthorizePage({
   const approved = parameters.approved === '1';
   const error = typeof parameters.error === 'string' ? parameters.error : null;
   const rawSession = await getTraceSession(await headers());
-  const session = isMockModeEnabled() ? (rawSession ?? mockDataProvider.getSession()) : rawSession;
+  const isMock = isMockModeEnabled() || rawSession?.user?.id === MOCK_PRIMARY_USER.id;
+  const session = isMock ? (rawSession ?? mockDataProvider.getSession()) : rawSession;
   if (!session?.user) {
     redirect(`/sign-in?next=${encodeURIComponent(safeAuthNext(`/cli/authorize?code=${code}`))}`);
   }
 
   let organizations: Array<{ id: string; name: string }> = [];
 
-  if (isMockModeEnabled()) {
+  if (isMock) {
     const universe = mockDataProvider.getUniverse();
     organizations = [{ id: universe.workspace.id, name: universe.workspace.name }];
   } else {

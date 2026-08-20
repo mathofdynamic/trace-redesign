@@ -12,6 +12,7 @@ export default async function SignInPage({
   const query = await searchParams;
   const requestedNext = Array.isArray(query.next) ? query.next[0] : query.next;
   const next = safeAuthNext(requestedNext);
+  const demoTarget = requestedNext && requestedNext !== '/onboarding' ? next : '/app';
   return (
     <AuthShell>
       <p className="section-label">TRACE</p>
@@ -20,7 +21,7 @@ export default async function SignInPage({
       <GithubAuthButton callbackURL={next} />
       <div style={{ marginTop: '0.75rem', textAlign: 'center' }}>
         <a
-          href={`/api/auth/demo?next=${encodeURIComponent(next)}`}
+          href={`/api/auth/demo?next=${encodeURIComponent(demoTarget)}`}
           className="trace-button trace-button--secondary"
           style={{ width: '100%', display: 'inline-block', textAlign: 'center' }}
         >

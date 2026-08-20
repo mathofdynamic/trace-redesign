@@ -7,6 +7,7 @@ import {
   getActiveMockScenario,
   isMockModeEnabled,
   mockDataProvider,
+  MOCK_PRIMARY_USER,
 } from './mock';
 
 export type AuthenticatedDashboardResult = {
@@ -17,8 +18,9 @@ export type AuthenticatedDashboardResult = {
 
 export async function getAuthenticatedDashboardSummary(): Promise<AuthenticatedDashboardResult> {
   const session = await getTraceSession(await headers());
+  const isMock = isMockModeEnabled() || session?.user?.id === MOCK_PRIMARY_USER.id;
 
-  if (isMockModeEnabled()) {
+  if (isMock) {
     const effectiveSession = session ?? mockDataProvider.getSession();
     return {
       session: effectiveSession,

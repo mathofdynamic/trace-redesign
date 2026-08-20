@@ -8,7 +8,7 @@ import { RepositorySelector } from '../../../components/repository-selector';
 import { SetupProgress } from '../../../components/setup-progress';
 import { createRequestDatabase } from '../../../../lib/request-database';
 import { getUserOrganizationIds } from '../../../../lib/workspace';
-import { getActiveMockScenario, isMockModeEnabled, mockDataProvider } from '../../../../lib/mock';
+import { getActiveMockScenario, isMockModeEnabled, mockDataProvider, MOCK_PRIMARY_USER } from '../../../../lib/mock';
 
 type RepositoriesPageProps = {
   searchParams: Promise<{ setup?: string | string[] }>;
@@ -29,7 +29,8 @@ function setupMessage(value: string | string[] | undefined) {
 
 export default async function RepositoriesPage({ searchParams }: RepositoriesPageProps) {
   const rawSession = await getTraceSession(await headers());
-  const session = isMockModeEnabled() ? (rawSession ?? mockDataProvider.getSession()) : rawSession;
+  const isMock = isMockModeEnabled() || rawSession?.user?.id === MOCK_PRIMARY_USER.id;
+  const session = isMock ? (rawSession ?? mockDataProvider.getSession()) : rawSession;
   if (!session?.user) redirect('/sign-in?next=/app/repositories');
   const query = await searchParams;
   const message = setupMessage(query.setup);
@@ -49,7 +50,7 @@ export default async function RepositoriesPage({ searchParams }: RepositoriesPag
     state: string;
   }> = [];
 
-  if (isMockModeEnabled()) {
+  if (isMock) {
     const mockRepos = mockDataProvider.getRepositories(getActiveMockScenario());
     installations = [
       {

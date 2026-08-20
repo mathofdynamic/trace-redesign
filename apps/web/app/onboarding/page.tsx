@@ -6,17 +6,18 @@ import { schema } from '@trace/db';
 import { OnboardingForm } from '../components/onboarding-form';
 import { SetupProgress } from '../components/setup-progress';
 import { createRequestDatabase } from '../../lib/request-database';
-import { isMockModeEnabled, mockDataProvider } from '../../lib/mock';
+import { isMockModeEnabled, mockDataProvider, MOCK_PRIMARY_USER } from '../../lib/mock';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Onboarding — TRACE', robots: { index: false, follow: false } };
 
 export default async function OnboardingPage() {
   const rawSession = await getTraceSession(await headers());
-  const session = isMockModeEnabled() ? (rawSession ?? mockDataProvider.getSession()) : rawSession;
+  const isMock = isMockModeEnabled() || rawSession?.user?.id === MOCK_PRIMARY_USER.id;
+  const session = isMock ? (rawSession ?? mockDataProvider.getSession()) : rawSession;
   if (!session?.user) redirect('/sign-in?next=/onboarding');
 
-  if (isMockModeEnabled()) {
+  if (isMock) {
     const summary = mockDataProvider.getDashboardSummary();
     if (summary.workspace.profileComplete) redirect('/app/repositories');
   } else {
