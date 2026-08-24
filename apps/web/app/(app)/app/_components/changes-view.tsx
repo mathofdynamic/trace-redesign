@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { TraceSelect } from './trace-select';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -283,22 +284,20 @@ export function ChangesView({
             <label htmlFor="changes-repo-filter" className="filter-select-label">
               Repository
             </label>
-            <select
+            <TraceSelect
               id="changes-repo-filter"
-              className="trace-select"
               value={repositoryFilter}
-              onChange={(e) => setRepositoryFilter(e.target.value)}
-            >
-              <option value="all">All repositories ({changes.length})</option>
-              {repositories.map((repo) => {
-                const count = changes.filter((c) => c.repositoryId === repo.id).length;
-                return (
-                  <option key={repo.id} value={repo.id}>
-                    {repo.name} ({count})
-                  </option>
-                );
-              })}
-            </select>
+              onChange={setRepositoryFilter}
+              ariaLabel="Filter by repository"
+              options={[
+                { value: 'all', label: `All repositories (${changes.length})` },
+                ...repositories.map((repo) => ({
+                  value: repo.id,
+                  label: repo.name,
+                  count: changes.filter((c) => c.repositoryId === repo.id).length,
+                })),
+              ]}
+            />
           </div>
 
           {/* Relationship / Status Filter */}
@@ -306,23 +305,30 @@ export function ChangesView({
             <label htmlFor="changes-relationship-filter" className="filter-select-label">
               Relationship
             </label>
-            <select
+            <TraceSelect
               id="changes-relationship-filter"
-              className="trace-select"
               value={relationshipFilter}
-              onChange={(e) => setRelationshipFilter(e.target.value)}
-            >
-              <option value="all">All relationships ({changes.length})</option>
-              <option value="conflict-linked">
-                Conflict linked only ({conflictLinkedChangesCount})
-              </option>
-              <option value="with-findings">
-                With findings only ({changesWithFindingsCount})
-              </option>
-              <option value="clean">
-                Clean / Uncontested ({changes.length - conflictLinkedChangesCount})
-              </option>
-            </select>
+              onChange={setRelationshipFilter}
+              ariaLabel="Filter by relationship"
+              options={[
+                { value: 'all', label: `All relationships (${changes.length})` },
+                {
+                  value: 'conflict-linked',
+                  label: 'Conflict linked only',
+                  count: conflictLinkedChangesCount,
+                },
+                {
+                  value: 'with-findings',
+                  label: 'With findings only',
+                  count: changesWithFindingsCount,
+                },
+                {
+                  value: 'clean',
+                  label: 'Clean / Uncontested',
+                  count: changes.length - conflictLinkedChangesCount,
+                },
+              ]}
+            />
           </div>
 
           {/* Affected Area Filter */}
@@ -331,19 +337,19 @@ export function ChangesView({
               <label htmlFor="changes-area-filter" className="filter-select-label">
                 Affected area
               </label>
-              <select
+              <TraceSelect
                 id="changes-area-filter"
-                className="trace-select"
                 value={affectedAreaFilter}
-                onChange={(e) => setAffectedAreaFilter(e.target.value)}
-              >
-                <option value="all">All architectural areas</option>
-                {allAffectedAreas.map((area) => (
-                  <option key={area} value={area}>
-                    {area}
-                  </option>
-                ))}
-              </select>
+                onChange={setAffectedAreaFilter}
+                ariaLabel="Filter by architectural area"
+                options={[
+                  { value: 'all', label: 'All architectural areas' },
+                  ...allAffectedAreas.map((area) => ({
+                    value: area,
+                    label: area,
+                  })),
+                ]}
+              />
             </div>
           ) : null}
 

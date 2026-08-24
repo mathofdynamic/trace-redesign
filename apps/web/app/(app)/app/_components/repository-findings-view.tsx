@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import type { DashboardAttention, DashboardRepository } from '../../../../lib/dashboard';
 import { formatDate, formatRelativeDate, presentFindingDetail } from '../../../../lib/dashboard-state';
 import { FindingDisclosure } from './trace-redesign';
+import { TraceSelect } from './trace-select';
 
 interface RepositoryFindingsViewProps {
   findings: DashboardAttention[];
@@ -100,35 +101,45 @@ export function RepositoryFindingsView({ findings, repository }: RepositoryFindi
             <label htmlFor="findings-severity-filter" className="filter-label">
               Severity
             </label>
-            <select
+            <TraceSelect
               id="findings-severity-filter"
-              className="trace-select filter-select"
               value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value)}
-            >
-              <option value="all">All severities</option>
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-              <option value="info">Info</option>
-            </select>
+              onChange={setSeverityFilter}
+              ariaLabel="Filter by severity"
+              size="sm"
+              options={[
+                { value: 'all', label: 'All severities' },
+                { value: 'critical', label: 'Critical' },
+                { value: 'high', label: 'High' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'low', label: 'Low' },
+                { value: 'info', label: 'Info' },
+              ]}
+            />
           </div>
 
           <div className="filter-group">
             <label htmlFor="findings-classification-filter" className="filter-label">
               Classification
             </label>
-            <select
+            <TraceSelect
               id="findings-classification-filter"
-              className="trace-select filter-select"
               value={classificationFilter}
-              onChange={(e) => setClassificationFilter(e.target.value)}
-            >
-              <option value="all">All classifications</option>
-              <option value="deterministic">Verified evidence (Deterministic)</option>
-              <option value="probabilistic">Probabilistic interpretation</option>
-            </select>
+              onChange={setClassificationFilter}
+              ariaLabel="Filter by classification"
+              size="sm"
+              options={[
+                { value: 'all', label: 'All classifications' },
+                {
+                  value: 'deterministic',
+                  label: 'Verified evidence (Deterministic)',
+                },
+                {
+                  value: 'probabilistic',
+                  label: 'Probabilistic interpretation',
+                },
+              ]}
+            />
           </div>
 
           {affectedAreas.length > 0 ? (
@@ -136,19 +147,20 @@ export function RepositoryFindingsView({ findings, repository }: RepositoryFindi
               <label htmlFor="findings-area-filter" className="filter-label">
                 Area
               </label>
-              <select
+              <TraceSelect
                 id="findings-area-filter"
-                className="trace-select filter-select"
                 value={affectedAreaFilter}
-                onChange={(e) => setAffectedAreaFilter(e.target.value)}
-              >
-                <option value="all">All affected areas</option>
-                {affectedAreas.map((area) => (
-                  <option key={area} value={area}>
-                    {area}
-                  </option>
-                ))}
-              </select>
+                onChange={setAffectedAreaFilter}
+                ariaLabel="Filter by affected area"
+                size="sm"
+                options={[
+                  { value: 'all', label: 'All affected areas' },
+                  ...affectedAreas.map((area) => ({
+                    value: area,
+                    label: area,
+                  })),
+                ]}
+              />
             </div>
           ) : null}
 

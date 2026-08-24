@@ -160,7 +160,7 @@ describe('Phase 3A: Changes, Findings, and Structured Evidence', () => {
   it('provides working evidence lookup helpers', () => {
     const traceFindingEvidence = getEvidenceForFinding('att-trace-001');
     expect(traceFindingEvidence.length).toBeGreaterThan(0);
-    expect(traceFindingEvidence[0].findingId).toBe('att-trace-001');
+    expect(traceFindingEvidence[0]?.findingId).toBe('att-trace-001');
 
     const atlasRepoEvidence = getEvidenceForRepository('repo-atlas-003');
     expect(atlasRepoEvidence.length).toBeGreaterThan(0);

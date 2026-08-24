@@ -14,7 +14,7 @@ import {
 
 describe('Overview (/app) Redesign & State Invariants', () => {
   it('derives correct state, commands, and rail step for the default TRACE repository', () => {
-    const traceRepo = MOCK_REPOSITORIES.find((r) => r.name === 'TRACE') ?? MOCK_REPOSITORIES[0];
+    const traceRepo = MOCK_REPOSITORIES.find((r) => r.name === 'TRACE') ?? MOCK_REPOSITORIES[0]!;
     const traceAttention = MOCK_ATTENTION.filter((a) => !a.repositoryId || a.repositoryId === traceRepo.id);
     const state = deriveTraceProjectState(traceRepo, traceAttention);
 

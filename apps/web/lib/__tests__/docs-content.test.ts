@@ -33,10 +33,10 @@ describe('Public Documentation Page Contracts', () => {
     ]);
 
     const stage1 = localToDashboardStages[0];
-    expect(stage1.boundaryGuarantee).toContain('Raw source stays on local disk');
+    expect(stage1?.boundaryGuarantee).toContain('Raw source stays on local disk');
 
     const stage3 = localToDashboardStages[2];
-    expect(stage3.boundaryGuarantee).toContain('sourceCodeIncluded: false');
+    expect(stage3?.boundaryGuarantee).toContain('sourceCodeIncluded: false');
   });
 
   it('documents local analysis CLI commands without fake terminal animations', () => {

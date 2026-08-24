@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { TraceSelect } from './trace-select';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -376,6 +377,11 @@ export function ConflictsView({
   const totalConflictsCount = conflicts.length;
   const affectedReposCount = new Set(conflicts.map((c) => c.repositoryId)).size;
   const highSeverityCount = pairedConflicts.filter((c) => c.severity === 'high').length;
+  const deterministicConflictsCount = pairedConflicts.filter(
+    (c) =>
+      c.classification.toLowerCase().includes('deterministic') ||
+      c.items.some((i) => (i.classification ?? '').toLowerCase().includes('deterministic')),
+  ).length;
 
   const selectedRepoObject = repositories.find((r) => r.id === repositoryFilter);
 
@@ -401,7 +407,9 @@ export function ConflictsView({
         </div>
         <div className="conflicts-summary-divider" aria-hidden="true" />
         <div className="conflicts-summary-metric">
-          <span className="conflicts-summary-metric__value">100%</span>
+          <span className="conflicts-summary-metric__value">
+            {deterministicConflictsCount}
+          </span>
           <span className="conflicts-summary-metric__label">Deterministic AST</span>
         </div>
         <div className="conflicts-summary-note">
@@ -454,22 +462,20 @@ export function ConflictsView({
             <label htmlFor="conflicts-repo-filter" className="filter-select-label">
               Repository
             </label>
-            <select
+            <TraceSelect
               id="conflicts-repo-filter"
-              className="trace-select"
               value={repositoryFilter}
-              onChange={(e) => setRepositoryFilter(e.target.value)}
-            >
-              <option value="all">All repositories ({conflicts.length})</option>
-              {repositories.map((repo) => {
-                const count = conflicts.filter((c) => c.repositoryId === repo.id).length;
-                return (
-                  <option key={repo.id} value={repo.id}>
-                    {repo.name} ({count})
-                  </option>
-                );
-              })}
-            </select>
+              onChange={setRepositoryFilter}
+              ariaLabel="Filter by repository"
+              options={[
+                { value: 'all', label: `All repositories (${conflicts.length})` },
+                ...repositories.map((repo) => ({
+                  value: repo.id,
+                  label: repo.name,
+                  count: conflicts.filter((c) => c.repositoryId === repo.id).length,
+                })),
+              ]}
+            />
           </div>
 
           {/* Severity / Impact Filter */}
@@ -477,16 +483,21 @@ export function ConflictsView({
             <label htmlFor="conflicts-severity-filter" className="filter-select-label">
               Severity
             </label>
-            <select
+            <TraceSelect
               id="conflicts-severity-filter"
-              className="trace-select"
               value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value)}
-            >
-              <option value="all">All severities ({conflicts.length})</option>
-              <option value="high">High impact only ({highSeverityCount})</option>
-              <option value="medium">Medium impact only ({conflicts.length - highSeverityCount})</option>
-            </select>
+              onChange={setSeverityFilter}
+              ariaLabel="Filter by severity"
+              options={[
+                { value: 'all', label: `All severities (${conflicts.length})` },
+                { value: 'high', label: 'High impact only', count: highSeverityCount },
+                {
+                  value: 'medium',
+                  label: 'Medium impact only',
+                  count: conflicts.length - highSeverityCount,
+                },
+              ]}
+            />
           </div>
 
           {/* Reset Filters */}
@@ -505,37 +516,7 @@ export function ConflictsView({
       {/* Main Conflict Listing / Empty State */}
       {filteredConflicts.length === 0 ? (
         /* Repository Specific or General Empty States */
-        repositoryFilter === 'repo-radar-002' || selectedRepoObject?.id === 'repo-radar-002' ? (
-          <div className="conflicts-empty-panel conflicts-empty-panel--radar" role="status">
-            <div className="conflicts-empty-glyph" aria-hidden="true">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-            </div>
-            <span className="conflicts-empty-status-tag">AST INVARIANTS CLEAN · ANALYSIS COMPLETE</span>
-            <h3>No active engineering conflicts detected.</h3>
-            <p>
-              Radar has passed all deterministic AST collision invariant checks across active branches.
-              All active pull request snapshots in this repository are uncontested and safe for independent evaluation.
-            </p>
-            <div className="conflicts-empty-actions">
-              <Link
-                className="trace-button trace-button--secondary trace-button--small"
-                href="/app/repositories/repo-radar-002"
-              >
-                View Radar repository overview →
-              </Link>
-              <button
-                type="button"
-                className="trace-button trace-button--tertiary trace-button--small"
-                onClick={resetFilters}
-              >
-                View all repositories
-              </button>
-            </div>
-          </div>
-        ) : repositoryFilter === 'repo-nova-005' || selectedRepoObject?.id === 'repo-nova-005' ? (
+        selectedRepoObject && (selectedRepoObject.syncState === 'not_analyzed' || !selectedRepoObject.lastSynchronizedAt || selectedRepoObject.analysis?.status === 'not-started') ? (
           <div className="conflicts-empty-panel conflicts-empty-panel--nova" role="status">
             <div className="conflicts-empty-glyph" aria-hidden="true">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -549,18 +530,48 @@ export function ConflictsView({
             </span>
             <h3>Conflict analysis requires completed TRACE analysis.</h3>
             <p>
-              Nova has not yet completed local TRACE analysis. Run <code>trace analyze</code> locally and sync an approved conflict artifact before cross-branch AST invariants can be evaluated.
+              {selectedRepoObject.name} has not yet completed local TRACE analysis. Run <code>trace analyze</code> locally and sync an approved conflict artifact before cross-branch AST invariants can be evaluated.
             </p>
             <div className="conflicts-empty-actions">
               <Link
                 className="trace-button trace-button--primary trace-button--small"
-                href="/app/repositories/repo-nova-005"
+                href={`/app/repositories/${selectedRepoObject.id}`}
               >
-                Configure Nova repository →
+                Configure {selectedRepoObject.name} repository →
               </Link>
               <button
                 type="button"
                 className="trace-button trace-button--secondary trace-button--small"
+                onClick={resetFilters}
+              >
+                View all repositories
+              </button>
+            </div>
+          </div>
+        ) : selectedRepoObject && selectedRepoObject.lastSynchronizedAt ? (
+          <div className="conflicts-empty-panel conflicts-empty-panel--radar" role="status">
+            <div className="conflicts-empty-glyph" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+            </div>
+            <span className="conflicts-empty-status-tag">AST INVARIANTS CLEAN · ANALYSIS COMPLETE</span>
+            <h3>No active engineering conflicts detected.</h3>
+            <p>
+              {selectedRepoObject.name} has passed all deterministic AST collision invariant checks across active branches.
+              All active pull request snapshots in this repository are uncontested and safe for independent evaluation.
+            </p>
+            <div className="conflicts-empty-actions">
+              <Link
+                className="trace-button trace-button--secondary trace-button--small"
+                href={`/app/repositories/${selectedRepoObject.id}`}
+              >
+                View {selectedRepoObject.name} repository overview →
+              </Link>
+              <button
+                type="button"
+                className="trace-button trace-button--tertiary trace-button--small"
                 onClick={resetFilters}
               >
                 View all repositories
@@ -620,17 +631,6 @@ interface PairedConflictCardProps {
 
 function PairedConflictCard({ model, onInspect }: PairedConflictCardProps) {
   const { conflict, sideA, sideB, sharedBoundary, severity, classification, items } = model;
-  const [copiedCmd, setCopiedCmd] = useState(false);
-
-  const handleCopyCli = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const cmd = `trace conflict inspect ${conflict.id}`;
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(cmd);
-      setCopiedCmd(true);
-      setTimeout(() => setCopiedCmd(false), 2000);
-    }
-  };
 
   return (
     <article className="conflict-card" id={`conflict-card-${conflict.id}`}>
@@ -841,19 +841,9 @@ function PairedConflictCard({ model, onInspect }: PairedConflictCardProps) {
 
       {/* Card Footer Actions */}
       <div className="conflict-card__footer">
-        <div className="conflict-card__cli-group">
-          <button
-            type="button"
-            className="conflict-cli-button"
-            onClick={handleCopyCli}
-            title="Click to copy local verification CLI command"
-          >
-            <span className="cli-prompt">$</span>
-            <code>trace conflict inspect {conflict.id}</code>
-            <span className="cli-copy-indicator">
-              {copiedCmd ? 'Copied ✓' : 'Copy'}
-            </span>
-          </button>
+        <div className="conflict-card__provenance-tag">
+          <span className="provenance-tag-glyph" aria-hidden="true">▪</span>
+          <span>Deterministic AST collision · Shared boundary: <code>{sharedBoundary.target}</code></span>
         </div>
 
         <div className="conflict-card__actions">
@@ -1028,12 +1018,12 @@ function ConflictDetailDrawer({
 
         {/* Local Verification Command */}
         <section className="conflict-drawer__section">
-          <span className="eyebrow">Local reproduction command</span>
+          <span className="eyebrow">Local reproduction guidance</span>
           <div className="conflict-drawer__cli-box">
-            <code>trace conflict inspect {conflict.id}</code>
+            <code>trace analyze</code>
           </div>
           <p className="conflict-drawer__cli-note">
-            Execute in your local shell to run the deterministic collision solver against local Git trees.
+            Run deterministic change analysis in your local repository workspace to verify AST collision boundaries.
           </p>
         </section>
 

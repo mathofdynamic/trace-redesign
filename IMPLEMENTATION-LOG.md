@@ -1,6 +1,114 @@
 # TRACE Implementation Log
 
-### Phase 25: Final Visual Consistency, Palette Audit, QA
+### Phase 32: Final Hardening, Mock-Boundary, CLI Truth & QA Audit
+
+- Status: Phase 32 completed, verified, and audited. Final technical truth, strict palette enforcement, mock boundary normalization, CLI truth audit, and end-to-end regression QA completed across all TRACE surfaces.
+- Date: 2026-08-24
+- Scope Executed:
+  - Palette Hardening & Color Compliance:
+    - Verified strict compliance with the TRACE visible product palette: black, white, neutral gray, and TRACE blue (`#0A84FF`) only.
+    - Zero forbidden colors across all surfaces, CSS variables, icons, badges, tokens, and drawers (no red, green, amber/yellow/orange, teal, purple, or brown).
+    - Verified via automated AST and CSS scan in `palette-hardening.test.ts` and `phase32-qa-hardening.test.ts`.
+  - Mock Boundary Normalization:
+    - Removed hardcoded mock repository IDs (`repo-nova-005`, `repo-radar-002`, `repo-trace-001`, `repo-atlas-003`, `repo-orbit-004`) from reusable UI components (`conflicts-view.tsx`, `decisions-view.tsx`, `rules-view.tsx`).
+    - Standardized empty states and conditional renderings to compute dynamically against `selectedRepoObj` properties (`syncState`, `analysis.status`, `lastSynchronizedAt`, dynamic record filtering) rather than hardcoded mock identities.
+  - Product-Claim & Technical Truth Audit:
+    - Audited full codebase for unbacked or fabricated claims (0 instances of arbitrary 10x metrics, fake confidence ratings, or unsupported enterprise commitments).
+    - Replaced all heuristic confidence scores with deterministic AST evidence counts and explicit invariant classifications.
+  - CLI Truth Audit:
+    - Verified that all displayed `trace ...` commands in UI components match authentic subcommands in `@trace/cli`.
+    - Updated inspection commands in decisions and rules views to canonical syntax (`trace inspect .trace/decisions/{id}.json`, `trace rules explain {id}`).
+    - Enhanced CLI parser in `packages/trace-cli/src/cli.ts` to natively support `trace rules explain <ruleId>` and `trace rules diff`.
+  - Quality Gate & Frozen Universe Verification:
+    - Verified exact frozen universe counts across all 9 entity collections: 5 repositories, 9 changes, 31 findings, 12 reports, 4 conflicts, 9 decisions, 8 rules, 35 activity events, 4 authorized computers (3 active, 1 revoked).
+    - Verified exact repository product-truth states: TRACE (Needs refresh), Radar (Current), Atlas (Current + conflicts), Orbit (Sync attention), Nova (Connected / not analyzed).
+    - ESLint verification clean with zero warnings or errors (`npm run lint`).
+    - TypeScript compilation clean across all 15 packages in monorepo with zero type errors (`npm run typecheck`).
+    - Full Vitest suite passing with 311 tests passing across 54 test files (`turbo run test:unit`).
+    - Production Next.js build succeeded with 36 routes generated (`compile_applet`).
+
+### Phase 31: Decisions, Rules, Activity Polish
+
+- Status: Phase 31 completed, verified, and audited. Polished governance and history surfaces across Architectural Decisions, Governance Rules, and Workspace Activity without changing frozen counts or introducing unauthorized capabilities.
+- Date: 2026-08-24
+- Scope Executed:
+  - Decisions Surface Polish:
+    - Derived summary active repository count and names dynamically from actual decision records.
+    - Streamlined eyebrow badge row by removing redundant `ADR` tag pill and establishing a crisp title and summary hierarchy.
+    - Enhanced the "Inspect" header affordance into a discoverable secondary pill button with smooth chevron animation.
+    - Preserved zero-source and no-surveillance engineering truth with monochrome SVG lock icons and quiet footer notes.
+  - Governance Rules Surface Polish:
+    - Reduced micro-label overload by eliminating redundant `GOVERNANCE` tags and emphasizing the primary rule invariant and synopsis.
+    - Kept severity and AST constraint scopes secondary but readable within neutral color styling (strictly no red/yellow/green).
+    - Unified the "Inspect" affordance button with the shared TRACE secondary button pattern.
+    - Highlighted factual deterministic evaluation classification without developer scoring metrics.
+  - Workspace Activity Surface Polish:
+    - Reordered timeline event card hierarchy: (1) Event Title primary with aligned timestamp, (2) Repository and category badge row secondary, (3) Detailed event explanation tertiary, and (4) Referenced technical tokens and commits quaternary.
+    - Replaced all colored emojis (`📄`, `⚖️`, `🛡️`, `⑂`, `🔒`) across activity items and inspection drawers with crisp monochrome inline SVGs.
+    - Corrected timeline date semantics by removing hardcoded "Today" conditions on frozen demo dates in favor of real date semantics and explicit date formatting.
+  - Visual & Accessibility Standards:
+    - Maintained dark-first palette: black canvas, neutral grays, white, and TRACE blue only.
+    - Cleaned up privacy footers across all surfaces to be quiet, subtle, and link to documentation without colored emojis.
+- Verification & Quality:
+  - ESLint verification clean with zero errors across the repository (`npm run lint`).
+  - Vitest unit test suites passing cleanly across all workspaces (`turbo run test:unit`, 268 tests passed).
+  - Turborepo / Next.js production build succeeded (`compile_applet`).
+
+### Phase 30: Intelligence Surfaces Polish (Changes, Conflicts, Reports, Report Detail)
+
+- Status: Phase 30 completed, verified, and audited. Polished TRACE intelligence surfaces across Changes, Conflicts, Reports Library, and Report Detail without rebuilding existing information architectures or introducing Tailwind/color violations.
+- Date: 2026-08-24
+- Scope Executed:
+  - Changes Surface Polish:
+    - Maintained compact summary metrics strip and clean repository grouping hierarchy.
+    - Ensured pull request titles dominate with clean typographic weighting while avoiding excessive pill clutter.
+    - Verified concise metadata tokens (PR badge, author, branch, SHA, areas, and findings count).
+    - Aligned secondary "Inspect details" action and approved primary TRACE blue "Open on GitHub ↗" button.
+  - Conflicts Surface Polish:
+    - Replaced hardcoded heuristic scores with factually derived deterministic conflict counts (`deterministicConflictsCount`).
+    - Increased body readability, line-height, and typographic breathing room across paired comparison cards and assumptions.
+    - Ensured shared boundary remains the dominant visual anchor with high-contrast framing and clear resolution guidance.
+    - Cleaned up paired conflict card footers to display a clean AST invariant provenance note and clear "Inspect coordination plan" CTA.
+    - Audited CLI reproduction guidance to remove unsupported CLI commands and reference canonical local commands (`trace analyze`).
+  - Reports Library Polish:
+    - Simplified report rows and cards into primary (report type, repository, title, summary) and secondary (freshness, commit, PR/findings counts, sync time) hierarchy.
+    - Streamlined card actions to at most two prominent actions: "Quick inspect" (secondary) and "Read report →" (primary).
+    - Refined summary intelligence strip to derive all counts dynamically without slash clutter.
+  - Report Detail Polish:
+    - Refined document body reading typography, leading, and contrast for both Markdown report content and structural finding cards.
+    - Applied sticky positioning to the right-hand metadata rail (`.report-metadata-rail`) on desktop viewports (`@media (min-width: 1081px)`).
+    - Updated report freshness notice and metadata rail to reflect the canonical 3-step local workflow: `trace analyze`, `trace sync --dry-run`, and `trace sync` with one-click copy.
+    - Ensured all document links adhere strictly to the TRACE blue and neutral palette.
+  - Strict Color & Privacy Compliance:
+    - Preserved dark-first palette: black canvas, neutral dark grays, crisp white, and TRACE blue only.
+    - Zero red, amber, yellow, green, purple, or teal introduced.
+    - Maintained all privacy and provenance guarantees: zero source code upload, zero developer surveillance metrics.
+- Verification & Quality:
+  - Comprehensive unit test suite in `apps/web/lib/__tests__/visual-polish.test.ts` passing (9 tests passed).
+  - Turborepo / Next.js production build succeeded (`compile_applet`).
+
+### Phase 29: Core Page Visual Polish
+
+- Status: Phase 27 completed, verified, and audited. Repaired the three P0 rendering failures identified in the screenshot audit across Repositories, Changes, and Settings without introducing Tailwind dependencies or changing the frozen product truth.
+- Date: 2026-08-24
+- Scope Executed:
+  - Repositories Surface Rendering Fix:
+    - Fixed the runaway SVG scaling defect in `apps/web/app/components/repository-selector.tsx` and `ProjectStatusGlyph` in `apps/web/app/(app)/app/_components/trace-redesign.tsx` by adding explicit `width="14" height="14"` (and `width="16" height="16"`) attributes to all inline SVGs and setting tight container constraints (`.project-status-glyph`, `.search-icon`, `.status-glyph`).
+    - Verified all repository cards render with crisp geometry, proper padding, and accurate status glyphs.
+  - Changes Surface Architecture & CSS Mapping:
+    - Mapped `apps/web/app/(app)/app/_components/changes-view.tsx` completely to the semantic TRACE CSS architecture in `apps/web/app/globals.css`.
+    - Implemented high-fidelity styling for the top summary intelligence metric bar, live search and multi-select filter toolbar, grouping view modes (by-repository vs. flat list), change cards with PR badges, state indicators, conflict coordination callouts, AST findings badges, and the full inspection drawer (`ChangeDetailDrawer`).
+    - Fixed link resets (`a:link`, `a:visited`) so visited links inherit proper TRACE theme colors rather than default browser purple.
+  - Settings Surface Refactor:
+    - Replaced all unsupported Tailwind utility classes in `apps/web/app/(app)/app/_components/settings-view.tsx` with semantic TRACE CSS classes (`.settings-surface`, `.settings-section`, `.settings-facts-grid`, `.settings-device-list`, `.settings-privacy-grid`, `.settings-cli-grid`).
+    - Fixed the runaway shield SVG icon in the header by adding explicit `width="12" height="12"` dimensions.
+    - Verified rename and revoke modals, device authorization lists, trust boundary comparative matrix, and local CLI workflow steps render with dark-first TRACE aesthetic.
+- Verification & Quality:
+  - Vitest unit tests passing cleanly across all 39 test suites (252 tests passed, 6 skipped).
+  - ESLint verification clean with zero errors or warnings.
+  - Full production build (`turbo run build` / `next build`) compiled successfully.
+
+
 
 - Status: Phase 25 completed, verified, and audited. Conducted an exhaustive end-to-end visual, architectural, and quality audit across all public and authenticated routes.
 - Date: 2026-08-23
@@ -1284,6 +1392,68 @@
 - `npm run --workspace @trace/web test:unit`: Passed (235 tests across 36 test files).
 - `npm run lint`: Clean, 0 errors.
 - `npm run build`: Clean production build across all 15 Turbo monorepo packages.
+
+## [2026-08-24] Phase 28 — Shared Controls, Filters, Search, and Focus Unification
+
+### Changes Implemented
+- **Universal TraceSelect Component**:
+  - Implemented accessible, dark-first custom select listbox (`TraceSelect`) in `apps/web/app/(app)/app/_components/trace-select.tsx`.
+  - Replaced native browser dropdown appearance across all primary surfaces:
+    - **Conflicts**: Repository scope and Severity filter dropdowns.
+    - **Changes**: Repository, Relationship, and Affected Area filter dropdowns.
+    - **Reports**: Repository, Report Artifact Type, and Freshness filter dropdowns.
+    - **Decisions**: Chronology & Repository sort dropdown.
+    - **Rules**: Severity filter and Sort order dropdowns.
+    - **Activity**: Category filter and Chronology sort dropdowns.
+    - **Repository Findings**: Severity, Classification, and Affected Area dropdowns.
+  - Fully accessible ARIA design (`role="combobox"`, `role="listbox"`, `role="option"`, `aria-expanded`, `aria-activedescendant`).
+  - Full keyboard navigation: ArrowUp/Down for option navigation, Enter/Space for selection, Escape/Tab for dismissal, Home/End for bounding navigation.
+  - Click-outside and blur listeners with auto-closing state.
+- **Search Field Primitive Normalization**:
+  - Standardized search inputs across Repositories, Reports, Changes, Conflicts, Decisions, Rules, and Activity.
+  - Uniform 36–38px height desktop, 14–16px search glyphs, dark container surface (`--trace-surface-1` / `--trace-surface-2`), placeholder styling, clear button triggers, and restrained 1px blue focus ring (`#0066ff`).
+- **Segmented and Toggle Controls**:
+  - Normalized grouped/flat toggle on Changes, report tab buttons, and repository filter pills.
+- **Link Color Normalization**:
+  - Universal link reset preventing browser-default purple visited links across all surfaces.
+- **Monochrome SVG Icon Audit**:
+  - Replaced colored emoji across footers, notices, and toolbars (e.g. lock `🔒`, info `ℹ`, check `✓`) with crisp monochrome SVG vector glyphs using `currentColor`.
+- **Responsive & Accessibility Support**:
+  - Added reduced-motion overrides (`prefers-reduced-motion: reduce`) for controls.
+
+### Verification
+- `npm run build`: Production build verified clean across all packages.
+- Unit tests added in `apps/web/lib/__tests__/shared-controls.test.ts`.
+
+## [2026-08-24] Phase 29 — Core Page Visual Polish
+
+### Changes Implemented
+- **App Shell & Sidebar Polish**:
+  - Refined navigation contrast (`#b8bac7` inactive, `#ffffff` active) with crisp typographic hierarchy.
+  - Enhanced active route indicator with 2px high-contrast `var(--trace-blue-bright)` line and subtle dark neutral surface (`var(--trace-surface-2)`).
+  - Polished account identity block with cohesive border dividers, balanced metadata typography, and clear team role display.
+- **Repository Switcher Micro-Polish**:
+  - Implemented smart semantic grouping ("With TRACE intelligence" vs. "Connected repositories").
+  - Added dedicated search wrapper with search icon and clear button.
+  - Added selected checkmark indicator for active project context.
+- **Overview Page Refinements**:
+  - **Unified Intelligence Metrics Strip**: Combined individual metric cards into a single cohesive, high-density command strip with internal hairline dividers and responsive 4-column layout.
+  - **Attention Section Refinements**: Enhanced severity badge distinction with distinct border weights and high-contrast styling (`critical`/`high` emphasized with solid neutral borders, `medium` with subtle neutral borders, `low`/`info` with restrained blue accents).
+  - Strengthened title and detail typographic hierarchy with generous line-height and max-width constraints.
+- **Settings & Privacy Boundaries**:
+  - Structured definition lists and factual pairs replacing over-carding.
+  - Neutral-destructive styling on device revoke actions.
+  - Monochrome SVG vector glyphs on trust boundaries (synchronized vs. never-sent matrix).
+- **Universal Palette Compliance**:
+  - Adhered strictly to TRACE dark-first palette: black, white, neutral gray, and single saturated TRACE blue.
+  - Zero traffic-light colors (no green checkmarks, red error tags, or amber badges).
+
+### Verification
+- `apps/web/lib/__tests__/visual-polish.test.ts`: Passed (5 unit tests).
+- Monorepo unit test suite: 264 passed across 41 test files.
+- Production build clean.
+
+
 
 
 

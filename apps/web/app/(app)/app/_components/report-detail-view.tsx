@@ -173,12 +173,18 @@ export function ReportDetailView({
                 <div className="freshness-notice-actions">
                   <div className="freshness-cli-commands">
                     <code>trace analyze</code>
+                    <code>trace sync --dry-run</code>
                     <code>trace sync</code>
                   </div>
                   <button
                     type="button"
                     className="trace-button trace-button--ghost trace-button--sm"
-                    onClick={() => copyToClipboard('trace analyze && trace sync', 'refresh-cmd')}
+                    onClick={() =>
+                      copyToClipboard(
+                        'trace analyze && trace sync --dry-run && trace sync',
+                        'refresh-cmd',
+                      )
+                    }
                     aria-label="Copy refresh commands"
                   >
                     {copiedText === 'refresh-cmd' ? 'Copied' : 'Copy refresh commands'}
@@ -527,13 +533,18 @@ export function ReportDetailView({
             </p>
             <div className="rail-cli-stack">
               <div className="rail-cli-box">
-                <code>trace report view {report.id}</code>
+                <code>{report.path ? `trace inspect ${report.path}` : `trace report daily`}</code>
                 <button
                   type="button"
                   className="rail-cli-copy-btn"
-                  onClick={() => copyToClipboard(`trace report view ${report.id}`, 'cli-view')}
-                  title="Copy view command"
-                  aria-label="Copy CLI view command"
+                  onClick={() =>
+                    copyToClipboard(
+                      report.path ? `trace inspect ${report.path}` : `trace report daily`,
+                      'cli-view',
+                    )
+                  }
+                  title="Copy inspect command"
+                  aria-label="Copy CLI inspect command"
                 >
                   {copiedText === 'cli-view' ? '✓' : 'Copy'}
                 </button>
@@ -541,13 +552,18 @@ export function ReportDetailView({
 
               {isNeedsRefresh ? (
                 <div className="rail-cli-box">
-                  <code>trace analyze && trace sync</code>
+                  <code>trace analyze && trace sync --dry-run && trace sync</code>
                   <button
                     type="button"
                     className="rail-cli-copy-btn"
-                    onClick={() => copyToClipboard('trace analyze && trace sync', 'cli-refresh')}
-                    title="Copy analyze & sync command"
-                    aria-label="Copy CLI analyze command"
+                    onClick={() =>
+                      copyToClipboard(
+                        'trace analyze && trace sync --dry-run && trace sync',
+                        'cli-refresh',
+                      )
+                    }
+                    title="Copy analyze & sync workflow"
+                    aria-label="Copy CLI analyze and sync command"
                   >
                     {copiedText === 'cli-refresh' ? '✓' : 'Copy'}
                   </button>

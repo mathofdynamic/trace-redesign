@@ -3,7 +3,9 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 describe('Phase 23 — Mobile & Responsive Pass Verification', () => {
-  const cssPath = path.resolve(process.cwd(), 'app/globals.css');
+  const cssPath = fs.existsSync(path.resolve(process.cwd(), 'app/globals.css'))
+    ? path.resolve(process.cwd(), 'app/globals.css')
+    : path.resolve(process.cwd(), 'apps/web/app/globals.css');
   const cssContent = fs.readFileSync(cssPath, 'utf8');
 
   it('includes mobile typography clamp constraints for hero headlines', () => {

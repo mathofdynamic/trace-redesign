@@ -82,7 +82,7 @@ export const capabilities: ProductCapability[] = [
       badge: 'Deterministic',
       body: 'Verified rule: Deterministic Memory Bounds Policy on ring-buffer stream.',
       evidence: 'stream.rs:48 · AST bounded allocation verified · 0 secret leaks',
-      footer: 'Confidence: High · Recommendation: Ready for review',
+      footer: 'Verification: Deterministic AST · Status: Ready for review',
     },
   },
   {

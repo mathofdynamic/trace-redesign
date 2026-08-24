@@ -32,7 +32,7 @@ export function ProjectStatusGlyph({
         aria-hidden="true"
         title="Current with GitHub"
       >
-        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M2.5 7.5 5.5 10.5 11.5 3.5" />
         </svg>
       </span>
@@ -45,7 +45,7 @@ export function ProjectStatusGlyph({
         aria-hidden="true"
         title="Needs refresh"
       >
-        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M2 7a5 5 0 1 0 1.5-3.5M2 2.5v3.2h3.2" />
         </svg>
       </span>
@@ -58,7 +58,7 @@ export function ProjectStatusGlyph({
         aria-hidden="true"
         title="Attention needed"
       >
-        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M7 2.2 12.8 12H1.2L7 2.2zM7 5.8v3.2M7 10.2v.2" />
         </svg>
       </span>
@@ -71,7 +71,7 @@ export function ProjectStatusGlyph({
         aria-hidden="true"
         title="Not analyzed"
       >
-        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
           <circle cx="7" cy="7" r="4.5" strokeDasharray="2.2 2.2" />
         </svg>
       </span>
@@ -84,7 +84,7 @@ export function ProjectStatusGlyph({
         aria-hidden="true"
         title="Analyzing"
       >
-        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
           <circle cx="7" cy="7" r="4.5" opacity="0.3" />
           <path d="M7 2.5a4.5 4.5 0 0 1 4.5 4.5" />
         </svg>
@@ -98,7 +98,7 @@ export function ProjectStatusGlyph({
         aria-hidden="true"
         title="Ready to sync"
       >
-        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M7 11V3.5M3.5 6.8 7 3.5l3.5 3.3" />
         </svg>
       </span>
@@ -109,7 +109,7 @@ export function ProjectStatusGlyph({
       className={`project-status-glyph project-status-glyph--neutral ${className}`}
       aria-hidden="true"
     >
-      <svg viewBox="0 0 14 14" fill="currentColor">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
         <circle cx="7" cy="7" r="2.5" />
       </svg>
     </span>
@@ -332,6 +332,16 @@ export function RepositorySwitcher({
     );
   }, [query, repositories]);
 
+  const withIntelligence = useMemo(
+    () => filtered.filter((repository) => repository.latestSync || repository.analysis),
+    [filtered],
+  );
+
+  const connectedOnly = useMemo(
+    () => filtered.filter((repository) => !repository.latestSync && !repository.analysis),
+    [filtered],
+  );
+
   useEffect(() => {
     if (open) {
       searchRef.current?.focus();
@@ -412,53 +422,70 @@ export function RepositorySwitcher({
                 ×
               </button>
             </div>
-            <input
-              ref={searchRef}
-              className="trace-input repository-switcher__search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search repositories…"
-              aria-label="Search repositories"
-            />
+            <div className="repository-switcher__search-wrapper">
+              <span className="repository-switcher__search-icon" aria-hidden="true">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="7" cy="7" r="5" />
+                  <path d="m11 11 3.5 3.5" />
+                </svg>
+              </span>
+              <input
+                ref={searchRef}
+                className="repository-switcher__search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search projects by name…"
+                aria-label="Search repositories"
+              />
+              {query ? (
+                <button
+                  type="button"
+                  className="repository-switcher__search-clear"
+                  onClick={() => setQuery('')}
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              ) : null}
+            </div>
             <div className="repository-switcher__body">
-              <div className="repository-switcher__group">
-                <span className="repository-switcher__label">With TRACE intelligence</span>
-                {filtered
-                  .filter((repository) => repository.latestSync || repository.analysis)
-                  .map((repository) => (
-                    <RepositorySwitcherRow
-                      key={repository.id}
-                      repository={repository}
-                      attention={attention}
-                      selected={repository.id === current?.id}
-                      onSelect={() => select(repository)}
-                    />
-                  ))}
-                {!filtered.some((repository) => repository.latestSync || repository.analysis) ? (
-                  <p className="repository-switcher__empty">
-                    No analyzed repositories match this search.
-                  </p>
-                ) : null}
-              </div>
-              <div className="repository-switcher__group">
-                <span className="repository-switcher__label">Connected</span>
-                {filtered
-                  .filter((repository) => !repository.latestSync && !repository.analysis)
-                  .map((repository) => (
-                    <RepositorySwitcherRow
-                      key={repository.id}
-                      repository={repository}
-                      attention={attention}
-                      selected={repository.id === current?.id}
-                      onSelect={() => select(repository)}
-                    />
-                  ))}
-                {!filtered.some((repository) => !repository.latestSync && !repository.analysis) ? (
-                  <p className="repository-switcher__empty">
-                    No other connected repositories match.
-                  </p>
-                ) : null}
-              </div>
+              {filtered.length === 0 ? (
+                <p className="repository-switcher__empty">
+                  No repositories found matching &ldquo;{query}&rdquo;.
+                </p>
+              ) : (
+                <>
+                  {withIntelligence.length > 0 ? (
+                    <div className="repository-switcher__group">
+                      <span className="repository-switcher__label">With TRACE intelligence</span>
+                      {withIntelligence.map((repository) => (
+                        <RepositorySwitcherRow
+                          key={repository.id}
+                          repository={repository}
+                          attention={attention}
+                          selected={repository.id === current?.id}
+                          onSelect={() => select(repository)}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {connectedOnly.length > 0 ? (
+                    <div className="repository-switcher__group">
+                      <span className="repository-switcher__label">Connected</span>
+                      {connectedOnly.map((repository) => (
+                        <RepositorySwitcherRow
+                          key={repository.id}
+                          repository={repository}
+                          attention={attention}
+                          selected={repository.id === current?.id}
+                          onSelect={() => select(repository)}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                </>
+              )}
             </div>
             <Link
               className="repository-switcher__manage"
@@ -504,9 +531,13 @@ function RepositorySwitcherRow({
             : ''}
         </small>
       </span>
-      <span className="repository-switcher__row-count">
-        {repository.latestSync ? 'Open' : 'Setup'}
-      </span>
+      {selected ? (
+        <span className="repository-switcher__selected-indicator" aria-label="Current project">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M2.5 7.5 5.5 10.5 11.5 3.5" />
+          </svg>
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -726,7 +757,21 @@ export function FindingDisclosure({
               ) : null}
 
               <div className="finding-privacy-badge">
-                <span className="privacy-icon" aria-hidden="true">🔒</span>
+                <span className="privacy-icon" aria-hidden="true">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="2.5" y="5.5" width="9" height="7" rx="1.5" />
+                    <path d="M4.5 5.5V3.5a2.5 2.5 0 0 1 5 0v2.5" />
+                  </svg>
+                </span>
                 <span>Zero source code exposure: TRACE analyzes AST locally and never uploads code snippets or files.</span>
               </div>
             </section>

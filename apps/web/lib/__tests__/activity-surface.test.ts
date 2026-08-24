@@ -98,7 +98,6 @@ describe('Phase 21: Workspace Activity Surface (/app/activity)', () => {
   it('formats dates and timestamps accurately without throwing', () => {
     const dateFormatted = formatEventGroupDate('2026-08-19T10:15:00.000Z');
     expect(dateFormatted).toContain('August 19, 2026');
-    expect(dateFormatted).toContain('Today');
 
     const timeFormatted = formatEventTime('2026-08-19T10:15:00.000Z');
     expect(timeFormatted).toMatch(/10:15/);

@@ -3,7 +3,9 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 describe('Phase 24: Motion, Interaction Feel & Accessibility Verification', () => {
-  const cssPath = path.resolve(process.cwd(), 'app/globals.css');
+  const cssPath = fs.existsSync(path.resolve(process.cwd(), 'app/globals.css'))
+    ? path.resolve(process.cwd(), 'app/globals.css')
+    : path.resolve(process.cwd(), 'apps/web/app/globals.css');
   const cssContent = fs.readFileSync(cssPath, 'utf8');
 
   it('verifies tactile press feedback and scale compression on active states', () => {

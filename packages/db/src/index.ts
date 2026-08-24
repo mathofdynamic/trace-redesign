@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Client, Pool } from 'pg';
 import { parseServerEnv } from '@trace/env';
-import * as schema from './schema.js';
+import * as schema from './schema';
 
 export { schema };
 export type TraceDatabase = ReturnType<typeof createDatabase>;

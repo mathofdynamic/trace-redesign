@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { TraceSelect } from './trace-select';
 import type { DashboardActivity, DashboardRepository } from '../../../../lib/dashboard';
 
 export type ActivityViewProps = {
@@ -71,13 +72,14 @@ export function formatEventTime(isoDate: string): string {
 
 export function formatEventGroupDate(isoDate: string): string {
   const date = new Date(isoDate);
-  const is2026Aug19 = isoDate.startsWith('2026-08-19');
+  if (Number.isNaN(date.getTime())) return isoDate;
   const dateStr = date.toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
   });
-  if (is2026Aug19) {
+  const now = new Date();
+  if (date.toDateString() === now.toDateString()) {
     return `Today · ${dateStr}`;
   }
   return dateStr;
@@ -439,21 +441,51 @@ export function ActivityView({
               <label htmlFor={categorySelectId} className="sr-only">
                 Filter by event category
               </label>
-              <select
+              <TraceSelect
                 id={categorySelectId}
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="activity-filter-select"
-              >
-                <option value="all">All Categories ({activities.length})</option>
-                <option value="report">Reports &amp; Briefs ({categoryCounts.report})</option>
-                <option value="decision">Decisions ({categoryCounts.decision})</option>
-                <option value="rule">Rules &amp; Governance ({categoryCounts.rule})</option>
-                <option value="conflict">Conflicts &amp; Incompatibilities ({categoryCounts.conflict})</option>
-                <option value="analysis">Analysis Runs ({categoryCounts.analysis})</option>
-                <option value="sync">Sync Operations ({categoryCounts.sync})</option>
-                <option value="system">Setup &amp; Devices ({categoryCounts.system})</option>
-              </select>
+                onChange={setSelectedCategory}
+                ariaLabel="Filter by event category"
+                size="sm"
+                options={[
+                  { value: 'all', label: `All Categories (${activities.length})` },
+                  {
+                    value: 'report',
+                    label: 'Reports & Briefs',
+                    count: categoryCounts.report,
+                  },
+                  {
+                    value: 'decision',
+                    label: 'Decisions',
+                    count: categoryCounts.decision,
+                  },
+                  {
+                    value: 'rule',
+                    label: 'Rules & Governance',
+                    count: categoryCounts.rule,
+                  },
+                  {
+                    value: 'conflict',
+                    label: 'Conflicts & Incompatibilities',
+                    count: categoryCounts.conflict,
+                  },
+                  {
+                    value: 'analysis',
+                    label: 'Analysis Runs',
+                    count: categoryCounts.analysis,
+                  },
+                  {
+                    value: 'sync',
+                    label: 'Sync Operations',
+                    count: categoryCounts.sync,
+                  },
+                  {
+                    value: 'system',
+                    label: 'Setup & Devices',
+                    count: categoryCounts.system,
+                  },
+                ]}
+              />
             </div>
 
             {/* Sort Order Dropdown */}
@@ -461,15 +493,17 @@ export function ActivityView({
               <label htmlFor={sortSelectId} className="sr-only">
                 Sort chronology
               </label>
-              <select
+              <TraceSelect
                 id={sortSelectId}
                 value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
-                className="activity-filter-select"
-              >
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-              </select>
+                onChange={(val) => setSortOrder(val as 'newest' | 'oldest')}
+                ariaLabel="Sort chronology"
+                size="sm"
+                options={[
+                  { value: 'newest', label: 'Newest first' },
+                  { value: 'oldest', label: 'Oldest first' },
+                ]}
+              />
             </div>
           </div>
         </div>
@@ -549,26 +583,27 @@ export function ActivityView({
 
                       {/* Content Card */}
                       <div className="timeline-item-card">
+                        {/* 1. Event Title 1st (with time right-aligned) */}
                         <div className="item-card-top">
-                          <div className="item-badge-row">
-                            <span className="item-repo-tag">{repoShortName}</span>
-                            <span className={`item-category-tag item-category-tag--${category}`}>
-                              {category.toUpperCase()}
-                            </span>
-                            <span className="item-kind-label">{act.kind}</span>
-                          </div>
+                          <h3 className="item-title">{act.title}</h3>
                           <time dateTime={act.occurredAt} className="item-time-tag">
                             {timeFormatted}
                           </time>
                         </div>
 
-                        {/* Title */}
-                        <h3 className="item-title">{act.title}</h3>
+                        {/* 2. Repository & Type 2nd */}
+                        <div className="item-badge-row">
+                          <span className="item-repo-tag">{repoShortName}</span>
+                          <span className={`item-category-tag item-category-tag--${category}`}>
+                            {category.toUpperCase()}
+                          </span>
+                          <span className="item-kind-label">{act.kind}</span>
+                        </div>
 
-                        {/* Detail text */}
+                        {/* 3. Detail text 3rd */}
                         <p className="item-detail">{act.detail}</p>
 
-                        {/* Extracted Entity Link Tokens */}
+                        {/* 4. Technical token/commit 4th */}
                         {tokens.length > 0 && (
                           <div className="item-tokens-row" aria-label="Referenced artifacts and entities">
                             {tokens.map((token, tIdx) => {
@@ -580,7 +615,10 @@ export function ActivityView({
                                     className="entity-token-pill entity-token-pill--report"
                                     title={`View linked report: ${token.id}`}
                                   >
-                                    <span className="token-icon" aria-hidden="true">📄</span>
+                                    <svg className="token-svg-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                      <path d="M9 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6L9 2z" />
+                                      <polyline points="9 2 9 6 13 6" />
+                                    </svg>
                                     <code>{token.label}</code>
                                   </Link>
                                 );
@@ -593,7 +631,10 @@ export function ActivityView({
                                     className="entity-token-pill entity-token-pill--decision"
                                     title={`View linked decision: ${token.id}`}
                                   >
-                                    <span className="token-icon" aria-hidden="true">⚖️</span>
+                                    <svg className="token-svg-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                      <circle cx="8" cy="8" r="6" />
+                                      <path d="M8 5v3l2 2" />
+                                    </svg>
                                     <code>{token.label}</code>
                                   </Link>
                                 );
@@ -606,7 +647,9 @@ export function ActivityView({
                                     className="entity-token-pill entity-token-pill--rule"
                                     title={`View linked rule: ${token.id}`}
                                   >
-                                    <span className="token-icon" aria-hidden="true">🛡️</span>
+                                    <svg className="token-svg-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                      <path d="M8 1.5 2.5 4v4.5c0 3.3 2.3 6.4 5.5 7 3.2-.6 5.5-3.7 5.5-7V4L8 1.5z" />
+                                    </svg>
                                     <code>{token.label}</code>
                                   </Link>
                                 );
@@ -618,7 +661,11 @@ export function ActivityView({
                                     className="entity-token-pill entity-token-pill--commit"
                                     title={`Commit hash: ${token.sha}`}
                                   >
-                                    <span className="token-icon" aria-hidden="true">⑂</span>
+                                    <svg className="token-svg-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                      <circle cx="8" cy="8" r="3" />
+                                      <line x1="1" y1="8" x2="5" y2="8" />
+                                      <line x1="11" y1="8" x2="15" y2="8" />
+                                    </svg>
                                     <code>{token.sha}</code>
                                   </span>
                                 );
@@ -688,7 +735,21 @@ export function ActivityView({
       {/* 4. Privacy & Provenance Truth Footer */}
       <footer className="activity-privacy-footer">
         <div className="privacy-footer-inner">
-          <span className="privacy-dot" aria-hidden="true">🔒</span>
+          <span className="privacy-dot" aria-hidden="true">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 14 14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="2.5" y="5.5" width="9" height="7" rx="1.5" />
+              <path d="M4.5 5.5V3.5a2.5 2.5 0 0 1 5 0v2.5" />
+            </svg>
+          </span>
           <p className="privacy-text">
             <strong>Workspace Audit Guarantee:</strong> TRACE logs structural boundary events, AST review checkpoints,
             and synchronized change briefs without collecting telemetry on individual developer velocity, score, or keystroke timing.

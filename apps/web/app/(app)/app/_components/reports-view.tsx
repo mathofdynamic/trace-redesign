@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { TraceSelect } from './trace-select';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -9,6 +10,12 @@ import type {
   DashboardSyncedRecord,
 } from '../../../../lib/dashboard';
 import { formatDate, formatRelativeDate, presentFindingDetail } from '../../../../lib/dashboard-state';
+import {
+  computeReportsSummaryMetrics,
+  groupReportsByDate,
+  getRepositoryReportEmptyState,
+} from '../../../../lib/report-view-model';
+import { MOCK_REFERENCE_DATE } from '../../../../lib/reference-clock';
 
 export type ReportsViewProps = {
   reports: DashboardSyncedRecord[];
@@ -104,7 +111,7 @@ export function ReportsView({
   }, [activeDrawerReport]);
 
   const copyCliCommand = (report: DashboardSyncedRecord) => {
-    const cmd = `trace report view ${report.id}`;
+    const cmd = report.path ? `trace inspect ${report.path}` : `trace report daily`;
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(cmd).catch(() => {});
     }
@@ -172,43 +179,14 @@ export function ReportsView({
 
   // Group filtered reports by date
   const groupedReports = useMemo(() => {
-    const groups = new Map<string, DashboardSyncedRecord[]>();
-    const order = [
-      'Today (Aug 19, 2026)',
-      'Yesterday (Aug 18, 2026)',
-      'This week (Aug 14 – 17, 2026)',
-      'Earlier',
-    ];
-
-    for (const report of filteredReports) {
-      const group = getReportDateGroup(report.generatedAt);
-      if (!groups.has(group)) {
-        groups.set(group, []);
-      }
-      groups.get(group)!.push(report);
-    }
-
-    // Return in deterministic chronological order
-    const result: Array<{ label: string; reports: DashboardSyncedRecord[] }> = [];
-    for (const label of order) {
-      if (groups.has(label) && groups.get(label)!.length > 0) {
-        result.push({ label, reports: groups.get(label)! });
-      }
-    }
-    // Any other group not in predefined order
-    for (const [label, grpReports] of groups.entries()) {
-      if (!order.includes(label) && grpReports.length > 0) {
-        result.push({ label, reports: grpReports });
-      }
-    }
-    return result;
+    return groupReportsByDate(filteredReports, MOCK_REFERENCE_DATE);
   }, [filteredReports]);
 
   // Overall counts for summary intelligence strip
-  const totalReportsCount = reports.length;
-  const currentCount = reports.filter((r) => !r.freshness || r.freshness === 'current').length;
-  const needsRefreshCount = reports.filter((r) => r.freshness === 'needs-refresh').length;
-  const attentionCount = reports.filter((r) => r.freshness === 'attention').length;
+  const summaryMetrics = useMemo(
+    () => computeReportsSummaryMetrics(reports, repositories),
+    [reports, repositories],
+  );
 
   const activeFilterCount =
     (selectedRepoId !== 'all' ? 1 : 0) +
@@ -224,39 +202,44 @@ export function ReportsView({
   };
 
   const selectedRepoObj = repositories.find((r) => r.id === selectedRepoId);
-  const isNovaSelected = selectedRepoId === 'repo-nova-005';
+  const isSelectedRepoUnsynced =
+    selectedRepoObj &&
+    (selectedRepoObj.syncState === 'not_analyzed' ||
+      (selectedRepoId !== 'all' && reports.filter((r) => r.repositoryId === selectedRepoId).length === 0));
+
+  const emptyStateReason = getRepositoryReportEmptyState(selectedRepoObj);
 
   return (
     <div className="reports-library-surface">
       {/* 1. Summary Intelligence Strip */}
       <div className="reports-summary-bar" aria-label="Reports Library Overview">
         <div className="reports-summary-metric">
-          <span className="reports-summary-metric__value">{totalReportsCount}</span>
+          <span className="reports-summary-metric__value">{summaryMetrics.totalReportsCount}</span>
           <span className="reports-summary-metric__label">Archived Records</span>
         </div>
         <div className="reports-summary-divider" aria-hidden="true" />
         <div className="reports-summary-metric">
-          <span className="reports-summary-metric__value">4 / 5</span>
+          <span className="reports-summary-metric__value">{summaryMetrics.syncedRepositoriesCount}</span>
           <span className="reports-summary-metric__label">Synced Repositories</span>
         </div>
         <div className="reports-summary-divider" aria-hidden="true" />
         <div className="reports-summary-metric">
-          <span className="reports-summary-metric__value">{currentCount}</span>
+          <span className="reports-summary-metric__value">{summaryMetrics.currentCount}</span>
           <span className="reports-summary-metric__label">Current</span>
         </div>
         <div className="reports-summary-divider" aria-hidden="true" />
         <div className="reports-summary-metric">
           <span className="reports-summary-metric__value reports-summary-metric__value--warning">
-            {needsRefreshCount}
+            {summaryMetrics.needsRefreshCount}
           </span>
           <span className="reports-summary-metric__label">Needs Refresh</span>
         </div>
-        {attentionCount > 0 ? (
+        {summaryMetrics.attentionCount > 0 ? (
           <>
             <div className="reports-summary-divider" aria-hidden="true" />
             <div className="reports-summary-metric">
               <span className="reports-summary-metric__value reports-summary-metric__value--attention">
-                {attentionCount}
+                {summaryMetrics.attentionCount}
               </span>
               <span className="reports-summary-metric__label">Sync Attention</span>
             </div>
@@ -304,23 +287,20 @@ export function ReportsView({
             <label htmlFor={repoSelectId} className="filter-select-label">
               Repo
             </label>
-            <select
+            <TraceSelect
               id={repoSelectId}
-              className="trace-select"
               value={selectedRepoId}
-              onChange={(e) => setSelectedRepoId(e.target.value)}
-              aria-label="Filter by repository"
-            >
-              <option value="all">All repositories ({reports.length})</option>
-              {repositories.map((repo) => {
-                const count = reports.filter((r) => r.repositoryId === repo.id).length;
-                return (
-                  <option key={repo.id} value={repo.id}>
-                    {repo.name} ({count})
-                  </option>
-                );
-              })}
-            </select>
+              onChange={setSelectedRepoId}
+              ariaLabel="Filter by repository"
+              options={[
+                { value: 'all', label: `All repositories (${reports.length})` },
+                ...repositories.map((repo) => ({
+                  value: repo.id,
+                  label: repo.name,
+                  count: reports.filter((r) => r.repositoryId === repo.id).length,
+                })),
+              ]}
+            />
           </div>
 
           {/* Type Selector */}
@@ -328,20 +308,19 @@ export function ReportsView({
             <label htmlFor={typeSelectId} className="filter-select-label">
               Type
             </label>
-            <select
+            <TraceSelect
               id={typeSelectId}
-              className="trace-select"
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              aria-label="Filter by report artifact type"
-            >
-              <option value="all">All types</option>
-              {availableTypes.map((type) => (
-                <option key={type} value={type}>
-                  {formatArtifactTypeLabel(type)}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedType}
+              ariaLabel="Filter by report artifact type"
+              options={[
+                { value: 'all', label: 'All types' },
+                ...availableTypes.map((type) => ({
+                  value: type,
+                  label: formatArtifactTypeLabel(type),
+                })),
+              ]}
+            />
           </div>
 
           {/* Freshness Selector */}
@@ -349,18 +328,30 @@ export function ReportsView({
             <label htmlFor={freshnessSelectId} className="filter-select-label">
               Freshness
             </label>
-            <select
+            <TraceSelect
               id={freshnessSelectId}
-              className="trace-select"
               value={selectedFreshness}
-              onChange={(e) => setSelectedFreshness(e.target.value)}
-              aria-label="Filter by synchronization freshness"
-            >
-              <option value="all">All freshness</option>
-              <option value="current">Current ({currentCount})</option>
-              <option value="needs-refresh">Needs refresh ({needsRefreshCount})</option>
-              <option value="attention">Sync attention ({attentionCount})</option>
-            </select>
+              onChange={setSelectedFreshness}
+              ariaLabel="Filter by synchronization freshness"
+              options={[
+                { value: 'all', label: 'All freshness' },
+                {
+                  value: 'current',
+                  label: 'Current',
+                  count: summaryMetrics.currentCount,
+                },
+                {
+                  value: 'needs-refresh',
+                  label: 'Needs refresh',
+                  count: summaryMetrics.needsRefreshCount,
+                },
+                {
+                  value: 'attention',
+                  label: 'Sync attention',
+                  count: summaryMetrics.attentionCount,
+                },
+              ]}
+            />
           </div>
 
           {/* Reset Filters */}
@@ -377,9 +368,9 @@ export function ReportsView({
       </div>
 
       {/* 3. Reports Library Main Content Area */}
-      {isNovaSelected ? (
-        /* Truthful Nova Empty State */
-        <div className="reports-empty-panel reports-empty-panel--nova" role="region" aria-label="Nova Repository Status">
+      {isSelectedRepoUnsynced ? (
+        /* Truthful Unsynced Repository Empty State */
+        <div className="reports-empty-panel reports-empty-panel--nova" role="region" aria-label="Repository Analysis Pending Status">
           <div className="reports-empty-glyph">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
@@ -388,16 +379,15 @@ export function ReportsView({
           <span className="reports-empty-status-tag">
             0 SYNCHRONIZED REPORTS · LOCAL ANALYSIS PENDING
           </span>
-          <h3>No reports synchronized for {selectedRepoObj?.fullName ?? 'northstar-engineering/Nova'}</h3>
-          <p>
-            Nova is connected via GitHub App, but local analysis has not been executed or approved for sync yet.
-            TRACE reports are generated deterministically by engineers on their local computers and explicitly
-            reviewed prior to synchronization.
-          </p>
+          <h3>{emptyStateReason.title}</h3>
+          <p>{emptyStateReason.description}</p>
           <div className="reports-nova-cli-box">
             <p className="nova-cli-title">Generate and sync first report:</p>
-            <code>git clone git@github.com:northstar-engineering/Nova.git && cd Nova</code>
-            <code>trace report daily --yes</code>
+            <code>
+              git clone {selectedRepoObj?.fullName ? `https://github.com/${selectedRepoObj.fullName}.git` : 'git@github.com:...'}
+            </code>
+            <code>trace analyze</code>
+            <code>trace sync --dry-run</code>
             <code>trace sync</code>
           </div>
           <div className="reports-empty-actions">
@@ -452,7 +442,7 @@ export function ReportsView({
                   const highFindingsCount = report.items.filter((i) => i.severity === 'high').length;
 
                   return (
-                    <article className="report-item-card" key={report.id} data-report-id={report.id}>
+                    <article className="report-item-card report-row" key={report.id} data-report-id={report.id}>
                       {/* Top metadata line */}
                       <div className="report-item-card__top">
                         <div className="report-item-card__identity">
@@ -528,22 +518,8 @@ export function ReportsView({
                           </span>
                         </div>
 
-                        {/* Interactive Actions */}
+                        {/* Interactive Actions (Max 2 prominent actions) */}
                         <div className="report-item-card__actions">
-                          <button
-                            type="button"
-                            className="report-cli-button"
-                            onClick={() => copyCliCommand(report)}
-                            title="Copy CLI command to view this report locally"
-                            aria-label={`Copy CLI command for report ${report.id}`}
-                          >
-                            <span className="cli-prompt">$</span>
-                            <code>trace report view {report.id.replace('report-', '')}</code>
-                            {copiedId === report.id ? (
-                              <span className="cli-copy-indicator">Copied</span>
-                            ) : null}
-                          </button>
-
                           <button
                             type="button"
                             className="trace-button trace-button--secondary trace-button--sm"
@@ -773,7 +749,7 @@ function ReportQuickDrawer({
         <div className="report-drawer__section">
           <span className="drawer-section-label">Local CLI Inspection</span>
           <div className="drawer-cli-box">
-            <code>trace report view {report.id}</code>
+            <code>{report.path ? `trace inspect ${report.path}` : `trace report daily`}</code>
             <button
               type="button"
               className="trace-button trace-button--ghost trace-button--sm"

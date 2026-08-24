@@ -137,7 +137,7 @@ export default function HomePage() {
               <div className="bottleneck-row">
                 <div className="bottleneck-row__header">
                   <strong>Change velocity & agent diff volume</strong>
-                  <span>Surging (10× code volume)</span>
+                  <span>Surging diff volume</span>
                 </div>
                 <div className="bottleneck-bar">
                   <div className="bottleneck-bar__fill bottleneck-bar__fill--surge" />

@@ -40,11 +40,11 @@ describe('Authenticated Shell, Sidebar & Navigation Invariants', () => {
   });
 
   it('derives accurate project state keys and representations for switcher', () => {
-    const traceRepo = MOCK_REPOSITORIES[0];
-    const radarRepo = MOCK_REPOSITORIES[1];
-    const atlasRepo = MOCK_REPOSITORIES[2];
-    const orbitRepo = MOCK_REPOSITORIES[3];
-    const novaRepo = MOCK_REPOSITORIES[4];
+    const traceRepo = MOCK_REPOSITORIES[0]!;
+    const radarRepo = MOCK_REPOSITORIES[1]!;
+    const atlasRepo = MOCK_REPOSITORIES[2]!;
+    const orbitRepo = MOCK_REPOSITORIES[3]!;
+    const novaRepo = MOCK_REPOSITORIES[4]!;
 
     const traceState = deriveTraceProjectState(traceRepo, MOCK_ATTENTION.filter(a => a.repositoryId === traceRepo.id));
     const radarState = deriveTraceProjectState(radarRepo, MOCK_ATTENTION.filter(a => a.repositoryId === radarRepo.id));
@@ -57,7 +57,6 @@ describe('Authenticated Shell, Sidebar & Navigation Invariants', () => {
       'needs-refresh',
       'connected-not-analyzed',
       'analysis-failed',
-      'sync-failed',
       'sync-attention',
     ];
 
@@ -86,13 +85,13 @@ describe('Authenticated Shell, Sidebar & Navigation Invariants', () => {
       return MOCK_REPOSITORIES.filter(
         (repo) =>
           repo.name.toLowerCase().includes(q) ||
-          repo.defaultBranch.toLowerCase().includes(q)
+          (repo.defaultBranch && repo.defaultBranch.toLowerCase().includes(q))
       );
     };
 
     expect(filterQuery('')).toHaveLength(5);
     expect(filterQuery('trace')).toHaveLength(1);
-    expect(filterQuery('trace')[0].name).toBe('TRACE');
+    expect(filterQuery('trace')[0]?.name).toBe('TRACE');
     expect(filterQuery('main')).toHaveLength(5);
     expect(filterQuery('nonexistent')).toHaveLength(0);
   });

@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { TraceSelect } from './trace-select';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -109,7 +110,7 @@ export function RulesView({
   };
 
   const copyCliCommand = (rule: DashboardSyncedRecord) => {
-    const cmd = `trace rule view ${rule.id}`;
+    const cmd = `trace rules explain ${rule.id}`;
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(cmd).catch(() => {});
     }
@@ -337,17 +338,19 @@ export function RulesView({
               <label htmlFor={severitySelectId} className="sr-only">
                 Filter by severity
               </label>
-              <select
+              <TraceSelect
                 id={severitySelectId}
                 value={selectedSeverity}
-                onChange={(e) => setSelectedSeverity(e.target.value)}
-                className="rules-filter-select"
-              >
-                <option value="all">All Severities</option>
-                <option value="high">High ({severityCounts.high})</option>
-                <option value="medium">Medium ({severityCounts.medium})</option>
-                <option value="low">Low ({severityCounts.low})</option>
-              </select>
+                onChange={setSelectedSeverity}
+                ariaLabel="Filter by severity"
+                size="sm"
+                options={[
+                  { value: 'all', label: 'All Severities' },
+                  { value: 'high', label: 'High', count: severityCounts.high },
+                  { value: 'medium', label: 'Medium', count: severityCounts.medium },
+                  { value: 'low', label: 'Low', count: severityCounts.low },
+                ]}
+              />
             </div>
 
             {/* Sort Dropdown */}
@@ -355,18 +358,24 @@ export function RulesView({
               <label htmlFor={sortSelectId} className="sr-only">
                 Sort rules by
               </label>
-              <select
+              <TraceSelect
                 id={sortSelectId}
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'severity' | 'newest' | 'oldest' | 'repository' | 'title')}
-                className="rules-filter-select"
-              >
-                <option value="severity">By severity</option>
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="repository">By repository</option>
-                <option value="title">By title</option>
-              </select>
+                onChange={(val) =>
+                  setSortBy(
+                    val as 'severity' | 'newest' | 'oldest' | 'repository' | 'title',
+                  )
+                }
+                ariaLabel="Sort rules by"
+                size="sm"
+                options={[
+                  { value: 'severity', label: 'By severity' },
+                  { value: 'newest', label: 'Newest first' },
+                  { value: 'oldest', label: 'Oldest first' },
+                  { value: 'repository', label: 'By repository' },
+                  { value: 'title', label: 'By title' },
+                ]}
+              />
             </div>
 
             {/* Expand / Collapse All Toggle */}
@@ -476,7 +485,6 @@ export function RulesView({
                     {/* Eyebrow & Badges */}
                     <div className="rule-eyebrow-row">
                       <span className="rule-repo-tag">{repoShortName}</span>
-                      <span className="rule-type-tag">GOVERNANCE</span>
 
                       {/* Neutral Severity Tag - Strictly NO Red/Amber/Green */}
                       <span className="rule-severity-tag">
@@ -526,25 +534,25 @@ export function RulesView({
                     </div>
                   </div>
 
-                  {/* Expand Chevron Icon */}
+                  {/* Expand / Inspect Action */}
                   <div className="rule-header-action">
-                    <span className="expand-indicator-label">
-                      {isExpanded ? 'Collapse' : 'Inspect'}
+                    <span className="trace-button trace-button--secondary trace-button--sm inspect-pill-btn">
+                      <span>{isExpanded ? 'Collapse' : 'Inspect'}</span>
+                      <svg
+                        className={`expand-chevron ${isExpanded ? 'expand-chevron--open' : ''}`}
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
                     </span>
-                    <svg
-                      className={`expand-chevron ${isExpanded ? 'expand-chevron--open' : ''}`}
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
                   </div>
                 </header>
 
@@ -656,7 +664,7 @@ export function RulesView({
                             Inspect rule evaluation and check local compliance in your terminal:
                           </p>
                           <div className="cli-code-block">
-                            <code>trace rule view {rule.id}</code>
+                            <code>trace rules explain {rule.id}</code>
                             <button
                               type="button"
                               className="cli-copy-btn"
@@ -711,15 +719,15 @@ export function RulesView({
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
             </div>
-            {selectedRepoId === 'repo-nova-005' ? (
+            {selectedRepoObj && rules.filter((r) => r.repositoryId === selectedRepoObj.id).length === 0 && !searchQuery.trim() && selectedSeverity === 'all' ? (
               <>
-                <h2 className="empty-title">No governance rules recorded for Nova yet</h2>
+                <h2 className="empty-title">No governance rules recorded for {selectedRepoObj.name} yet</h2>
                 <p className="empty-description">
-                  Nova is connected with 0 open findings and 0 active governance rules. Rule definitions will appear here when local{' '}
+                  {selectedRepoObj.name} has 0 active governance rules. Rule definitions will appear here when local{' '}
                   <code>.trace/rules.json</code> policy artifacts pass verification and sync.
                 </p>
                 <div className="empty-cli-box">
-                  <code>trace rule add --template security &amp;&amp; trace sync</code>
+                  <code>trace analyze &amp;&amp; trace sync</code>
                 </div>
               </>
             ) : (
@@ -748,7 +756,21 @@ export function RulesView({
       {/* 4. Privacy & Governance Truth Footer Note */}
       <footer className="rules-privacy-footer">
         <div className="privacy-footer-inner">
-          <span className="privacy-dot" aria-hidden="true">🔒</span>
+          <span className="privacy-dot" aria-hidden="true">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 14 14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="2.5" y="5.5" width="9" height="7" rx="1.5" />
+              <path d="M4.5 5.5V3.5a2.5 2.5 0 0 1 5 0v2.5" />
+            </svg>
+          </span>
           <p className="privacy-text">
             <strong>Deterministic Review Invariant:</strong> TRACE rules make review expectations explicit and explainable
             without computing surveillance metrics, ranking individual developers, or transmitting raw source files.

@@ -199,7 +199,11 @@ export function RepositorySelector({
         >
           <div className="repositories-notification__body">
             <span className="notification-glyph" aria-hidden="true">
-              ℹ
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="7" cy="7" r="5.5" />
+                <path d="M7 6.5v4" />
+                <path d="M7 4.5h.01" />
+              </svg>
             </span>
             <p>{setupMessage}</p>
           </div>
@@ -270,7 +274,10 @@ export function RepositorySelector({
               </button>
               {status === 'saved' ? (
                 <span className="access-save-feedback is-success">
-                  ✓ Repository access saved successfully.
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}>
+                    <path d="M2.5 7.5 5.5 10.5 11.5 3.5" />
+                  </svg>
+                  Repository access saved successfully.
                 </span>
               ) : null}
               {status === 'error' ? (
@@ -288,6 +295,8 @@ export function RepositorySelector({
         <div className="repositories-search">
           <span className="repositories-search-icon" aria-hidden="true">
             <svg
+              width="14"
+              height="14"
               viewBox="0 0 16 16"
               fill="none"
               stroke="currentColor"
@@ -431,6 +440,8 @@ export function RepositorySelector({
                         <div className="repo-identity-tags">
                           <span className="repo-branch-pill">
                             <svg
+                              width="12"
+                              height="12"
                               viewBox="0 0 14 14"
                               fill="none"
                               stroke="currentColor"

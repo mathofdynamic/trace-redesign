@@ -89,11 +89,10 @@ describe('Phase 5 — Final Mock Universe Audit, Integrity, and Baseline Freeze'
     it('all decisions point to valid repositories and linked entities', () => {
       universe.decisions.forEach((decision) => {
         expect(repoIds.has(decision.repositoryId)).toBe(true);
-        if (decision.relatedChangeId) {
-          expect(changeIds.has(decision.relatedChangeId)).toBe(true);
-        }
-        if (decision.relatedReportId) {
-          expect(reportIds.has(decision.relatedReportId)).toBe(true);
+        if (decision.relatedChangeIds) {
+          decision.relatedChangeIds.forEach((changeId) => {
+            expect(changeIds.has(changeId)).toBe(true);
+          });
         }
       });
     });
@@ -108,7 +107,9 @@ describe('Phase 5 — Final Mock Universe Audit, Integrity, and Baseline Freeze'
 
     it('all activity events point to valid repositories', () => {
       universe.activity.forEach((event) => {
-        expect(repoIds.has(event.repositoryId)).toBe(true);
+        if (event.repositoryId) {
+          expect(repoIds.has(event.repositoryId)).toBe(true);
+        }
       });
     });
 

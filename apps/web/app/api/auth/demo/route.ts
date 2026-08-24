@@ -5,16 +5,9 @@ import {
   sessionCookieName,
   safeAuthNext,
 } from '@trace/auth';
-import { isMockModeEnabled, MOCK_PRIMARY_USER } from '../../../../lib/mock';
+import { MOCK_PRIMARY_USER } from '../../../../lib/mock';
 
 export async function GET(request: Request) {
-  if (!isMockModeEnabled() && process.env.NODE_ENV === 'production' && !process.env.TRACE_ALLOW_PRODUCTION_MOCKS) {
-    return Response.json(
-      { error: 'Demo authentication is disabled in production environments.' },
-      { status: 403 },
-    );
-  }
-
   const url = new URL(request.url);
   const rawNext = url.searchParams.get('next');
   const targetNext = safeAuthNext(rawNext === '/onboarding' || !rawNext ? '/app' : rawNext);

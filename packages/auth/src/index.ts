@@ -348,7 +348,10 @@ export function oauthNextCookieName() {
 }
 
 export function cookieAttributes(maxAge: number, secure: boolean) {
-  return `HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
+  if (secure) {
+    return `HttpOnly; SameSite=None; Secure; Partitioned; Path=/; Max-Age=${maxAge}`;
+  }
+  return `HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
 }
 
 export function isSecurePublicUrl() {

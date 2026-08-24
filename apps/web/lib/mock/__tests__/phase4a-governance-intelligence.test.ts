@@ -77,8 +77,8 @@ describe('Phase 4A: Conflicts, Decisions, Rules, and Activity', () => {
       expect(atlasConflict?.relatedChangeIds).toEqual(['change-atlas-88', 'change-atlas-89']);
       expect(atlasConflict?.relatedFindingIds).toEqual(['att-atlas-001']);
       expect(atlasConflict?.items).toHaveLength(2);
-      expect(atlasConflict?.items[0].severity).toBe('high');
-      expect(atlasConflict?.items[0].classification).toBe('deterministic');
+      expect(atlasConflict?.items?.[0]?.severity).toBe('high');
+      expect(atlasConflict?.items?.[0]?.classification).toBe('deterministic');
     });
 
     it('verifies conflict helper lookups', () => {
@@ -176,15 +176,15 @@ describe('Phase 4A: Conflicts, Decisions, Rules, and Activity', () => {
       // Verify all activities point to existing repositories
       const validRepoIds = new Set(universe.repositories.map((r) => r.id));
       for (const act of universe.activity) {
-        expect(validRepoIds.has(act.repositoryId)).toBe(true);
+        expect(validRepoIds.has(act.repositoryId!)).toBe(true);
         expect(act.id).toMatch(/^act-\d{3}$/);
         expect(new Date(act.occurredAt).getTime()).not.toBeNaN();
       }
 
       // Check reverse chronological order
       for (let i = 0; i < universe.activity.length - 1; i++) {
-        const t1 = new Date(universe.activity[i].occurredAt).getTime();
-        const t2 = new Date(universe.activity[i + 1].occurredAt).getTime();
+        const t1 = new Date(universe.activity[i]?.occurredAt ?? 0).getTime();
+        const t2 = new Date(universe.activity[i + 1]?.occurredAt ?? 0).getTime();
         expect(t1).toBeGreaterThanOrEqual(t2);
       }
     });
@@ -195,7 +195,7 @@ describe('Phase 4A: Conflicts, Decisions, Rules, and Activity', () => {
 
       const novaActs = getActivityByRepository('repo-nova-005');
       expect(novaActs).toHaveLength(1);
-      expect(novaActs[0].kind).toBe('repository-connected');
+      expect(novaActs[0]?.kind).toBe('repository-connected');
     });
   });
 

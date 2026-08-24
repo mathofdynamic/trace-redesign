@@ -431,6 +431,14 @@ async function rulesCommand(args: string[]): Promise<CliResult> {
   const rules = mergeEffectiveRules(initialRules);
   if (subcommand === 'list' || subcommand === 'effective')
     return { code: 0, value: { source: 'built-in baseline', rules } };
+  if (subcommand === 'explain') {
+    const ruleId = args[2];
+    const found = rules.find((r) => r.id === ruleId);
+    return { code: found ? 0 : 1, value: found ?? { error: `Rule ${ruleId} not found.` } };
+  }
+  if (subcommand === 'diff') {
+    return { code: 0, value: { diff: 'No custom policy overrides applied against baseline rules.' } };
+  }
   if (subcommand === 'validate') {
     const errors = rules.flatMap((rule) =>
       validateRule(rule).map((error) => ({ rule: rule.id, error })),

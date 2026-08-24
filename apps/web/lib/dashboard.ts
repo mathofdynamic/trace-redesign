@@ -18,6 +18,8 @@ export type DashboardRepository = {
   defaultBranch: string | null;
   visibility: string | null;
   state: string;
+  url?: string | null;
+  syncState?: 'not_analyzed' | 'pending' | 'synced' | 'stale' | string | null;
   remoteHeadSha: string | null;
   lastSynchronizedAt: string | null;
   latestSync: {
@@ -113,6 +115,10 @@ export type DashboardSyncedRecord = {
   title: string;
   summary: string;
   status: string | null;
+  path?: string | null;
+  severity?: 'critical' | 'high' | 'medium' | 'low' | string | null;
+  category?: string | null;
+  classification?: string | null;
   timeWindow?: string | null;
   analyzedCommit?: string | null;
   remoteHeadCommit?: string | null;
