@@ -203,9 +203,9 @@ export function DashboardShell({
           <TraceMark />
           <span>TRACE</span>
         </Link>
-        <div className="workspace-switcher">
-          <span className="workspace-switcher__dot" />
-          <span>
+        <div className="workspace-switcher" role="region" aria-label="Active workspace">
+          <span className="workspace-switcher__dot" aria-hidden="true" />
+          <span className="workspace-switcher__identity">
             <small>Workspace</small>
             <strong>{workspaceName}</strong>
           </span>
@@ -216,14 +216,16 @@ export function DashboardShell({
           </span>
         </div>
         <nav className="dashboard-nav" aria-label="Application navigation">
-          <p>Workspace</p>
+          <p className="dashboard-nav__section-label">Workspace</p>
           <NavigationLinks items={primaryNavigation} {...navigationProps} />
-          <p>Manage</p>
+          <p className="dashboard-nav__section-label">Manage</p>
           <NavigationLinks items={secondaryNavigation} {...navigationProps} />
         </nav>
         <div className="dashboard-account">
-          <span className="avatar">{userName.charAt(0).toUpperCase()}</span>
-          <span>
+          <span className="avatar" aria-hidden="true">
+            {userName.charAt(0).toUpperCase()}
+          </span>
+          <span className="dashboard-account__identity">
             <small>Signed in as</small>
             <strong title={userName}>{userName}</strong>
           </span>
@@ -244,7 +246,10 @@ export function DashboardShell({
             aria-label="Mobile workspace navigation"
           >
             <div className="dashboard-mobile-drawer__header">
-              <span>{workspaceName}</span>
+              <div className="dashboard-mobile-drawer__workspace">
+                <span className="workspace-switcher__dot" aria-hidden="true" />
+                <span>{workspaceName}</span>
+              </div>
               <button
                 ref={closeButtonRef}
                 type="button"
@@ -255,43 +260,59 @@ export function DashboardShell({
               </button>
             </div>
             <nav className="dashboard-nav" aria-label="Mobile application navigation">
-              <p>Workspace</p>
+              <p className="dashboard-nav__section-label">Workspace</p>
               <NavigationLinks items={primaryNavigation} {...navigationProps} />
-              <p>Manage</p>
+              <p className="dashboard-nav__section-label">Manage</p>
               <NavigationLinks items={secondaryNavigation} {...navigationProps} />
             </nav>
+            <div className="dashboard-account dashboard-account--mobile">
+              <span className="avatar" aria-hidden="true">
+                {userName.charAt(0).toUpperCase()}
+              </span>
+              <span className="dashboard-account__identity">
+                <small>Signed in as</small>
+                <strong title={userName}>{userName}</strong>
+              </span>
+            </div>
           </aside>
         </>
       ) : null}
 
       <div className="dashboard-main">
         <header className="dashboard-topbar">
-          <button
-            ref={menuButtonRef}
-            className="dashboard-menu-button"
-            type="button"
-            aria-label="Open navigation"
-            aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen(true)}
-          >
-            <span />
-            <span />
-          </button>
-          <span className="breadcrumb">
-            <span>{workspaceName}</span>
-            <i aria-hidden="true">/</i>
-            <strong>{routeLabel}</strong>
-          </span>
-          {repositories.length ? (
-            <RepositorySwitcher
-              repositories={repositories}
-              attention={attention}
-              preferredRepositoryId={preferredRepositoryId}
-            />
-          ) : null}
-          <span className="topbar-status">
-            <i /> Early pilot
-          </span>
+          <div className="dashboard-topbar__start">
+            <button
+              ref={menuButtonRef}
+              className="dashboard-menu-button"
+              type="button"
+              aria-label="Open navigation"
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen(true)}
+            >
+              <span />
+              <span />
+            </button>
+            <div className="breadcrumb" aria-label="Current location">
+              <span className="breadcrumb__workspace">{workspaceName}</span>
+              <span className="breadcrumb__separator" aria-hidden="true">
+                /
+              </span>
+              <strong className="breadcrumb__page">{routeLabel}</strong>
+            </div>
+          </div>
+          <div className="dashboard-topbar__end">
+            {repositories.length ? (
+              <RepositorySwitcher
+                repositories={repositories}
+                attention={attention}
+                preferredRepositoryId={preferredRepositoryId}
+              />
+            ) : null}
+            <span className="topbar-status">
+              <i aria-hidden="true" />
+              <span>Early pilot</span>
+            </span>
+          </div>
         </header>
         {pendingHref ? (
           <div

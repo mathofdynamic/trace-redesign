@@ -1,9 +1,19 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getAuthenticatedDashboardSummary } from '../../../../../../lib/dashboard-server';
-import { FindingDisclosure, ProjectContextSummary } from '../../../_components/trace-redesign';
-import { formatDate, formatRelativeDate, presentFindingDetail } from '../../../../../../lib/dashboard-state';
+import {
+  deriveTraceProjectState,
+  formatDate,
+  formatRelativeDate,
+  presentFindingDetail,
+  stateToneClass,
+} from '../../../../../../lib/dashboard-state';
+import {
+  FindingDisclosure,
+  ProjectStatusGlyph,
+} from '../../../_components/trace-redesign';
 import { RepositoryTabs } from '../../../_components/repository-tabs';
+import { RepositoryFindingsView } from '../../../_components/repository-findings-view';
 
 export default async function RepositoryViewPage({
   params,
@@ -15,6 +25,7 @@ export default async function RepositoryViewPage({
   const { summary } = await getAuthenticatedDashboardSummary();
   const repository = summary.repositories.find((item) => item.id === repositoryId);
   if (!repository) notFound();
+  const state = deriveTraceProjectState(repository, summary.attention);
   const changes = summary.latestChanges.filter((item) => item.repositoryId === repository.id);
   const findings = summary.attention.filter(
     (item) =>
@@ -36,30 +47,87 @@ export default async function RepositoryViewPage({
   };
 
   return (
-    <div className="dashboard-page redesign-page repository-page">
-      <header className="redesign-header">
-        <div>
-          <span className="eyebrow">{repository.fullName}</span>
-          <h1>{getHeading()}</h1>
-          <ProjectContextSummary repository={repository} attention={summary.attention} />
+    <div className="dashboard-page redesign-page repository-page" id={`repository-${view}-view`}>
+      <header className="redesign-header repository-command-header">
+        <div className="repository-identity-block">
+          <div className="repository-identity-block__topline">
+            <Link className="repository-identity-block__parent-link" href={`/app/repositories/${repository.id}`}>
+              ← {repository.fullName}
+            </Link>
+            <span className="repository-identity-block__sep" aria-hidden="true">·</span>
+            <span className="repository-identity-block__visibility">{repository.visibility}</span>
+          </div>
+          <div className="repository-identity-block__title-row">
+            <h1 className="repository-identity-block__name">{getHeading()}</h1>
+            <span className={`state-pill ${stateToneClass(state.tone)}`}>
+              <ProjectStatusGlyph stateKey={state.key} />
+              <span>{state.label}</span>
+            </span>
+          </div>
+          <p className="repository-identity-block__description">
+            {view === 'pull-requests'
+              ? `Signed pull requests and branch changes processed for ${repository.fullName}.`
+              : view === 'findings'
+                ? `Active findings and deterministic engineering evidence for ${repository.fullName}.`
+                : `Approved project memory reports and summaries synchronized for ${repository.fullName}.`}
+          </p>
+        </div>
+        <div className="header-actions">
+          <Link className="trace-button trace-button--secondary" href={`/app/repositories/${repository.id}`}>
+            Repository overview
+          </Link>
         </div>
       </header>
-      <RepositoryTabs repositoryId={repositoryId} />
+
+      <RepositoryTabs
+        repositoryId={repositoryId}
+        counts={{
+          changes: changes.length,
+          findings: findings.length,
+          reports: reports.length,
+        }}
+      />
+
       {view === 'pull-requests' ? (
         changes.length ? (
           <div className="redesign-list record-list-redesign">
             {changes.map((change) => (
-              <article className="redesign-list-row" key={change.id}>
-                <div>
-                  <span className="record-index">#{change.number}</span>
-                  <strong>{change.title}</strong>
-                  <small>
-                    {change.state} · {change.authorLogin ?? 'Author unavailable'}
-                    {change.branch ? ` · ${change.branch}` : ''}
-                    {change.affectedAreas?.length ? ` · ${change.affectedAreas.join(', ')}` : ''}
-                  </small>
+              <article className="repository-recent-row" key={change.id}>
+                <div className="repository-recent-row__info">
+                  <div className="repository-recent-row__header">
+                    <span className="change-pr-number">PR #{change.number}</span>
+                    <span className="change-state-tag" data-state={change.state}>{change.state}</span>
+                    <span className="repository-recent-row__date">{formatRelativeDate(change.updatedAt)}</span>
+                  </div>
+                  <h2 className="repository-recent-row__title">{change.title}</h2>
+                  <div className="repository-recent-row__meta">
+                    <span>{change.authorLogin ?? 'Author unavailable'}</span>
+                    {change.branch ? (
+                      <>
+                        <span className="meta-sep" aria-hidden="true">·</span>
+                        <code>{change.branch}</code>
+                      </>
+                    ) : null}
+                    {change.affectedAreas?.length ? (
+                      <>
+                        <span className="meta-sep" aria-hidden="true">·</span>
+                        <span>{change.affectedAreas.join(', ')}</span>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
-                {change.url ? <a href={change.url}>Open on GitHub</a> : null}
+                {change.url ? (
+                  <div className="repository-recent-row__action">
+                    <a
+                      className="trace-button trace-button--secondary trace-button--small"
+                      href={change.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open on GitHub ↗
+                    </a>
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>
@@ -70,72 +138,37 @@ export default async function RepositoryViewPage({
           </div>
         )
       ) : view === 'findings' ? (
-        findings.length ? (
-          <div className="redesign-list finding-list-redesign finding-list-redesign--standalone">
-            {findings.map((finding) => (
-              <div className="finding-row-redesign" key={finding.id}>
-                <div className="finding-row-redesign__severity">
-                  <span className="severity-label" data-severity={finding.severity}>
-                    {finding.severity}
-                  </span>
-                  <small>
-                    {finding.evidence.length} evidence reference
-                    {finding.evidence.length === 1 ? '' : 's'}
-                  </small>
-                </div>
-                <div className="finding-row-redesign__body">
-                  <h2>{finding.title}</h2>
-                  <p>{presentFindingDetail(finding.detail)}</p>
-                  <small>
-                    {finding.classification === 'deterministic'
-                      ? 'Verified local evidence'
-                      : `${finding.classification} interpretation`}
-                  </small>
-                </div>
-                <FindingDisclosure
-                  finding={finding}
-                  repositoryName={repository.fullName}
-                  repository={repository}
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="inline-empty redesign-empty redesign-empty--large">
-            <strong>
-              {repository.analysis?.status === 'completed'
-                ? 'No unresolved findings'
-                : 'No findings yet'}
-            </strong>
-            <p>
-              {repository.analysis?.status === 'completed'
-                ? 'The latest persisted run has nothing requiring review.'
-                : 'Run local TRACE analysis before expecting findings here.'}
-            </p>
-          </div>
-        )
+        <RepositoryFindingsView findings={findings} repository={repository} />
       ) : reports.length ? (
         <div className="redesign-list record-list-redesign">
           {reports.map((report) => (
-            <article className="redesign-list-row report-row" key={report.id}>
-              <div>
-                <span className="report-type">{report.artifactType.replaceAll('_', ' ')}</span>
-                <h3>
+            <article className="repository-recent-row" key={report.id}>
+              <div className="repository-recent-row__info">
+                <div className="repository-recent-row__header">
+                  <span className="report-type-badge">{report.artifactType.replaceAll('_', ' ')}</span>
+                  <span className="repository-recent-row__date">{formatRelativeDate(report.generatedAt)}</span>
+                </div>
+                <h2 className="repository-recent-row__title">
                   <Link href={`/app/reports/${report.id}`}>{report.title}</Link>
-                </h3>
-                <p>{report.summary || 'Approved TRACE record.'}</p>
-                <small>
-                  {formatDate(report.generatedAt)} · Synced {formatRelativeDate(report.syncedAt)}
-                  {report.freshness === 'needs-refresh'
-                    ? ' · Needs refresh (newer commits on GitHub)'
-                    : report.freshness === 'attention'
-                      ? ' · Sync attention'
-                      : ' · Current'}
-                </small>
+                </h2>
+                <p className="repository-recent-row__summary">{report.summary || 'Approved local record.'}</p>
+                <div className="repository-recent-row__meta">
+                  <span className="report-freshness-tag" data-freshness={report.freshness}>
+                    {report.freshness === 'needs-refresh'
+                      ? 'Needs refresh'
+                      : report.freshness === 'attention'
+                        ? 'Sync attention'
+                        : 'Current'}
+                  </span>
+                  <span className="meta-sep" aria-hidden="true">·</span>
+                  <time dateTime={report.generatedAt}>{formatDate(report.generatedAt)}</time>
+                </div>
               </div>
-              <Link className="trace-button trace-button--secondary" href={`/app/reports/${report.id}`}>
-                View report
-              </Link>
+              <div className="repository-recent-row__action">
+                <Link className="trace-button trace-button--secondary trace-button--small" href={`/app/reports/${report.id}`}>
+                  View report
+                </Link>
+              </div>
             </article>
           ))}
         </div>

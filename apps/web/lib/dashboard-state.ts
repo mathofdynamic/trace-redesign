@@ -70,7 +70,7 @@ export function analysisOriginLabel(repository: DashboardRepository) {
 export function isFileEvidenceReference(value: string) {
   const normalized = value.replaceAll('\\', '/');
   if (/^(?:evidence|trace|artifact)(?:[/\\:]|$)/i.test(normalized)) return false;
-  return /(?:^|[/\\])[^/\\]+\.(?:c|cc|cpp|cs|go|java|js|jsx|json|md|php|py|rs|sql|ts|tsx|yml|yaml)$/i.test(
+  return /(?:^|[/\\])[^/\\]+\.(?:c|cc|cpp|cs|go|java|js|jsx|json|md|php|py|rs|sql|ts|tsx|yml|yaml)(?::\d+(?::\d+)?)?$/i.test(
     normalized,
   );
 }

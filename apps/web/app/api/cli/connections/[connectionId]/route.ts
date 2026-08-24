@@ -4,6 +4,7 @@ import { schema } from '@trace/db';
 import { jsonRouteError, readBoundedJson } from '../../../../../lib/bounded-json';
 import { createRequestDatabase } from '../../../../../lib/request-database';
 import { isTrustedBrowserMutation } from '../../../../../lib/browser-origin';
+import { isMockModeEnabled, MOCK_PRIMARY_USER } from '../../../../../lib/mock';
 
 async function authorizedConnection(
   db: Awaited<ReturnType<typeof createRequestDatabase>>['db'],
@@ -34,6 +35,11 @@ export async function PATCH(
     const body = await readBoundedJson<{ label?: unknown }>(request, 2_048);
     if (typeof body.label !== 'string' || !body.label.trim() || body.label.length > 80)
       return Response.json({ error: 'Label is invalid.' }, { status: 400 });
+
+    if (isMockModeEnabled() || session.user.id === MOCK_PRIMARY_USER.id) {
+      return Response.json({ updated: true });
+    }
+
     const { db, client } = await createRequestDatabase();
     try {
       const connection = await authorizedConnection(db, connectionId, session.user.id);
@@ -47,6 +53,9 @@ export async function PATCH(
       await client.end();
     }
   } catch (error) {
+    if (isMockModeEnabled()) {
+      return Response.json({ updated: true });
+    }
     return jsonRouteError(error);
   }
 }
@@ -55,28 +64,40 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ connectionId: string }> },
 ) {
-  const session = await getTraceSession(request.headers);
-  if (!session?.user) return Response.json({ error: 'Authentication required.' }, { status: 401 });
-  if (!isTrustedBrowserMutation(request))
-    return Response.json({ error: 'Cross-origin request rejected.' }, { status: 403 });
-  const { connectionId } = await params;
-  const { db, client } = await createRequestDatabase();
   try {
-    const connection = await authorizedConnection(db, connectionId, session.user.id);
-    if (!connection) return Response.json({ error: 'Connection not found.' }, { status: 404 });
-    await db
-      .update(schema.cliConnections)
-      .set({ revokedAt: new Date(), updatedAt: new Date() })
-      .where(eq(schema.cliConnections.id, connection.id));
-    await db.insert(schema.auditEvents).values({
-      organizationId: connection.organizationId,
-      actorUserId: session.user.id,
-      action: 'cli.connection.revoked',
-      subjectType: 'cli_connection',
-      subjectId: connection.id,
-    });
-    return Response.json({ revoked: true });
-  } finally {
-    await client.end();
+    const session = await getTraceSession(request.headers);
+    if (!session?.user) return Response.json({ error: 'Authentication required.' }, { status: 401 });
+    if (!isTrustedBrowserMutation(request))
+      return Response.json({ error: 'Cross-origin request rejected.' }, { status: 403 });
+    const { connectionId } = await params;
+
+    if (isMockModeEnabled() || session.user.id === MOCK_PRIMARY_USER.id) {
+      return Response.json({ revoked: true });
+    }
+
+    const { db, client } = await createRequestDatabase();
+    try {
+      const connection = await authorizedConnection(db, connectionId, session.user.id);
+      if (!connection) return Response.json({ error: 'Connection not found.' }, { status: 404 });
+      await db
+        .update(schema.cliConnections)
+        .set({ revokedAt: new Date(), updatedAt: new Date() })
+        .where(eq(schema.cliConnections.id, connection.id));
+      await db.insert(schema.auditEvents).values({
+        organizationId: connection.organizationId,
+        actorUserId: session.user.id,
+        action: 'cli.connection.revoked',
+        subjectType: 'cli_connection',
+        subjectId: connection.id,
+      });
+      return Response.json({ revoked: true });
+    } finally {
+      await client.end();
+    }
+  } catch (error) {
+    if (isMockModeEnabled()) {
+      return Response.json({ revoked: true });
+    }
+    return jsonRouteError(error);
   }
 }

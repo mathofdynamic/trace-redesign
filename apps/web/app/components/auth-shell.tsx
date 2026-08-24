@@ -4,13 +4,24 @@ import { Wordmark } from './public';
 
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
-    <main className="auth-shell">
-      <div className="auth-shell__top">
-        <Wordmark />
-        <Link href="/">Back to TRACE</Link>
-      </div>
-      <section className="auth-card">{children}</section>
-      <p className="auth-shell__footer">One account. Repository access stays under your control.</p>
-    </main>
+    <div className="auth-stage-wrapper">
+      <div className="auth-ambient-halo" aria-hidden="true" />
+      <main className="auth-shell" id="main-content">
+        <header className="auth-shell__top">
+          <Wordmark />
+          <Link href="/" className="auth-back-link">
+            Back to TRACE →
+          </Link>
+        </header>
+        <section className="auth-card" aria-label="Sign in to TRACE">
+          {children}
+        </section>
+        <footer className="auth-shell__footer">
+          <p className="auth-trust-note">
+            One account. Repository access stays under your control.
+          </p>
+        </footer>
+      </main>
+    </div>
   );
 }

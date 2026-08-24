@@ -8,7 +8,13 @@ import { RepositorySelector } from '../../../components/repository-selector';
 import { SetupProgress } from '../../../components/setup-progress';
 import { createRequestDatabase } from '../../../../lib/request-database';
 import { getUserOrganizationIds } from '../../../../lib/workspace';
-import { getActiveMockScenario, isMockModeEnabled, mockDataProvider, MOCK_PRIMARY_USER } from '../../../../lib/mock';
+import {
+  getActiveMockScenario,
+  isMockModeEnabled,
+  mockDataProvider,
+  MOCK_PRIMARY_USER,
+} from '../../../../lib/mock';
+import { getAuthenticatedDashboardSummary } from '../../../../lib/dashboard-server';
 
 type RepositoriesPageProps = {
   searchParams: Promise<{ setup?: string | string[] }>;
@@ -17,7 +23,7 @@ type RepositoriesPageProps = {
 function setupMessage(value: string | string[] | undefined) {
   const setup = Array.isArray(value) ? value[0] : value;
   return setup === 'connected'
-    ? 'GitHub connected. Now choose the repositories TRACE should understand.'
+    ? 'GitHub connected. TRACE has discovered the repositories in your workspace.'
     : setup === 'cancelled'
       ? 'GitHub App installation was cancelled.'
       : setup === 'not-configured'
@@ -34,6 +40,7 @@ export default async function RepositoriesPage({ searchParams }: RepositoriesPag
   if (!session?.user) redirect('/sign-in?next=/app/repositories');
   const query = await searchParams;
   const message = setupMessage(query.setup);
+  const setupStatusStr = Array.isArray(query.setup) ? query.setup[0] : query.setup;
 
   let installations: Array<{
     id: string;
@@ -42,16 +49,7 @@ export default async function RepositoriesPage({ searchParams }: RepositoriesPag
     state: string;
   }> = [];
 
-  let repositories: Array<{
-    id: string;
-    fullName: string;
-    defaultBranch: string | null;
-    visibility: string | null;
-    state: string;
-  }> = [];
-
   if (isMock) {
-    const mockRepos = mockDataProvider.getRepositories(getActiveMockScenario());
     installations = [
       {
         id: 'mock-gh-inst-001',
@@ -60,13 +58,6 @@ export default async function RepositoriesPage({ searchParams }: RepositoriesPag
         state: 'active',
       },
     ];
-    repositories = mockRepos.map((repo) => ({
-      id: repo.id,
-      fullName: repo.fullName,
-      defaultBranch: repo.defaultBranch,
-      visibility: repo.visibility,
-      state: repo.state,
-    }));
   } else {
     try {
       const { db, client } = await createRequestDatabase();
@@ -83,134 +74,121 @@ export default async function RepositoriesPage({ searchParams }: RepositoriesPag
               .from(schema.githubInstallations)
               .where(inArray(schema.githubInstallations.organizationId, organizationIds))
           : [];
-        repositories = organizationIds.length
-          ? await db
-              .select({
-                id: schema.githubRepositories.id,
-                fullName: schema.githubRepositories.fullName,
-                defaultBranch: schema.githubRepositories.defaultBranch,
-                visibility: schema.githubRepositories.visibility,
-                state: schema.githubRepositories.state,
-              })
-              .from(schema.githubRepositories)
-              .where(inArray(schema.githubRepositories.organizationId, organizationIds))
-          : [];
       } finally {
         await client.end().catch(() => {});
       }
     } catch (error) {
-      console.warn('[TRACE] Error loading repositories from database:', error);
+      console.warn('[TRACE] Error loading installations from database:', error);
       installations = [];
-      repositories = [];
     }
   }
 
-  const activeRepositories = repositories.filter((repository) => repository.state === 'active');
-  const currentStep = activeRepositories.length ? 4 : installations.length ? 3 : 2;
+  // Load authenticated dashboard summary to get rich project intelligence
+  const { summary } = await getAuthenticatedDashboardSummary();
+  const repositories = summary.repositories;
+
+  // 1. Zero state: No GitHub installations connected
+  if (!installations.length) {
     return (
-      <div className="dashboard-page">
-        <SetupProgress current={currentStep} />
+      <div className="dashboard-page redesign-page repositories-page">
+        <SetupProgress current={2} />
         <div className="dashboard-page-header">
           <div>
-            <p className="section-label">Repository setup</p>
-            <h1>
-              {installations.length ? 'Choose your repositories.' : 'Connect your repositories.'}
-            </h1>
+            <span className="eyebrow">WORKSPACE SETUP</span>
+            <h1>Connect your repositories.</h1>
             <p>
-              {installations.length
-                ? 'GitHub is connected. Select which projects should become part of this TRACE workspace.'
-                : 'TRACE uses read-only access to understand commits, pull requests, issues, and project changes. You choose which repositories it can access.'}
+              TRACE uses read-only access to understand commits, pull requests, issues, and project
+              changes. You choose which repositories it can access.
             </p>
           </div>
-          <span className="connection-state">
-            {installations.length ? 'Connected' : 'Not connected'}
-          </span>
+          <span className="connection-state">Not connected</span>
         </div>
+
         {message ? (
-          <p
-            className={query.setup === 'connected' ? 'form-success' : 'auth-error-block'}
-            role="status"
-          >
+          <p className="auth-error-block" role="status">
             {message}
           </p>
         ) : null}
-        {!installations.length ? (
-          <section className="empty-panel empty-panel--large repository-connect-panel">
-            <span aria-hidden="true">↗</span>
-            <h2>Connect GitHub</h2>
+
+        <section className="empty-panel empty-panel--large repository-connect-panel">
+          <span className="empty-glyph" aria-hidden="true">
+            ↗
+          </span>
+          <h2>Connect GitHub</h2>
+          <p>
+            Choose the GitHub account and repositories TRACE may read. No source write access is
+            requested.
+          </p>
+          <Link
+            className="trace-button trace-button--primary"
+            href="/api/github/install?next=/app/repositories"
+          >
+            Connect GitHub
+          </Link>
+          <details className="access-disclosure">
+            <summary>What TRACE can access</summary>
             <p>
-              Choose the GitHub account and repositories TRACE may read. No source write access is
-              requested.
+              Repository metadata, contents, pull requests, and issues for repositories you
+              select. Source code remains on your computer.
             </p>
-            <Link
-              className="trace-button trace-button--primary"
-              href="/api/github/install?next=/app/repositories"
-            >
-              Connect GitHub
-            </Link>
-            <details className="access-disclosure">
-              <summary>What TRACE can access</summary>
-              <p>
-                Repository metadata, contents, pull requests, and issues for repositories you
-                select.
-              </p>
-            </details>
-          </section>
-        ) : repositories.length ? (
-          <>
-            <div className="connection-list">
-              {installations.map((installation) => (
-                <article className="connection-card" key={installation.id}>
-                  <span className="card-label">Installation account</span>
-                  <strong>{installation.accountLogin}</strong>
-                  <small>
-                    {installation.accountType} · {installation.state}
-                  </small>
-                </article>
-              ))}
-            </div>
-            {activeRepositories.length ? (
-              <section className="connected-summary">
-                <div>
-                  <span className="success-mark" aria-hidden="true">
-                    ✓
-                  </span>
-                  <div>
-                    <p className="section-label">TRACE is connected</p>
-                    <h2>
-                      {activeRepositories.length === 1
-                        ? activeRepositories[0]!.fullName
-                        : `${activeRepositories.length} repositories connected`}
-                    </h2>
-                    <p>
-                      Repository access is active. Cloud analysis is not enabled in this
-                      environment.
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  className="trace-button trace-button--secondary"
-                  href={`/app/repositories/${activeRepositories[0]!.id}`}
-                >
-                  Open repository
-                </Link>
-              </section>
-            ) : null}
-            <RepositorySelector repositories={repositories} />
-          </>
-        ) : (
-          <section className="empty-panel empty-panel--large">
-            <span aria-hidden="true">◌</span>
-            <h2>No repositories were granted</h2>
-            <p>Update the GitHub App installation to grant access to at least one repository.</p>
-            <Link
-              className="trace-button trace-button--secondary"
-              href="/api/github/install?next=/app/repositories"
-            >
-              Update GitHub access
-            </Link>
-          </section>
-        )}
+          </details>
+        </section>
       </div>
     );
+  }
+
+  // 2. Degraded state: GitHub connected, but 0 repositories granted
+  if (!repositories.length) {
+    return (
+      <div className="dashboard-page redesign-page repositories-page">
+        <SetupProgress current={3} />
+        <div className="dashboard-page-header">
+          <div>
+            <span className="eyebrow">REPOSITORY ACCESS</span>
+            <h1>No repositories granted</h1>
+            <p>
+              GitHub account <strong>{installations[0]?.accountLogin}</strong> is connected, but no
+              repositories were selected for this workspace.
+            </p>
+          </div>
+          <span className="connection-state">0 repositories</span>
+        </div>
+
+        {message ? (
+          <p className="auth-error-block" role="status">
+            {message}
+          </p>
+        ) : null}
+
+        <section className="empty-panel empty-panel--large">
+          <span className="empty-glyph" aria-hidden="true">
+            ◌
+          </span>
+          <h2>No repositories were granted</h2>
+          <p>Update the GitHub App installation to grant access to at least one repository.</p>
+          <Link
+            className="trace-button trace-button--primary"
+            href="/api/github/install?next=/app/repositories"
+          >
+            Update GitHub access
+          </Link>
+        </section>
+      </div>
+    );
+  }
+
+  // 3. Complete state: Managed Repositories Surface
+  return (
+    <div className="dashboard-page redesign-page repositories-page">
+      <RepositorySelector
+        repositories={repositories}
+        attention={summary.attention}
+        reports={summary.latestReports}
+        installations={installations}
+        workspaceName={summary.workspace?.name}
+        setupMessage={message}
+        setupStatus={setupStatusStr ?? null}
+      />
+    </div>
+  );
 }

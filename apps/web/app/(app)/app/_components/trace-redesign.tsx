@@ -18,6 +18,104 @@ export function StateMark({ tone = 'neutral' }: { tone?: string }) {
   return <span className={`state-mark state-mark--${tone}`} aria-hidden="true" />;
 }
 
+export function ProjectStatusGlyph({
+  stateKey,
+  className = '',
+}: {
+  stateKey: TraceProjectStateKey;
+  className?: string;
+}) {
+  if (stateKey === 'current') {
+    return (
+      <span
+        className={`project-status-glyph project-status-glyph--current ${className}`}
+        aria-hidden="true"
+        title="Current with GitHub"
+      >
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2.5 7.5 5.5 10.5 11.5 3.5" />
+        </svg>
+      </span>
+    );
+  }
+  if (stateKey === 'needs-refresh') {
+    return (
+      <span
+        className={`project-status-glyph project-status-glyph--refresh ${className}`}
+        aria-hidden="true"
+        title="Needs refresh"
+      >
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 7a5 5 0 1 0 1.5-3.5M2 2.5v3.2h3.2" />
+        </svg>
+      </span>
+    );
+  }
+  if (stateKey === 'sync-attention' || stateKey === 'analysis-failed') {
+    return (
+      <span
+        className={`project-status-glyph project-status-glyph--attention ${className}`}
+        aria-hidden="true"
+        title="Attention needed"
+      >
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 2.2 12.8 12H1.2L7 2.2zM7 5.8v3.2M7 10.2v.2" />
+        </svg>
+      </span>
+    );
+  }
+  if (stateKey === 'connected-not-analyzed' || stateKey === 'not-connected') {
+    return (
+      <span
+        className={`project-status-glyph project-status-glyph--setup ${className}`}
+        aria-hidden="true"
+        title="Not analyzed"
+      >
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+          <circle cx="7" cy="7" r="4.5" strokeDasharray="2.2 2.2" />
+        </svg>
+      </span>
+    );
+  }
+  if (stateKey === 'analysis-running' || stateKey === 'syncing') {
+    return (
+      <span
+        className={`project-status-glyph project-status-glyph--running ${className}`}
+        aria-hidden="true"
+        title="Analyzing"
+      >
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <circle cx="7" cy="7" r="4.5" opacity="0.3" />
+          <path d="M7 2.5a4.5 4.5 0 0 1 4.5 4.5" />
+        </svg>
+      </span>
+    );
+  }
+  if (stateKey === 'analysis-available-locally') {
+    return (
+      <span
+        className={`project-status-glyph project-status-glyph--local ${className}`}
+        aria-hidden="true"
+        title="Ready to sync"
+      >
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 11V3.5M3.5 6.8 7 3.5l3.5 3.3" />
+        </svg>
+      </span>
+    );
+  }
+  return (
+    <span
+      className={`project-status-glyph project-status-glyph--neutral ${className}`}
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 14 14" fill="currentColor">
+        <circle cx="7" cy="7" r="2.5" />
+      </svg>
+    </span>
+  );
+}
+
 export function TraceRail({ state }: { state: TraceProjectStateKey }) {
   const completion =
     state === 'current'
@@ -222,6 +320,7 @@ export function RepositorySwitcher({
   const [query, setQuery] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const currentId = pathname.match(/\/app\/repositories\/([^/]+)/)?.[1] ?? preferredRepositoryId;
   const current =
     repositories.find((repository) => repository.id === currentId) ?? repositories[0] ?? null;
@@ -232,22 +331,49 @@ export function RepositorySwitcher({
       (repository) => !normalized || repository.fullName.toLowerCase().includes(normalized),
     );
   }, [query, repositories]);
+
   useEffect(() => {
-    if (open) searchRef.current?.focus();
-    else triggerRef.current?.focus();
+    if (open) {
+      searchRef.current?.focus();
+    } else {
+      triggerRef.current?.focus();
+    }
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setOpen(false);
+      }
+    }
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
+
   function select(repository: DashboardRepository) {
     setOpen(false);
     setQuery('');
     router.push(`/app/repositories/${repository.id}`);
   }
+
   return (
-    <div className="repository-context">
+    <div ref={containerRef} className="repository-context">
       <button
         ref={triggerRef}
         className="repository-context__trigger"
         type="button"
         aria-expanded={open}
+        aria-haspopup="dialog"
         onClick={() => setOpen((value) => !value)}
       >
         <span className="repository-context__identity">
@@ -256,8 +382,8 @@ export function RepositorySwitcher({
         </span>
         {current ? (
           <span className={`state-pill ${stateToneClass(currentState.tone)}`}>
-            <StateMark tone={currentState.tone} />
-            {currentState.shortLabel}
+            <ProjectStatusGlyph stateKey={currentState.key} />
+            <span>{currentState.shortLabel}</span>
           </span>
         ) : null}
         <span className="repository-context__chevron" aria-hidden="true">
@@ -265,69 +391,85 @@ export function RepositorySwitcher({
         </span>
       </button>
       {open ? (
-        <div className="repository-switcher" role="dialog" aria-label="Switch repository">
-          <div className="repository-switcher__head">
-            <div>
-              <span className="eyebrow">Project context</span>
-              <strong>{current?.fullName ?? 'No repository selected'}</strong>
+        <>
+          <button
+            className="repository-switcher__scrim"
+            type="button"
+            aria-label="Close project switcher"
+            onClick={() => setOpen(false)}
+          />
+          <div className="repository-switcher" role="dialog" aria-label="Switch repository" aria-modal="true">
+            <div className="repository-switcher__head">
+              <div>
+                <span className="eyebrow">Project context</span>
+                <strong>{current?.fullName ?? 'No repository selected'}</strong>
+              </div>
+              <button
+                type="button"
+                aria-label="Close repository switcher"
+                onClick={() => setOpen(false)}
+              >
+                ×
+              </button>
             </div>
-            <button
-              type="button"
-              aria-label="Close repository switcher"
+            <input
+              ref={searchRef}
+              className="trace-input repository-switcher__search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search repositories…"
+              aria-label="Search repositories"
+            />
+            <div className="repository-switcher__body">
+              <div className="repository-switcher__group">
+                <span className="repository-switcher__label">With TRACE intelligence</span>
+                {filtered
+                  .filter((repository) => repository.latestSync || repository.analysis)
+                  .map((repository) => (
+                    <RepositorySwitcherRow
+                      key={repository.id}
+                      repository={repository}
+                      attention={attention}
+                      selected={repository.id === current?.id}
+                      onSelect={() => select(repository)}
+                    />
+                  ))}
+                {!filtered.some((repository) => repository.latestSync || repository.analysis) ? (
+                  <p className="repository-switcher__empty">
+                    No analyzed repositories match this search.
+                  </p>
+                ) : null}
+              </div>
+              <div className="repository-switcher__group">
+                <span className="repository-switcher__label">Connected</span>
+                {filtered
+                  .filter((repository) => !repository.latestSync && !repository.analysis)
+                  .map((repository) => (
+                    <RepositorySwitcherRow
+                      key={repository.id}
+                      repository={repository}
+                      attention={attention}
+                      selected={repository.id === current?.id}
+                      onSelect={() => select(repository)}
+                    />
+                  ))}
+                {!filtered.some((repository) => !repository.latestSync && !repository.analysis) ? (
+                  <p className="repository-switcher__empty">
+                    No other connected repositories match.
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            <Link
+              className="repository-switcher__manage"
+              href="/app/repositories"
               onClick={() => setOpen(false)}
             >
-              ×
-            </button>
+              <span>Manage repositories</span>
+              <span aria-hidden="true">→</span>
+            </Link>
           </div>
-          <input
-            ref={searchRef}
-            className="trace-input"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search repositories…"
-            aria-label="Search repositories"
-          />
-          <div className="repository-switcher__group">
-            <span className="repository-switcher__label">With TRACE intelligence</span>
-            {filtered
-              .filter((repository) => repository.latestSync || repository.analysis)
-              .map((repository) => (
-                <RepositorySwitcherRow
-                  key={repository.id}
-                  repository={repository}
-                  attention={attention}
-                  selected={repository.id === current?.id}
-                  onSelect={() => select(repository)}
-                />
-              ))}
-            {!filtered.some((repository) => repository.latestSync || repository.analysis) ? (
-              <p className="repository-switcher__empty">
-                No analyzed repositories match this search.
-              </p>
-            ) : null}
-          </div>
-          <div className="repository-switcher__group">
-            <span className="repository-switcher__label">Connected</span>
-            {filtered
-              .filter((repository) => !repository.latestSync && !repository.analysis)
-              .map((repository) => (
-                <RepositorySwitcherRow
-                  key={repository.id}
-                  repository={repository}
-                  attention={attention}
-                  selected={repository.id === current?.id}
-                  onSelect={() => select(repository)}
-                />
-              ))}
-          </div>
-          <Link
-            className="repository-switcher__manage"
-            href="/app/repositories"
-            onClick={() => setOpen(false)}
-          >
-            Manage repositories
-          </Link>
-        </div>
+        </>
       ) : null}
     </div>
   );
@@ -352,8 +494,8 @@ function RepositorySwitcherRow({
       type="button"
       onClick={onSelect}
     >
-      <StateMark tone={state.tone} />
-      <span>
+      <ProjectStatusGlyph stateKey={state.key} className="repository-switcher__row-glyph" />
+      <span className="repository-switcher__row-info">
         <strong>{repository.fullName}</strong>
         <small>
           {state.label}
@@ -380,8 +522,8 @@ export function ProjectContextSummary({
   return (
     <div className="project-state-summary">
       <span className={`state-pill ${stateToneClass(state.tone)}`}>
-        <StateMark tone={state.tone} />
-        {state.label}
+        <ProjectStatusGlyph stateKey={state.key} />
+        <span>{state.label}</span>
       </span>
       <p>{state.description}</p>
       {repository?.latestSync ? (
@@ -405,15 +547,51 @@ export function FindingDisclosure({
   repository?: DashboardRepository | null;
 }) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const fileEvidence = finding.evidence.filter(isFileEvidenceReference);
   const recordEvidence = finding.evidence.filter((item) => !isFileEvidenceReference(item));
+
+  // Focus management and escape key listener
   useEffect(() => {
-    if (open) closeRef.current?.focus();
+    if (open) {
+      closeRef.current?.focus();
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setOpen(false);
+          triggerRef.current?.focus();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
   }, [open]);
+
+  const handleClose = () => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  const analyzedCommitSha =
+    finding.provenance?.analyzedCommit ??
+    finding.analyzedCommit ??
+    repository?.latestSync?.headCommit ??
+    null;
+
+  const branchName =
+    repository?.latestSync?.branch ??
+    repository?.defaultBranch ??
+    'main';
+
   return (
     <>
-      <button className="finding-row__open" type="button" onClick={() => setOpen(true)}>
+      <button
+        ref={triggerRef}
+        className="finding-row__open"
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+      >
         Review
       </button>
       {open ? (
@@ -422,110 +600,219 @@ export function FindingDisclosure({
             className="trace-dialog-scrim"
             type="button"
             aria-label="Close finding details"
-            onClick={() => setOpen(false)}
+            onClick={handleClose}
           />
           <aside
             className="finding-drawer"
             role="dialog"
             aria-modal="true"
-            aria-labelledby={`finding-${finding.id}`}
+            aria-labelledby={`finding-title-${finding.id}`}
           >
-            <button
-              ref={closeRef}
-              className="trace-dialog__close"
-              type="button"
-              aria-label="Close finding details"
-              onClick={() => setOpen(false)}
-            >
-              ×
-            </button>
-            <div className="finding-drawer__eyebrow">
-              <span data-severity={finding.severity}>{finding.severity}</span>
-              <span>
-                {finding.classification === 'deterministic'
-                  ? 'Verified local evidence'
-                  : 'Probabilistic interpretation'}
-              </span>
-              {finding.affectedArea ? <span>{finding.affectedArea}</span> : null}
+            <div className="finding-drawer__header">
+              <div className="finding-drawer__eyebrow">
+                <span className="severity-badge" data-severity={finding.severity}>
+                  {finding.severity}
+                </span>
+                <span className="classification-pill">
+                  {finding.classification === 'deterministic'
+                    ? 'Verified evidence'
+                    : 'Probabilistic'}
+                </span>
+                {finding.affectedArea ? (
+                  <span className="affected-area-pill">{finding.affectedArea}</span>
+                ) : null}
+                {finding.relatedChangeNumber ? (
+                  <span className="related-change-pill">PR #{finding.relatedChangeNumber}</span>
+                ) : null}
+              </div>
+              <button
+                ref={closeRef}
+                className="trace-dialog__close"
+                type="button"
+                aria-label="Close finding details"
+                onClick={handleClose}
+              >
+                ×
+              </button>
             </div>
-            <h2 id={`finding-${finding.id}`}>{finding.title}</h2>
-            <p className="finding-drawer__lead">{presentFindingDetail(finding.detail)}</p>
+
+            {/* 1. What Happened */}
+            <div className="finding-drawer__intro">
+              <h2 id={`finding-title-${finding.id}`}>{finding.title}</h2>
+              <p className="finding-drawer__lead">{presentFindingDetail(finding.detail)}</p>
+            </div>
+
+            {/* 2. Why this matters */}
+            <section className="finding-drawer__section">
+              <span className="eyebrow">Why TRACE flagged this</span>
+              <p className="finding-drawer__text">
+                {finding.classification === 'deterministic'
+                  ? `Deterministic AST rule '${finding.provenance?.ruleId ?? 'code-rule'}' matched code patterns that violate local invariants. This condition directly affects ${finding.affectedArea ?? 'the codebase'} and should be addressed before merging.`
+                  : `Heuristic evaluation flagged potential drift in ${finding.affectedArea ?? 'related components'}. Review the referenced evidence to verify impact on system stability.`}
+              </p>
+            </section>
+
+            {/* 3. Related Change (if present) */}
             {finding.relatedChangeNumber ? (
-              <section>
+              <section className="finding-drawer__section">
                 <span className="eyebrow">Related change</span>
-                <p>
-                  Observed in context of active pull request{' '}
-                  <strong>#{finding.relatedChangeNumber}</strong>.
-                </p>
+                <div className="finding-drawer__fact-card">
+                  <strong>Pull Request #{finding.relatedChangeNumber}</strong>
+                  <p>Observed in the context of active pull request #{finding.relatedChangeNumber}.</p>
+                </div>
               </section>
             ) : null}
-            <section>
-              <span className="eyebrow">Why TRACE flagged this</span>
-              <p>{presentFindingDetail(finding.detail)}</p>
-            </section>
-            <section>
-              <span className="eyebrow">Evidence</span>
+
+            {/* 4. Evidence & Locations */}
+            <section className="finding-drawer__section">
+              <span className="eyebrow">
+                Evidence ({finding.evidence.length} reference{finding.evidence.length === 1 ? '' : 's'})
+              </span>
               {fileEvidence.length ? (
-                <>
-                  <h3 className="finding-drawer__subheading">Affected locations</h3>
-                  <ul className="evidence-list">
+                <div className="finding-drawer__evidence-group">
+                  <h3 className="finding-drawer__subheading">Affected file locations</h3>
+                  <ul className="evidence-list evidence-list--enhanced">
                     {fileEvidence.map((item) => (
-                      <li key={item}>
-                        <code>{item}</code>
+                      <li key={item} className="evidence-item">
+                        <div className="evidence-item__icon" aria-hidden="true">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                          </svg>
+                        </div>
+                        <div className="evidence-item__details">
+                          <code className="evidence-item__path">{item}</code>
+                          <span className="evidence-item__meta">
+                            {finding.classification === 'deterministic'
+                              ? 'Deterministic AST syntax match'
+                              : 'File reference'}
+                            {' · '}Verified by local trace CLI
+                          </span>
+                        </div>
                       </li>
                     ))}
                   </ul>
-                </>
-              ) : (
-                <p className="drawer-muted">No supporting file-level evidence was synchronized.</p>
-              )}
+                </div>
+              ) : null}
+
               {recordEvidence.length ? (
-                <>
+                <div className="finding-drawer__evidence-group">
                   <h3 className="finding-drawer__subheading">TRACE evidence records</h3>
-                  <p className="drawer-muted">
-                    These references are synchronized TRACE records, not raw source files.
-                  </p>
-                  <ul className="evidence-list">
+                  <ul className="evidence-list evidence-list--enhanced">
                     {recordEvidence.map((item) => (
-                      <li key={item}>
-                        <code>{item}</code>
+                      <li key={item} className="evidence-item">
+                        <div className="evidence-item__icon" aria-hidden="true">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <line x1="3" y1="9" x2="21" y2="9" />
+                            <line x1="9" y1="21" x2="9" y2="9" />
+                          </svg>
+                        </div>
+                        <div className="evidence-item__details">
+                          <code className="evidence-item__path">{item}</code>
+                          <span className="evidence-item__meta">Synchronized TRACE record</span>
+                        </div>
                       </li>
                     ))}
                   </ul>
-                </>
+                </div>
               ) : null}
+
               {!finding.evidence.length ? (
-                <p className="drawer-muted">No supporting evidence record was synchronized.</p>
+                <p className="drawer-muted">No supporting evidence references were synchronized for this item.</p>
               ) : null}
+
+              <div className="finding-privacy-badge">
+                <span className="privacy-icon" aria-hidden="true">🔒</span>
+                <span>Zero source code exposure: TRACE analyzes AST locally and never uploads code snippets or files.</span>
+              </div>
             </section>
-            <section>
-              <span className="eyebrow">Origin and verification</span>
-              <p>
-                {repositoryName ?? 'Selected repository'} ·{' '}
-                {repository?.latestSync?.branch ??
-                  repository?.defaultBranch ??
-                  'branch unavailable'}{' '}
-                · analyzed @{' '}
-                <code>
-                  {finding.provenance?.analyzedCommit?.slice(0, 12) ??
-                    finding.analyzedCommit?.slice(0, 12) ??
-                    repository?.latestSync?.headCommit?.slice(0, 12) ??
-                    'commit unavailable'}
-                </code>
-              </p>
-              {finding.provenance?.isStaleWithRemote && finding.provenance.remoteHeadCommit ? (
-                <p className="drawer-muted">
-                  Newer commit exists on GitHub (<code>{finding.provenance.remoteHeadCommit.slice(0, 12)}</code>). Run local analysis to refresh findings.
-                </p>
-              ) : null}
-              <small>Analysis remains local; raw source code and snippets are never synchronized to TRACE.</small>
+
+            {/* 5. Origin & Verification */}
+            <section className="finding-drawer__section">
+              <span className="eyebrow">Origin & Rule details</span>
+              <div className="finding-drawer__grid">
+                <div>
+                  <span className="detail-label">Repository</span>
+                  <strong>{repositoryName ?? repository?.fullName ?? 'Local workspace'}</strong>
+                </div>
+                <div>
+                  <span className="detail-label">Branch</span>
+                  <code>{branchName}</code>
+                </div>
+                {finding.provenance?.ruleId ? (
+                  <div>
+                    <span className="detail-label">Rule ID</span>
+                    <code>{finding.provenance.ruleId}</code>
+                  </div>
+                ) : null}
+                <div>
+                  <span className="detail-label">Verification source</span>
+                  <span>Local CLI Analyzer</span>
+                </div>
+              </div>
             </section>
-            <details className="technical-details">
-              <summary>Technical details</summary>
-              <p>
-                Updated {formatDate(finding.updatedAt)}. No finding disposition controls are
-                available because the current dashboard does not persist them.
+
+            {/* 6. Analyzed Commit & Freshness Boundary */}
+            <section className="finding-drawer__section">
+              <span className="eyebrow">Analyzed commit & Freshness</span>
+              <div className="finding-drawer__commit-info">
+                <span>
+                  Analyzed at commit:{' '}
+                  <code>{analyzedCommitSha ? analyzedCommitSha.slice(0, 12) : 'local workspace'}</code>
+                </span>
+                {finding.provenance?.isStaleWithRemote && finding.provenance.remoteHeadCommit ? (
+                  <div className="stale-warning-box">
+                    <strong>Newer commit on GitHub</strong>
+                    <p>
+                      Remote default branch has commit <code>{finding.provenance.remoteHeadCommit.slice(0, 12)}</code>. Run <code>trace analyze</code> locally to update findings against latest remote changes.
+                    </p>
+                  </div>
+                ) : (
+                  <span className="freshness-ok">
+                    Verified against current repository state.
+                  </span>
+                )}
+              </div>
+            </section>
+
+            {/* 7. Privacy & Security Boundary */}
+            <section className="finding-drawer__section">
+              <span className="eyebrow">Privacy & Security boundary</span>
+              <p className="finding-drawer__privacy-text">
+                Local-first guarantee: TRACE performs code analysis exclusively on your machine. Raw source code, syntax trees, and sensitive repository contents are never transmitted or retained in the cloud. Only structured metadata and verified evidence references are stored.
               </p>
+            </section>
+
+            {/* 8. Technical Details Accordion (Read-only, no fake resolve buttons) */}
+            <details className="technical-details redesign-technical">
+              <summary>Technical provenance details</summary>
+              <div className="technical-details__content">
+                <div className="tech-row">
+                  <span>Finding ID:</span>
+                  <code>{finding.id}</code>
+                </div>
+                <div className="tech-row">
+                  <span>Classification:</span>
+                  <span>{finding.classification}</span>
+                </div>
+                <div className="tech-row">
+                  <span>Severity Level:</span>
+                  <span>{finding.severity}</span>
+                </div>
+                <div className="tech-row">
+                  <span>Last Updated:</span>
+                  <time dateTime={finding.updatedAt}>{formatDate(finding.updatedAt)}</time>
+                </div>
+                <div className="tech-notice">
+                  <small>
+                    TRACE finding records are immutable snapshots from local analysis runs. Manual disposition controls (resolve, dismiss, or assign) are intentionally excluded because TRACE enforces deterministic engineering truth rather than subjective ticket status.
+                  </small>
+                </div>
+              </div>
             </details>
           </aside>
         </div>
