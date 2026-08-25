@@ -343,7 +343,7 @@ export default function HomePage() {
             </div>
             <div className="final-cta__token-row">
               <span>Source Transmission</span>
-              <span>0 Bytes (Air-gapped)</span>
+              <span>0 Bytes (Local Analysis)</span>
             </div>
           </div>
         </section>

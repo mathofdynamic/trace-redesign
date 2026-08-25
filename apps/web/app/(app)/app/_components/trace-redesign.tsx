@@ -187,12 +187,16 @@ export function LocalActionPanel({
   description,
   commands = [],
   triggerLabel = 'Update TRACE',
+  variant = 'primary',
+  buttonClassName,
 }: {
   repositoryName?: string;
   title?: string;
   description?: string;
   commands?: string[];
   triggerLabel?: string;
+  variant?: 'primary' | 'secondary';
+  buttonClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -220,11 +224,15 @@ export function LocalActionPanel({
     setCopied(key);
     window.setTimeout(() => setCopied((current) => (current === key ? null : current)), 1400);
   }
+  const buttonClass =
+    buttonClassName ??
+    (variant === 'primary' ? 'trace-button trace-button--primary' : 'trace-button trace-button--secondary');
+
   return (
     <>
       <button
         ref={triggerRef}
-        className="trace-button trace-button--primary"
+        className={buttonClass}
         type="button"
         onClick={() => setOpen(true)}
       >

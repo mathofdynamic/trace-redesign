@@ -4,7 +4,7 @@ export interface DocSourceItem {
   purpose: string;
   path: string;
   url: string;
-  category: 'Overview' | 'Architecture' | 'Design' | 'Roadmap' | 'Integration';
+  category: 'Overview' | 'Architecture' | 'Design' | 'Workflow' | 'Integration' | 'Internal / Contributor';
 }
 
 export interface CliCommandStep {
@@ -25,20 +25,44 @@ export interface WorkflowStage {
 
 export const sourceDocuments: DocSourceItem[] = [
   {
+    id: 'readme-quickstart',
+    name: 'README & Quick Start',
+    purpose: 'Repository quick start, CLI commands summary, and local analysis architecture.',
+    path: 'README.md',
+    url: 'https://github.com/mathofdynamic/TRACE/blob/main/README.md',
+    category: 'Overview',
+  },
+  {
+    id: 'local-dashboard-workflow',
+    name: 'Local-to-Dashboard Workflow',
+    purpose: 'First connection walkthrough, signed artifact staging, review boundaries, and sync transport.',
+    path: 'DOC/local-dashboard-workflow.md',
+    url: 'https://github.com/mathofdynamic/TRACE/blob/main/DOC/local-dashboard-workflow.md',
+    category: 'Workflow',
+  },
+  {
+    id: 'technical-overview',
+    name: 'Technical Overview & .trace RFC',
+    purpose: 'AST boundary rules, .trace schema v0.1 specification, and source-exclusion guarantees.',
+    path: 'DOC/technical-overview.md',
+    url: 'https://github.com/mathofdynamic/TRACE/blob/main/DOC/technical-overview.md',
+    category: 'Architecture',
+  },
+  {
     id: 'project-overview',
-    name: 'Project Overview',
-    purpose: 'Product thesis, user personas, coordination model, and noise-elimination principles.',
+    name: 'Project Overview & Principles',
+    purpose: 'Product thesis, developer coordination model, and noise-elimination principles.',
     path: 'DOC/project-overview.md',
     url: 'https://github.com/mathofdynamic/TRACE/blob/main/DOC/project-overview.md',
     category: 'Overview',
   },
   {
-    id: 'technical-overview',
-    name: 'Technical Overview',
-    purpose: 'Architecture, AST boundary rules, .trace schema v0.1, and cloud projection guarantees.',
-    path: 'DOC/technical-overview.md',
-    url: 'https://github.com/mathofdynamic/TRACE/blob/main/DOC/technical-overview.md',
-    category: 'Architecture',
+    id: 'github-app-setup',
+    name: 'GitHub App & Webhooks',
+    purpose: 'Signed webhook pipelines, event deduplication, idempotency tokens, and OAuth scopes.',
+    path: 'DOC/github-app-setup.md',
+    url: 'https://github.com/mathofdynamic/TRACE/blob/main/DOC/github-app-setup.md',
+    category: 'Integration',
   },
   {
     id: 'design-spec',
@@ -51,18 +75,10 @@ export const sourceDocuments: DocSourceItem[] = [
   {
     id: 'roadmap-prompts',
     name: 'Implementation Roadmap',
-    purpose: 'Phases 00–16 execution breakdown, non-negotiable invariants, and test coverage standards.',
+    purpose: 'Internal contributor phase execution breakdown, non-negotiable invariants, and test coverage standards.',
     path: 'Implementation-Prompts/README.md',
     url: 'https://github.com/mathofdynamic/TRACE/tree/main/Implementation-Prompts',
-    category: 'Roadmap',
-  },
-  {
-    id: 'github-app-setup',
-    name: 'GitHub App & Webhooks',
-    purpose: 'Signed webhook pipelines, event deduplication, idempotency tokens, and OAuth scopes.',
-    path: 'DOC/github-app-setup.md',
-    url: 'https://github.com/mathofdynamic/TRACE/blob/main/DOC/github-app-setup.md',
-    category: 'Integration',
+    category: 'Internal / Contributor',
   },
 ];
 

@@ -8,8 +8,8 @@ export default async function ConflictsPage() {
     <div className="dashboard-page conflicts-page-redesign">
       <div className="dashboard-page-header">
         <div>
-          <p className="section-label">Conflicts</p>
-          <h1>Changes that may be correct alone but incompatible together.</h1>
+          <span className="eyebrow">Engineering Coordination</span>
+          <h1>Active Conflicts</h1>
           <p>
             Deterministic cross-PR AST collision discovery and architectural boundary analysis.
             Evidence remains distinct from interpretation.

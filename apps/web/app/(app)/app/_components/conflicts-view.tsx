@@ -872,6 +872,7 @@ function ConflictDetailDrawer({
   onClose,
 }: ConflictDetailDrawerProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [copied, setCopied] = useState(false);
   const { conflict, sideA, sideB, sharedBoundary, severity, classification, items } = model;
 
   useEffect(() => {
@@ -884,6 +885,15 @@ function ConflictDetailDrawer({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
+
+  const copyCliCommand = () => {
+    const cmd = `trace analyze`;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(cmd).catch(() => {});
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="trace-dialog-layer" role="presentation">
@@ -1021,6 +1031,13 @@ function ConflictDetailDrawer({
           <span className="eyebrow">Local reproduction guidance</span>
           <div className="conflict-drawer__cli-box">
             <code>trace analyze</code>
+            <button
+              type="button"
+              className="trace-button trace-button--ghost trace-button--sm"
+              onClick={copyCliCommand}
+            >
+              {copied ? 'Copied' : 'Copy command'}
+            </button>
           </div>
           <p className="conflict-drawer__cli-note">
             Run deterministic change analysis in your local repository workspace to verify AST collision boundaries.

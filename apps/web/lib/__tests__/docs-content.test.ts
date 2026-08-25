@@ -7,14 +7,19 @@ import {
 } from '../docs-data';
 
 describe('Public Documentation Page Contracts', () => {
-  it('indexes all authoritative in-tree source documents', () => {
-    expect(sourceDocuments).toHaveLength(5);
+  it('indexes all authoritative in-tree source documents and classifies internal artifacts', () => {
+    expect(sourceDocuments).toHaveLength(7);
     const paths = sourceDocuments.map((d) => d.path);
-    expect(paths).toContain('DOC/project-overview.md');
+    expect(paths).toContain('README.md');
+    expect(paths).toContain('DOC/local-dashboard-workflow.md');
     expect(paths).toContain('DOC/technical-overview.md');
+    expect(paths).toContain('DOC/project-overview.md');
+    expect(paths).toContain('DOC/github-app-setup.md');
     expect(paths).toContain('Design-system/TRACE-DESIGN-SPEC.md');
     expect(paths).toContain('Implementation-Prompts/README.md');
-    expect(paths).toContain('DOC/github-app-setup.md');
+
+    const internalDoc = sourceDocuments.find((d) => d.path === 'Implementation-Prompts/README.md');
+    expect(internalDoc?.category).toBe('Internal / Contributor');
 
     for (const doc of sourceDocuments) {
       expect(doc.name.length).toBeGreaterThan(0);

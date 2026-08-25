@@ -42,7 +42,7 @@ export const packagingTiers: PackagingTier[] = [
     id: 'enterprise-private',
     name: 'Enterprise / Private',
     badge: 'Design Partnership',
-    intendedRole: 'Organizations requiring air-gapped runtimes, VPC isolation, and custom security policies.',
+    intendedRole: 'Organizations requiring self-hosted or network-isolated runtimes, VPC isolation, and custom security policies.',
     currentAvailability: 'Requirements and operational constraints defined with pilot design partners.',
     dataBoundary: 'Self-hosted control plane or customer-managed cloud isolation boundaries.',
     licensingStatus: 'Formal enterprise packaging and support terms will be announced after pilot audit.',

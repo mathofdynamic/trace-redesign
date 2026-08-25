@@ -164,10 +164,10 @@ export function RepositorySelector({
 
         <div className="repositories-header__meta-strip">
           {primaryInstallation ? (
-            <div className="repositories-header__installation-tag">
-              <span className="tag-label">GitHub Installation</span>
-              <strong>{primaryInstallation.accountLogin}</strong>
-              <small>Read-only access · {primaryInstallation.accountType}</small>
+            <div className="repositories-installation-badge" aria-label="GitHub installation metadata">
+              <span className="installation-badge__label">GitHub installation</span>
+              <code className="installation-badge__account">{primaryInstallation.accountLogin}</code>
+              <span className="installation-badge__meta">Read-only · {primaryInstallation.accountType}</span>
             </div>
           ) : null}
 
@@ -334,36 +334,40 @@ export function RepositorySelector({
             type="button"
             className="repositories-filter-button"
             data-active={activeFilter === 'all'}
+            aria-pressed={activeFilter === 'all'}
             onClick={() => setActiveFilter('all')}
           >
-            <span>All</span>
+            <span className="filter-button__label">All</span>
             <span className="filter-count-badge">{counts.all}</span>
           </button>
           <button
             type="button"
             className="repositories-filter-button"
             data-active={activeFilter === 'current'}
+            aria-pressed={activeFilter === 'current'}
             onClick={() => setActiveFilter('current')}
           >
-            <span>Current</span>
+            <span className="filter-button__label">Current</span>
             <span className="filter-count-badge">{counts.current}</span>
           </button>
           <button
             type="button"
             className="repositories-filter-button"
             data-active={activeFilter === 'attention'}
+            aria-pressed={activeFilter === 'attention'}
             onClick={() => setActiveFilter('attention')}
           >
-            <span>Attention</span>
+            <span className="filter-button__label">Attention</span>
             <span className="filter-count-badge">{counts.attention}</span>
           </button>
           <button
             type="button"
             className="repositories-filter-button"
             data-active={activeFilter === 'not-analyzed'}
+            aria-pressed={activeFilter === 'not-analyzed'}
             onClick={() => setActiveFilter('not-analyzed')}
           >
-            <span>Not analyzed</span>
+            <span className="filter-button__label">Not analyzed</span>
             <span className="filter-count-badge">{counts.notAnalyzed}</span>
           </button>
         </nav>
@@ -431,7 +435,7 @@ export function RepositorySelector({
               <tbody>
                 {filteredRepositories.map((repo) => (
                   <tr className="repositories-row" key={repo.id}>
-                    {/* Identity Column */}
+                    {/* Zone 1: Identity */}
                     <td className="col-identity">
                       <div className="repo-identity-cell">
                         <Link className="repo-identity-name" href={`/app/repositories/${repo.id}`}>
@@ -462,7 +466,7 @@ export function RepositorySelector({
                       </div>
                     </td>
 
-                    {/* State Column */}
+                    {/* Zone 2: Lifecycle */}
                     <td className="col-state">
                       <div className="repo-state-cell">
                         <div className="repo-state-head">
@@ -473,41 +477,35 @@ export function RepositorySelector({
                       </div>
                     </td>
 
-                    {/* Facts Column: Findings & Reports */}
+                    {/* Zone 3: Intelligence Facts (14 findings · 5 reports) */}
                     <td className="col-facts">
-                      <div className="repo-facts-cell">
-                        <div className="repo-fact-item">
-                          <span className="fact-label">Findings</span>
-                          <span
-                            className={`fact-value-badge ${repo.findingsCount > 0 ? 'is-highlight' : ''}`}
-                          >
-                            {repo.findingsCount}
-                          </span>
-                        </div>
-                        <div className="repo-fact-item">
-                          <span className="fact-label">Reports</span>
-                          <span className="fact-value-badge">{repo.reportsCount}</span>
-                        </div>
+                      <div className="repo-intelligence-cell">
+                        <span className="intelligence-count-group">
+                          <strong className="intelligence-number">{repo.findingsCount}</strong> {repo.findingsCount === 1 ? 'finding' : 'findings'}
+                        </span>
+                        <span className="intelligence-sep" aria-hidden="true">·</span>
+                        <span className="intelligence-count-group">
+                          <strong className="intelligence-number">{repo.reportsCount}</strong> {repo.reportsCount === 1 ? 'report' : 'reports'}
+                        </span>
                       </div>
                     </td>
 
-                    {/* Sync Column */}
+                    {/* Zone 4: Synchronization (5d ago · 4953add) */}
                     <td className="col-sync">
                       <div className="repo-sync-cell">
                         <span className="sync-time">
                           {formatRelativeDate(repo.lastSynchronizedAt)}
                         </span>
+                        <span className="sync-sep" aria-hidden="true">·</span>
                         {repo.shortSha ? (
-                          <span className="sync-sha">
-                            <code>{repo.shortSha}</code>
-                          </span>
+                          <code className="sync-sha">{repo.shortSha}</code>
                         ) : (
                           <span className="sync-sha-none">No sync commit</span>
                         )}
                       </div>
                     </td>
 
-                    {/* Action Column */}
+                    {/* Zone 5: Action */}
                     <td className="col-action">
                       <div className="repo-action-cell">
                         {repo.state.actionKind === 'local' ? (
@@ -517,6 +515,7 @@ export function RepositorySelector({
                             description={repo.state.description}
                             commands={repo.localCommands}
                             triggerLabel={repo.state.actionLabel ?? 'Update TRACE'}
+                            variant={repo.state.key === 'needs-refresh' ? 'primary' : 'secondary'}
                           />
                         ) : null}
                         <Link
@@ -535,7 +534,7 @@ export function RepositorySelector({
         )}
       </section>
 
-      {/* 5. GitHub Installation & Security Context (Secondary Card) */}
+      {/* 5. GitHub Installation & Security Context (Secondary Card with Definition List) */}
       {primaryInstallation ? (
         <section
           className="repositories-installation-card"
@@ -552,20 +551,26 @@ export function RepositorySelector({
               </p>
             </div>
 
-            <div className="installation-card__meta">
-              <div className="meta-pair">
-                <span className="meta-pair__label">Account</span>
-                <span className="meta-pair__value">{primaryInstallation.accountLogin}</span>
+            <dl className="installation-facts-grid" aria-label="GitHub integration details">
+              <div className="installation-fact-item">
+                <dt className="installation-fact-item__label">Account</dt>
+                <dd className="installation-fact-item__val">
+                  <code>{primaryInstallation.accountLogin}</code>
+                </dd>
               </div>
-              <div className="meta-pair">
-                <span className="meta-pair__label">Type</span>
-                <span className="meta-pair__value">{primaryInstallation.accountType}</span>
+              <div className="installation-fact-item">
+                <dt className="installation-fact-item__label">Type</dt>
+                <dd className="installation-fact-item__val">{primaryInstallation.accountType}</dd>
               </div>
-              <div className="meta-pair">
-                <span className="meta-pair__label">Status</span>
-                <span className="meta-pair__value">Active (Read-only)</span>
+              <div className="installation-fact-item">
+                <dt className="installation-fact-item__label">Access</dt>
+                <dd className="installation-fact-item__val">Read-only</dd>
               </div>
-            </div>
+              <div className="installation-fact-item">
+                <dt className="installation-fact-item__label">Status</dt>
+                <dd className="installation-fact-item__val">Active</dd>
+              </div>
+            </dl>
           </div>
 
           <div className="installation-card__footer">

@@ -188,7 +188,7 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
                 >
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
-                Zero-Knowledge Boundary
+                Source-Exclusion Boundary
               </span>
             </div>
             <h1 className="settings-header__title">
@@ -534,7 +534,7 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
           </div>
         </div>
         <p className="settings-section__lead">
-          TRACE enforces an air-gapped local AST architecture. Full source code, inline snippets, and developer credentials never leave your workstation.
+          TRACE enforces a source-isolated local analysis architecture. Full source code, inline snippets, and developer credentials never leave your workstation.
         </p>
 
         {/* Two-Column Comparison Matrix: Sent vs Never Sent */}

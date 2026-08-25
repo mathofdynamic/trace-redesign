@@ -15,7 +15,7 @@ export default async function ReportsPage({
       <header className="redesign-header">
         <div>
           <span className="eyebrow">Reports Library</span>
-          <h1>Project memory, made readable.</h1>
+          <h1>Synchronized Reports</h1>
           <p>
             Approved local engineering records organized around the changes they describe.
             Deterministic AST facts with source code excluded.

@@ -580,8 +580,6 @@ function ReportQuickDrawer({
   copiedId: string | null;
 }) {
   const repository = repositories.find((r) => r.id === report.repositoryId);
-  const sections = parseReportMarkdownSections(report.content);
-
   const relatedChanges = changes.filter(
     (c) =>
       c.repositoryId === report.repositoryId &&
@@ -589,16 +587,24 @@ function ReportQuickDrawer({
         report.items.some((i) => i.changeId === c.id || i.changeNumber === c.number)),
   );
 
+  // Top high-signal findings (2 to 4 items)
+  const topFindings = report.items.slice(0, 3);
+  const remainingFindingsCount = Math.max(0, report.items.length - topFindings.length);
+
+  // Top linked changes (up to 2 items)
+  const topChanges = relatedChanges.slice(0, 2);
+  const remainingChangesCount = Math.max(0, relatedChanges.length - topChanges.length);
+
   return (
     <div className="drawer-overlay" onClick={onClose}>
       <aside
-        className="report-drawer"
+        className="report-drawer report-quick-inspect"
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-drawer-title"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Drawer Header */}
+        {/* 1. Header: Type, Repo, Title, Date & Close */}
         <div className="report-drawer__header">
           <div>
             <div className="report-drawer__eyebrow">
@@ -608,92 +614,68 @@ function ReportQuickDrawer({
               <span className="report-repo-tag">
                 {repository?.fullName ?? report.repositoryName}
               </span>
-              <span className="report-origin-tag">Approved local sync</span>
+              <span className="report-origin-tag">Quick Inspect</span>
             </div>
             <h2 id="report-drawer-title" className="report-drawer__title">
               {report.title}
             </h2>
+            <time className="report-drawer__date" dateTime={report.generatedAt}>
+              Generated {formatDate(report.generatedAt)} · {report.timeWindow ?? 'Single evaluation'}
+            </time>
           </div>
           <button
             type="button"
             className="drawer-close-btn"
             onClick={onClose}
-            aria-label="Close report quick view"
+            aria-label="Close report quick inspect"
           >
             ✕
           </button>
         </div>
 
-        {/* Freshness Banner */}
+        {/* 2. Freshness Status */}
         {report.freshness === 'needs-refresh' ? (
           <div className="drawer-freshness-banner drawer-freshness-banner--warning">
             <strong>Needs refresh</strong>
             <p>
-              Analyzed at commit <code>{report.analyzedCommit?.slice(0, 12)}</code>.
-              GitHub remote HEAD is at <code>{report.remoteHeadCommit?.slice(0, 12)}</code>.
+              Analyzed commit <code>{report.analyzedCommit?.slice(0, 12)}</code> is behind GitHub remote HEAD (<code>{report.remoteHeadCommit?.slice(0, 12)}</code>).
             </p>
           </div>
         ) : report.freshness === 'attention' ? (
           <div className="drawer-freshness-banner drawer-freshness-banner--attention">
             <strong>Sync attention</strong>
-            <p>CLI schema version alignment required for automated synchronization bridge.</p>
+            <p>CLI manifest schema alignment required for automated bridge sync.</p>
           </div>
         ) : (
           <div className="drawer-freshness-banner drawer-freshness-banner--current">
             <strong>Current with GitHub</strong>
-            <p>Analyzed commit matches remote repository default branch.</p>
+            <p>Analyzed commit matches remote default branch HEAD.</p>
           </div>
         )}
 
-        {/* Executive Summary */}
+        {/* 3. Summary: One Concise Paragraph */}
         <div className="report-drawer__section">
-          <span className="drawer-section-label">Executive Summary</span>
+          <span className="drawer-section-label">Summary</span>
           <p className="report-drawer__summary-text">
             {report.summary || 'Approved TRACE project-memory record.'}
           </p>
         </div>
 
-        {/* Facts DL */}
-        <div className="report-drawer__section">
-          <span className="drawer-section-label">Record Provenance</span>
-          <dl className="drawer-facts-grid">
-            <div>
-              <dt>Repository</dt>
-              <dd>
-                <Link href={`/app/repositories/${report.repositoryId}`}>
-                  {report.repositoryName}
-                </Link>
-              </dd>
-            </div>
-            <div>
-              <dt>Time Window</dt>
-              <dd>{report.timeWindow ?? 'Single evaluation'}</dd>
-            </div>
-            <div>
-              <dt>Analyzed Commit</dt>
-              <dd>
-                <code>{report.analyzedCommit?.slice(0, 12) ?? 'Local HEAD'}</code>
-              </dd>
-            </div>
-            <div>
-              <dt>Generated</dt>
-              <dd>{formatDate(report.generatedAt)}</dd>
-            </div>
-            <div>
-              <dt>Privacy Guarantee</dt>
-              <dd>Deterministic AST facts · Source code excluded</dd>
-            </div>
-          </dl>
-        </div>
-
-        {/* Recorded Intelligence Items */}
-        {report.items.length > 0 ? (
+        {/* 4. High-Signal Intelligence: Top Findings & AST Evidence */}
+        {topFindings.length > 0 ? (
           <div className="report-drawer__section">
-            <span className="drawer-section-label">
-              Recorded Findings & AST Evidence ({report.items.length})
-            </span>
+            <div className="drawer-section-header-row">
+              <span className="drawer-section-label">
+                Top Findings ({report.items.length})
+              </span>
+              {remainingFindingsCount > 0 ? (
+                <span className="drawer-more-hint">
+                  +{remainingFindingsCount} more in full report
+                </span>
+              ) : null}
+            </div>
             <div className="drawer-items-list">
-              {report.items.map((item) => (
+              {topFindings.map((item) => (
                 <div className="drawer-item-card" key={item.id}>
                   <div className="drawer-item-card__head">
                     <span className="item-severity-tag" data-severity={item.severity ?? 'low'}>
@@ -704,9 +686,12 @@ function ReportQuickDrawer({
                   <p>{presentFindingDetail(item.detail)}</p>
                   {item.evidence?.length ? (
                     <div className="drawer-item-evidence">
-                      {item.evidence.map((ev) => (
+                      {item.evidence.slice(0, 2).map((ev) => (
                         <code key={ev}>{ev}</code>
                       ))}
+                      {item.evidence.length > 2 ? (
+                        <span className="evidence-more-tag">+{item.evidence.length - 2} loci</span>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
@@ -715,20 +700,27 @@ function ReportQuickDrawer({
           </div>
         ) : null}
 
-        {/* Related Pull Requests */}
-        {relatedChanges.length > 0 ? (
+        {/* 5. High-Signal Intelligence: Linked Changes */}
+        {topChanges.length > 0 ? (
           <div className="report-drawer__section">
-            <span className="drawer-section-label">
-              Changes Reviewed ({relatedChanges.length})
-            </span>
+            <div className="drawer-section-header-row">
+              <span className="drawer-section-label">
+                Linked Pull Requests ({relatedChanges.length})
+              </span>
+              {remainingChangesCount > 0 ? (
+                <span className="drawer-more-hint">
+                  +{remainingChangesCount} more reviewed
+                </span>
+              ) : null}
+            </div>
             <div className="drawer-changes-list">
-              {relatedChanges.map((change) => (
+              {topChanges.map((change) => (
                 <div className="drawer-change-row" key={change.id}>
                   <span className="drawer-change-badge">PR #{change.number}</span>
                   <div className="drawer-change-info">
                     <strong>{change.title}</strong>
                     <small>
-                      {change.authorLogin} · {change.branch}
+                      @{change.authorLogin} · <code>{change.branch}</code>
                     </small>
                   </div>
                 </div>
@@ -737,39 +729,45 @@ function ReportQuickDrawer({
           </div>
         ) : null}
 
-        {/* Markdown Sections Preview (Summary & Next Actions) */}
-        {sections.slice(0, 2).map((sec) => (
-          <div className="report-drawer__section" key={sec.title}>
-            <span className="drawer-section-label">{sec.title}</span>
-            <p className="drawer-section-body">{sec.body.join('\n').trim()}</p>
-          </div>
-        ))}
-
-        {/* CLI Reproduction */}
+        {/* 6. High-Signal Intelligence: Provenance Summary */}
         <div className="report-drawer__section">
-          <span className="drawer-section-label">Local CLI Inspection</span>
-          <div className="drawer-cli-box">
-            <code>{report.path ? `trace inspect ${report.path}` : `trace report daily`}</code>
-            <button
-              type="button"
-              className="trace-button trace-button--ghost trace-button--sm"
-              onClick={() => onCopyCli(report)}
-            >
-              {copiedId === report.id ? 'Copied' : 'Copy command'}
-            </button>
-          </div>
+          <span className="drawer-section-label">Provenance Summary</span>
+          <dl className="drawer-facts-grid drawer-facts-grid--compact">
+            <div>
+              <dt>Repository</dt>
+              <dd>
+                <Link href={`/app/repositories/${report.repositoryId}`}>
+                  {report.repositoryName}
+                </Link>
+              </dd>
+            </div>
+            <div>
+              <dt>Analyzed Commit</dt>
+              <dd>
+                <code>{report.analyzedCommit?.slice(0, 12) ?? 'Local HEAD'}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>Privacy Guarantee</dt>
+              <dd>Deterministic AST facts · Source code excluded</dd>
+            </div>
+          </dl>
         </div>
 
-        {/* Drawer Footer Actions */}
+        {/* 7. Footer: Read Full Report & Copy CLI */}
         <div className="report-drawer__footer">
-          <button type="button" className="trace-button trace-button--secondary" onClick={onClose}>
-            Close preview
+          <button
+            type="button"
+            className="trace-button trace-button--secondary trace-button--small"
+            onClick={() => onCopyCli(report)}
+          >
+            {copiedId === report.id ? 'Copied' : 'Copy CLI inspect'}
           </button>
           <Link
             href={`/app/reports/${report.id}`}
-            className="trace-button trace-button--primary"
+            className="trace-button trace-button--primary trace-button--small"
           >
-            Open standalone report view →
+            Read full report →
           </Link>
         </div>
       </aside>

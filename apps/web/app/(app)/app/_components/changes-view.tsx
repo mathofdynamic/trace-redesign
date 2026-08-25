@@ -628,7 +628,7 @@ function ChangeRow({ change, conflictInfo, showRepo = false, onInspect }: Change
           </button>
           {change.url ? (
             <a
-              className="trace-button trace-button--primary trace-button--small change-github-link"
+              className="trace-button trace-button--secondary trace-button--small change-github-link"
               href={change.url}
               target="_blank"
               rel="noreferrer"
@@ -659,6 +659,7 @@ function ChangeDetailDrawer({
   onClose,
 }: ChangeDetailDrawerProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [copied, setCopied] = useState(false);
   const relatedFindings = attention.filter(
     (a) =>
       change.relatedFindingIds?.includes(a.id) ||
@@ -676,6 +677,15 @@ function ChangeDetailDrawer({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
+
+  const copyCliCommand = () => {
+    const cmd = `trace pr inspect ${change.number}`;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(cmd).catch(() => {});
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="trace-dialog-layer" role="presentation">
@@ -782,6 +792,12 @@ function ChangeDetailDrawer({
               <span className="detail-label">Head commit SHA</span>
               <code>{change.headSha ?? 'SHA unavailable'}</code>
             </div>
+            {change.affectedAreas?.length ? (
+              <div>
+                <span className="detail-label">Affected areas</span>
+                <span>{change.affectedAreas.join(', ')}</span>
+              </div>
+            ) : null}
             <div>
               <span className="detail-label">Snapshot timestamp</span>
               <span>{formatDate(change.updatedAt)}</span>
@@ -832,6 +848,13 @@ function ChangeDetailDrawer({
           <span className="eyebrow">Local review command</span>
           <div className="change-drawer__cli-box">
             <code>trace pr inspect {change.number}</code>
+            <button
+              type="button"
+              className="trace-button trace-button--ghost trace-button--sm"
+              onClick={copyCliCommand}
+            >
+              {copied ? 'Copied' : 'Copy command'}
+            </button>
           </div>
           <p className="change-drawer__cli-note">
             Run on your local computer to verify AST invariants before merging.
@@ -840,6 +863,13 @@ function ChangeDetailDrawer({
 
         {/* Drawer Actions */}
         <div className="change-drawer__footer">
+          <button
+            type="button"
+            className="trace-button trace-button--secondary"
+            onClick={onClose}
+          >
+            Close
+          </button>
           {change.url ? (
             <a
               className="trace-button trace-button--primary"
@@ -850,13 +880,6 @@ function ChangeDetailDrawer({
               Open PR #{change.number} on GitHub ↗
             </a>
           ) : null}
-          <button
-            type="button"
-            className="trace-button trace-button--secondary"
-            onClick={onClose}
-          >
-            Close
-          </button>
         </div>
       </aside>
     </div>

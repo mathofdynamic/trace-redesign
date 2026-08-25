@@ -49,9 +49,11 @@ const nextConfig: NextConfig = {
       '@trace/config': path.resolve(rootDir, 'packages/config/src/index.ts'),
     };
     if (isServer) {
-      config.resolve.conditionNames = Array.from(
-        new Set(['workerd', ...(config.resolve.conditionNames ?? ['...'])]),
-      );
+      if (process.env.OPENNEXT) {
+        config.resolve.conditionNames = Array.from(
+          new Set(['workerd', ...(config.resolve.conditionNames ?? ['...'])]),
+        );
+      }
       config.externals = [
         'cloudflare:sockets',
         ...(Array.isArray(config.externals) ? config.externals : []),

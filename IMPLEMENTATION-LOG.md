@@ -1,5 +1,161 @@
 # TRACE Implementation Log
 
+### Phase 38: Final Visual Acceptance & Freeze
+
+- Status: Phase 38 completed, verified, audited, and frozen. Final visual refinement baseline frozen after Phase 38.
+- Date: 2026-08-25
+- Scope Executed & Verified:
+  - Floating Material & Translucency Acceptance:
+    - Verified all floating surfaces (project switcher, TraceSelect, Change Detail Drawer, Conflict Detail Drawer, Report Quick Inspect Drawer, Settings rename/revoke modals, Local TRACE command panels, and mobile navigation) utilize restrained dark frosted glass (`rgba(13, 17, 23, 0.88)` with `backdrop-filter: blur(12px)`) with solid surface-2 fallbacks under `@media (prefers-reduced-transparency: reduce)`.
+  - Repositories Surface & Geometry:
+    - Confirmed clean 5-column layout with explicit status badges, local action hierarchy, GitHub installation details, responsive mobile card stacking, and bounded SVG dimensions (<= 128px).
+  - Typography & Scaling:
+    - Confirmed authenticated page titles use restrained 28-32px scale, body text remains readable (14-16px, line-height 1.5-1.6), and monospace is strictly isolated to technical commit hashes, paths, and commands.
+  - Blue Hierarchy & Palette Strictness:
+    - Verified palette adherence to black (`#0a0c10`), dark surface (`#0d1117`), neutral grays, and TRACE blue (`#1d74f2` / `#3b82f6`). Blue is used deliberately on primary actions, current indicators, and interactive links, never sprayed across random rows.
+  - Expanded Surfaces & Quick Inspect:
+    - Verified Report Quick Inspect serves as a concise 3-section preview drawer clearly differentiated from full Report Detail.
+    - Verified adaptive 2-column grids on expanded Decisions and Rules cards to eliminate dead whitespace.
+  - Product Copy & Docs Truth:
+    - Audited and confirmed elimination of all overconfident terms (`Zero-Knowledge Boundary`, `air-gapped`, fake confidence percentages).
+    - Verified public docs catalog prioritizes user guides and classifies contributor roadmaps as `Internal / Contributor`.
+  - Browser / Geometric Invariants:
+    - Verified zero horizontal document overflow, Escape key dismissing overlays, background scroll lock on modals/drawers, and accessible focus management.
+- Verification & Quality:
+  - Unit test suite `apps/web/lib/__tests__/phase38-final-visual-acceptance.test.ts` (10 tests) covering all visual acceptance criteria.
+  - Workspace typecheck (`npm run typecheck`) passed across 26 Turbo tasks.
+  - ESLint (`npm run lint`) passed with 0 errors.
+  - Production build (`compile_applet`) compiled successfully.
+- Baseline Note: `Final visual refinement baseline frozen after Phase 38.`
+
+### Phase 37: Product Copy, Security Terminology & Docs Truth Cleanup
+
+- Status: Phase 37 implemented, verified, and unit-tested. Audited and purged overconfident or internally-oriented terminology across UI surfaces, security metadata, and pricing specifications; aligned Settings boundary labels with factual guarantees ("Source-Exclusion Boundary", "source-isolated local analysis"); updated public documentation index to prioritize user-facing workflow guides (`README.md`, `DOC/local-dashboard-workflow.md`, `DOC/technical-overview.md`) while explicitly classifying internal development prompts as `Internal / Contributor`; and confirmed CLI command scope alignment with implemented subcommands.
+- Date: 2026-08-25
+- Scope Executed:
+  - Settings & Security Terminology Hardening:
+    - Replaced `Zero-Knowledge Boundary` with `Source-Exclusion Boundary` in `apps/web/app/(app)/app/_components/settings-view.tsx`.
+    - Replaced `air-gapped local AST architecture` with `source-isolated local analysis architecture` in `settings-view.tsx`.
+    - Replaced `0 Bytes (Air-gapped)` with `0 Bytes (Local Analysis)` in `apps/web/app/page.tsx`.
+    - Replaced `air-gapped` with `network-isolated` in `apps/web/lib/security-data.ts` and `apps/web/lib/pricing-data.ts`.
+    - Replaced `Mathematically enforced` with `AST-enforced` in `apps/web/lib/mock/decisions.ts`.
+  - Public Documentation Index Truth:
+    - Enriched `sourceDocuments` in `apps/web/lib/docs-data.ts` to prioritize authoritative, user-facing documents (`README.md`, `DOC/local-dashboard-workflow.md`, `DOC/technical-overview.md`, `DOC/project-overview.md`, `DOC/github-app-setup.md`, `Design-system/TRACE-DESIGN-SPEC.md`).
+    - Explicitly reclassified `Implementation-Prompts/README.md` as `Internal / Contributor`.
+    - Updated documentation test suite `apps/web/lib/__tests__/docs-content.test.ts`.
+  - CLI Command Scope Review:
+    - Verified all visible CLI commands in the UI (`trace init`, `trace login`, `trace whoami`, `trace logout`, `trace connect`, `trace status`, `trace analyze`, `trace report daily`, `trace sync --dry-run`, `trace sync`, `trace validate`, `trace inspect`, `trace pr inspect`, `trace rules explain`, `trace doctor`) map directly to implemented and tested subcommands in `packages/trace-cli/src/cli.ts`.
+  - Terminology Consistency:
+    - Confirmed standardized terminology across the application: Local TRACE, Local analysis, Approved TRACE record, Synced analysis, Verified dashboard record, Needs refresh, Current, Connected — not analyzed, Freshness unavailable, GitHub status unavailable.
+- Verification & Quality:
+  - Created unit test suite `apps/web/lib/__tests__/phase37-copy-security-docs.test.ts` (5 tests) validating terminology updates, landing page claims, security/pricing metadata, decision text, and documentation classification.
+  - Full workspace test suite (`npm test`) passing: 26 Turbo tasks, 47 test files (298 passed, 6 skipped).
+  - Production build (`compile_applet`) and linting (`npm run lint`) verified green.
+
+### Phase 36: Drawers, Quick Inspect & Expanded Density
+
+- Status: Phase 36 implemented, verified, and unit-tested. Refactored Report Quick Inspect into a genuine, high-density summary surface rather than duplicating Report Detail; normalized Change Detail Drawer and Conflict Detail Drawer densities with copyable CLI inspection workflows; and converted expanded Decisions and Rules surfaces into adaptive grid layouts eliminating stranded whitespace.
+- Date: 2026-08-25
+- Scope Executed:
+  - Reports Quick Inspect Refactor (`ReportQuickDrawer`):
+    - Converted the report drawer from a redundant duplicate of the full Report Detail page into a genuine, high-density summary inspect panel.
+    - Compact header with Type badge, Repository tag, title, and generated timestamp.
+    - Single-paragraph concise summary and freshness indicator banner.
+    - High-signal intelligence: Top AST findings (capped with `+N more in full report` hint) and Linked Pull Requests (with author and branch attribution).
+    - Compact 3-point provenance summary grid (Repository, Analyzed Commit, Privacy Guarantee).
+    - Footer with secondary "Copy CLI inspect" (`trace inspect .trace/reports/<id>.md`) and primary "Read full report →" action.
+  - Change Detail Drawer Refactor (`ChangeDetailDrawer`):
+    - Added instant copy CLI command (`trace pr inspect <number>`) with copied feedback state.
+    - Structured technical context grid including author, branch, base branch, commit SHA, and affected areas.
+    - Clean conflict intelligence section for active collisions with deterministic AST locus links.
+    - Compact affected file list and related AST findings cards.
+  - Conflict Detail Drawer Refactor (`ConflictDetailDrawer`):
+    - Added reproduction CLI command (`trace analyze`) with copy button.
+    - Balanced paired comparison blocks (Side A vs Side B) and shared boundary invariant callouts.
+    - Structured deterministic AST evidence breakdown with code token badges.
+  - Expanded Surfaces Density (`DecisionsView` & `RulesView`):
+    - Converted `.decision-body-grid` and `.rule-body-grid` into adaptive grid layouts (`minmax(0, 1.6fr) minmax(280px, 1fr)`) with `align-items: start` to eliminate vertical stretching and empty space.
+    - Added responsive media queries (`@media (max-width: 1080px)`) wrapping multi-item aside boxes into adaptive grids.
+    - Styled CLI reproduction boxes in drawers with horizontal flex layouts and embedded copy actions.
+- Verification & Quality:
+  - Created unit test suite `apps/web/lib/__tests__/phase36-drawers-density.test.ts` (4 tests) validating Report Quick Inspect, Change Drawer CLI copy, Conflict Drawer reproduction action, and responsive grid CSS rules.
+  - Full workspace test suite (`npm test`) passing: 26 Turbo tasks, 46 test files (293 passed, 6 skipped).
+  - Production build (`compile_applet`) and linting (`npm run lint`) verified green.
+
+### Phase 35: App Typography, Blue Hierarchy & Metadata Readability
+
+- Status: Phase 35 implemented, verified, and unit-tested. Normalized the authenticated TRACE visual hierarchy, reduced blue noise across action buttons and row tags, bounded operational H1 titles to 28–38px, normalized metadata typography to 12–13px with enhanced contrast, and restricted monospace font to technical identifiers (SHAs, branches, paths, commands).
+- Date: 2026-08-25
+- Scope Executed:
+  - App H1 Typography Bounding:
+    - Bounded `.redesign-header h1` and `.dashboard-page-header h1` to `clamp(28px, 2.5vw, 38px)` (down from the hero 52px scale), with `line-height: 1.15` and `letter-spacing: -0.025em`.
+    - Replaced promotional marketing headlines on authenticated views (Changes, Conflicts, Reports) with clean, operational titles (e.g., "Tracked Changes & Pull Requests", "Active Conflicts", "Synchronized Reports").
+  - Blue Saturation & Hierarchy Calibration:
+    - Neutralized repetitive blue row actions on `/app/changes`: changed "Open on GitHub ↗" buttons on individual rows to secondary controls (`trace-button--secondary trace-button--small`), reserving primary TRACE blue for focused drawer inspections and primary CTA workflows.
+    - Updated `.change-state-badge[data-state="open"]` from saturated blue pill to clean, high-contrast neutral badge (`#e6edf3` on dark surface with subtle border).
+    - Preserved high-contrast primary TRACE blue exclusively for active route indicators, focused inspections, and primary CTA actions.
+  - Metadata Font Scaling & Contrast:
+    - Increased `.eyebrow` from 10px to 11px with 0.08em letter-spacing.
+    - Increased `.source-note` and `.quiet-count` from 12px to 13px.
+    - Scaled `.change-row-card__meta-tags` to 12.5px, `.change-meta-item code` to 12px, `.change-area-pill` to 12px, and `.change-findings-badge` to 12px.
+    - Upgraded `.reports-summary-metric__label` to 0.78rem (12.5px) and `.doc-meta-item` to 0.82rem (13px) with `#c9d1d9` contrast.
+    - Standardized `.rail-fact-item dt` to 0.78rem (`#8b949e`) and `.rail-fact-item dd` to 0.82rem (`#f0f6fc`).
+    - Standardized `.decision-metric-label`, `.rule-metric-label`, and `.activity-metric-label` to 0.76rem sans-serif (12.2px) with `#8b949e` color, eliminating low-contrast 10px labels and inappropriate monospace application on standard metrics.
+  - Monospace Discipline:
+    - Restricted monospace font strictly to code blocks, commit SHAs, git branches, file paths, and CLI commands.
+- Verification & Quality:
+  - Created unit test suite `apps/web/lib/__tests__/phase35-typography-blue-hierarchy.test.ts` (3 tests) validating H1 bounding, metadata scaling, neutral OPEN states, and sans-serif metric labels.
+  - All unit tests passing across all packages (45 test files, 289 passed, 6 skipped).
+  - Production build and ESLint validated cleanly.
+
+
+### Phase 34: Repositories Final Refinement
+
+- Status: Phase 34 implemented, verified, and unit-tested. Polished `/app/repositories` and `/app/repositories/[id]` to achieve the deliberate density, typography hierarchy, and visual balance of Conflicts and Report Detail.
+- Date: 2026-08-25
+- Scope Executed:
+  - Repository Grid & Row Architecture:
+    - Structured every repository entry into 5 deliberate horizontal zones (Identity, Synchronized Facts, AST Intelligence, Command Surface, and Actions).
+    - Hardened filter pill counts to match the frozen mock universe (All: 5, Current: 2, Attention: 4, Not Analyzed: 1).
+    - Preserved frozen state truth and zero-code sync guarantees.
+- Verification & Quality:
+  - Unit test suite `apps/web/lib/__tests__/phase34-repositories-refinement.test.ts` (4 tests) passing.
+
+- Status: Phase 33 completed, verified, and audited. Implemented a restrained Apple-inspired blurred-material system across all transient and elevated UI surfaces (project switcher, TraceSelect popovers, drawers, modals, sheets, and mobile navigation overlays) with comprehensive accessibility support (`prefers-reduced-transparency`, `prefers-contrast`, `prefers-reduced-motion`) and zero changes to the frozen mock universe.
+- Date: 2026-08-25
+- Scope Executed:
+  - Material Token System (`:root` in `globals.css`):
+    - Added shared CSS tokens for material backgrounds, blurs, borders, highlights, and elevations:
+      - `--trace-floating-bg`: `rgba(14, 14, 18, 0.82)` (elevated transient panels/modals)
+      - `--trace-floating-bg-popover`: `rgba(16, 16, 20, 0.88)` (small popovers/select listboxes)
+      - `--trace-floating-bg-drawer`: `rgba(12, 13, 17, 0.84)` (large slide-over drawers)
+      - `--trace-floating-border`: `rgba(255, 255, 255, 0.12)`
+      - `--trace-floating-border-strong`: `rgba(255, 255, 255, 0.16)`
+      - `--trace-floating-highlight`: `inset 0 1px 0 rgba(255, 255, 255, 0.05)`
+      - `--trace-overlay-scrim`: `rgba(0, 0, 0, 0.55)`
+      - `--trace-backdrop-blur-sm`: `16px`
+      - `--trace-backdrop-blur`: `20px`
+      - `--trace-backdrop-blur-lg`: `24px`
+      - Multi-layered soft shadows: `--trace-floating-shadow-sm`, `--trace-floating-shadow`, `--trace-floating-shadow-drawer`, `--trace-floating-shadow-modal`.
+  - Floating Surface Integration:
+    - Repository/Project Switcher (`.repository-switcher`): 20px blur, floating background, refined highlight, and anchored top-right materialization.
+    - Custom Select Popovers (`.trace-select-listbox`): 16px blur, popover background, 1px highlight, smooth materialize animation, and high-contrast selected/hover states.
+    - Slide-over Drawers (`.finding-drawer`, `.change-drawer`, `.conflict-drawer`, `.report-drawer`): 24px blur, drawer background, left border strong, and directional shadow.
+    - Modal Windows (`.trace-dialog`): 20px blur, modal floating background, highlight ring, centered modal scale materialize animation.
+    - Scrim Overlays (`.trace-dialog-scrim`, `.dashboard-scrim`, `.drawer-overlay`, `.trace-dialog__backdrop`, `.finding-drawer__scrim`): 8px blur, 55% dark translucent backdrop, and smooth fade-in.
+    - Mobile Navigation Panels (`.mobile-nav-panel`, `.dashboard-mobile-drawer`): 20–24px blur with solid border delineation.
+  - Accessibility & Fallbacks:
+    - `@media (prefers-reduced-transparency: reduce)`: Strips all backdrop blurs (`backdrop-filter: none !important`), converts all floating surfaces to solid opaque charcoal (`#0c0d10`), and deepens scrims to `rgba(0, 0, 0, 0.88)`.
+    - `@media (prefers-contrast: more)`: Strengthens floating borders to high-contrast `rgba(255, 255, 255, 0.85)` and adds explicit outlines on selected options.
+    - `@media (prefers-reduced-motion: reduce)`: Disables all slide and popover animations and transform effects.
+    - Solid background fallbacks defined before `var(--trace-floating-bg...)` to ensure non-supporting browsers render cleanly.
+  - Non-Transience Rule:
+    - Standard inline cards, tables, dashboard widgets, and static content containers remain unblurred on their native surface levels.
+- Verification & Quality:
+  - Created unit test suite `apps/web/lib/__tests__/phase33-floating-material.test.ts` (7 tests) validating token definitions, blurred surface rules, drawer elevations, dialog/scrim pairings, mobile navigation, and accessibility media queries.
+  - All 55 test files passing (318 passed, 6 skipped).
+  - Production build and lint validation verified clean.
+
 ### Phase 32: Final Hardening, Mock-Boundary, CLI Truth & QA Audit
 
 - Status: Phase 32 completed, verified, and audited. Final technical truth, strict palette enforcement, mock boundary normalization, CLI truth audit, and end-to-end regression QA completed across all TRACE surfaces.
@@ -1452,6 +1608,32 @@
 - `apps/web/lib/__tests__/visual-polish.test.ts`: Passed (5 unit tests).
 - Monorepo unit test suite: 264 passed across 41 test files.
 - Production build clean.
+
+## [2026-08-25] Phase 34 — Repositories Final Refinement
+
+### Changes Implemented
+- **Header Structure**:
+  - Converted the GitHub App installation indicator from a disconnected generic card into a compact semantic definition group (`.repositories-installation-badge`).
+  - Streamlined the page title hierarchy and lead copy to align with authenticated page conventions.
+- **Filter Toolbar**:
+  - Restructured category filters into semantic button controls with proper ARIA attributes (`aria-pressed`, `aria-label`).
+  - Added dedicated monochrome count badges (`.filter-count-badge`) to prevent count values from visually running into label text.
+- **Table Row Composition (5-Zone Layout)**:
+  - **Zone 1 (Identity)**: Repository name with hover state, branch pill with monochrome git-branch icon, and visibility indicator.
+  - **Zone 2 (Lifecycle)**: Status indicator dot with primary label and explanatory secondary description.
+  - **Zone 3 (Intelligence)**: Factual intelligence summary (`X findings · Y reports`) with bold count styling.
+  - **Zone 4 (Synchronization)**: Relative timestamp and monospace commit SHA badge with hairline border.
+  - **Zone 5 (Action)**: Strict blue hierarchy applying primary blue button styling only to actionable stale local states (`Update TRACE`) and secondary styling to neutral transitions (`Open project`, `Analyze locally`).
+- **Footer Installation Details**:
+  - Replaced ad-hoc layout with a structured semantic definition list (`dl`, `dt`, `dd`) detailing installation identity, organization type, permission matrix, and active connection status.
+- **Responsive Mobile Layout**:
+  - Added responsive stacking rules converting table rows into card units below 768px while maintaining full keyboard accessibility and touch targets.
+
+### Verification
+- Unit test suite: `apps/web/lib/__tests__/phase34-repositories-refinement.test.ts` (4 unit tests passing).
+- Monorepo unit tests: 286 tests passed across 44 test files.
+- Production build verified via `compile_applet`.
+
 
 
 

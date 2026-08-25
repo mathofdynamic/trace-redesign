@@ -112,7 +112,7 @@ export const notClaimedPoints: NotClaimedItem[] = [
   },
   {
     label: 'No zero-retention third-party claims',
-    detail: 'External LLM model providers may retain temporary logs according to their enterprise terms unless self-hosted or air-gapped.',
+    detail: 'External LLM model providers may retain temporary logs according to their enterprise terms unless self-hosted or network-isolated.',
   },
   {
     label: 'No absolute vulnerability immunity',

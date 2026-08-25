@@ -287,7 +287,7 @@ Multi-tenant architectures run the risk of developer oversight omitting tenant f
 2. AST analysis in CI flags and rejects any raw SQL query touching tenant tables without an explicit organization predicate.
 
 ## Consequences
-- Mathematically enforced tenant isolation across all query execution paths.`,
+- AST-enforced tenant isolation across all query execution paths.`,
   },
 
   // --- Orbit (2 Decisions) ---

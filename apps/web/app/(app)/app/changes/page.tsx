@@ -8,11 +8,11 @@ export default async function ChangesPage() {
     <div className="dashboard-page redesign-page" id="changes-dashboard-page">
       <header className="redesign-header">
         <div>
-          <p className="section-label">Active changes</p>
-          <h1>Work currently moving through the project.</h1>
+          <span className="eyebrow">Active changes</span>
+          <h1>Tracked Changes &amp; Pull Requests</h1>
           <p className="redesign-header__description">
-            Pull request snapshots stored from connected GitHub repositories. This is project
-            context, not individual activity scoring.
+            Pull request snapshots synchronized from connected GitHub repositories. Project
+            context and deterministic AST findings without individual activity scoring.
           </p>
         </div>
       </header>
