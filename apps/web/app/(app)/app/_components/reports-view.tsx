@@ -3,6 +3,7 @@
 import { useId, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TraceSelect } from './trace-select';
+import { OverlayPortal, ModalBackdrop, CenteredDialog } from './overlay-portal';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -253,9 +254,9 @@ export function ReportsView({
       {/* 2. Compact Multi-Dimensional Toolbar */}
       <div className="reports-toolbar" aria-label="Reports Filter and Search Bar">
         <div className="reports-toolbar__search">
-          <div className="search-field-wrapper">
+          <div className="search-input-wrapper">
             <svg
-              className="search-field-glyph"
+              className="search-icon"
               width="14"
               height="14"
               viewBox="0 0 24 24"
@@ -278,6 +279,29 @@ export function ReportsView({
               onChange={(e) => setSearchQuery(e.target.value)}
               aria-label="Search reports library"
             />
+            {searchQuery ? (
+              <button
+                type="button"
+                className="search-clear-btn"
+                onClick={() => setSearchQuery('')}
+                aria-label="Clear search input"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -358,8 +382,9 @@ export function ReportsView({
           {activeFilterCount > 0 ? (
             <button
               type="button"
-              className="trace-button trace-button--ghost trace-button--sm reset-filter-btn"
+              className="trace-button trace-button--secondary trace-button--sm reset-filter-btn"
               onClick={resetFilters}
+              aria-label={`Reset ${activeFilterCount} active filters`}
             >
               Reset ({activeFilterCount})
             </button>
@@ -596,42 +621,42 @@ function ReportQuickDrawer({
   const remainingChangesCount = Math.max(0, relatedChanges.length - topChanges.length);
 
   return (
-    <div className="drawer-overlay" onClick={onClose}>
-      <aside
-        className="report-drawer report-quick-inspect"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="report-drawer-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* 1. Header: Type, Repo, Title, Date & Close */}
-        <div className="report-drawer__header">
-          <div>
-            <div className="report-drawer__eyebrow">
-              <span className="report-type-badge">
-                {formatArtifactTypeLabel(report.artifactType)}
-              </span>
-              <span className="report-repo-tag">
-                {repository?.fullName ?? report.repositoryName}
-              </span>
-              <span className="report-origin-tag">Quick Inspect</span>
+    <OverlayPortal>
+      <ModalBackdrop onClose={onClose} ariaLabel="Close report quick inspect">
+        <CenteredDialog
+          size="lg"
+          titleId="report-drawer-title"
+          onClose={onClose}
+          className="report-drawer report-quick-inspect"
+        >
+          {/* 1. Header: Type, Repo, Title, Date & Close */}
+          <div className="report-drawer__header">
+            <div>
+              <div className="report-drawer__eyebrow">
+                <span className="report-type-badge">
+                  {formatArtifactTypeLabel(report.artifactType)}
+                </span>
+                <span className="report-repo-tag">
+                  {repository?.fullName ?? report.repositoryName}
+                </span>
+                <span className="report-origin-tag">Quick Inspect</span>
+              </div>
+              <h2 id="report-drawer-title" className="report-drawer__title">
+                {report.title}
+              </h2>
+              <time className="report-drawer__date" dateTime={report.generatedAt}>
+                Generated {formatDate(report.generatedAt)} · {report.timeWindow ?? 'Single evaluation'}
+              </time>
             </div>
-            <h2 id="report-drawer-title" className="report-drawer__title">
-              {report.title}
-            </h2>
-            <time className="report-drawer__date" dateTime={report.generatedAt}>
-              Generated {formatDate(report.generatedAt)} · {report.timeWindow ?? 'Single evaluation'}
-            </time>
+            <button
+              type="button"
+              className="drawer-close-btn"
+              onClick={onClose}
+              aria-label="Close report quick inspect"
+            >
+              ✕
+            </button>
           </div>
-          <button
-            type="button"
-            className="drawer-close-btn"
-            onClick={onClose}
-            aria-label="Close report quick inspect"
-          >
-            ✕
-          </button>
-        </div>
 
         {/* 2. Freshness Status */}
         {report.freshness === 'needs-refresh' ? (
@@ -758,19 +783,20 @@ function ReportQuickDrawer({
         <div className="report-drawer__footer">
           <button
             type="button"
-            className="trace-button trace-button--secondary trace-button--small"
+            className="trace-button trace-button--secondary trace-button--sm"
             onClick={() => onCopyCli(report)}
           >
             {copiedId === report.id ? 'Copied' : 'Copy CLI inspect'}
           </button>
           <Link
             href={`/app/reports/${report.id}`}
-            className="trace-button trace-button--primary trace-button--small"
+            className="trace-button trace-button--primary trace-button--sm"
           >
             Read full report →
           </Link>
         </div>
-      </aside>
-    </div>
-  );
+      </CenteredDialog>
+    </ModalBackdrop>
+  </OverlayPortal>
+);
 }

@@ -3,6 +3,7 @@
 import { useId, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TraceSelect } from './trace-select';
+import { RulePromptBuilder } from './rule-prompt-builder';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -76,6 +77,7 @@ export function RulesView({
   const [sortBy, setSortBy] = useState<'severity' | 'newest' | 'oldest' | 'repository' | 'title'>('severity');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState<boolean>(false);
 
   const searchInputId = useId();
   const repoSelectId = useId();
@@ -220,17 +222,42 @@ export function RulesView({
     <div className="rules-surface" id="rules-root">
       {/* 1. Header & Summary Intelligence Bar */}
       <header className="rules-header">
-        <div className="rules-header__copy">
-          <div className="rules-header__eyebrow">
-            <span className="rules-eyebrow-tag">GOVERNANCE &amp; BOUNDARY POLICIES</span>
-            <span className="rules-eyebrow-count">{rules.length} Synchronized Rules</span>
+        <div className="rules-header__top">
+          <div className="rules-header__copy">
+            <div className="rules-header__eyebrow">
+              <span className="rules-eyebrow-tag">GOVERNANCE &amp; BOUNDARY POLICIES</span>
+              <span className="rules-eyebrow-count">{rules.length} Synchronized Rules</span>
+            </div>
+            <h1 className="rules-header__title">Repository Governance Rules</h1>
+            <p className="rules-header__description">
+              Explicit architectural boundary contracts, security invariants, and review expectations.
+              Enforced deterministically during local analysis and synchronized via cryptographic review
+              without transmitting source code.
+            </p>
           </div>
-          <h1 className="rules-header__title">Repository Governance Rules</h1>
-          <p className="rules-header__description">
-            Explicit architectural boundary contracts, security invariants, and review expectations.
-            Enforced deterministically during local analysis and synchronized via cryptographic review
-            without transmitting source code.
-          </p>
+
+          <div className="rules-header__action">
+            <button
+              type="button"
+              className="trace-button trace-button--primary"
+              onClick={() => setIsPromptBuilderOpen(true)}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span>Draft rule prompt</span>
+            </button>
+          </div>
         </div>
 
         {/* Intelligence Metrics Bar */}
@@ -265,7 +292,8 @@ export function RulesView({
 
       {/* 2. Filter & Search Controls Toolbar */}
       <section className="rules-toolbar" aria-label="Filter and search governance rules">
-        <div className="rules-toolbar__search">
+        {/* Row 1: Search flexible / full width */}
+        <div className="rules-toolbar__row rules-toolbar__row--search">
           <label htmlFor={searchInputId} className="sr-only">
             Search rules by title, summary, constraints, or evidence paths
           </label>
@@ -306,7 +334,8 @@ export function RulesView({
           </div>
         </div>
 
-        <div className="rules-toolbar__filters">
+        {/* Row 2: Repository pills, severity, sort, bulk toggle, reset button */}
+        <div className="rules-toolbar__row rules-toolbar__row--controls">
           {/* Repository Scope Pills */}
           <div className="rules-repo-pills" role="group" aria-label="Repository filter">
             <button
@@ -389,6 +418,21 @@ export function RulesView({
                 {expandedIds.size === sortedRules.length ? 'Collapse all' : 'Expand all'}
               </button>
             </div>
+
+            {/* Reset Filters at End */}
+            {(selectedRepoId !== 'all' || selectedSeverity !== 'all' || searchQuery.trim().length > 0) && (
+              <button
+                type="button"
+                className="trace-button trace-button--secondary trace-button--sm rules-reset-btn"
+                onClick={() => {
+                  setSelectedRepoId('all');
+                  setSelectedSeverity('all');
+                  setSearchQuery('');
+                }}
+              >
+                Reset filters
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -414,17 +458,6 @@ export function RulesView({
               </>
             )}
           </span>
-          <button
-            type="button"
-            className="filter-reset-link"
-            onClick={() => {
-              setSelectedRepoId('all');
-              setSelectedSeverity('all');
-              setSearchQuery('');
-            }}
-          >
-            Reset filters
-          </button>
         </div>
       )}
 
@@ -780,6 +813,14 @@ export function RulesView({
           </Link>
         </div>
       </footer>
+
+      {/* 5. Draft Rule Prompt Modal Dialog */}
+      <RulePromptBuilder
+        isOpen={isPromptBuilderOpen}
+        onClose={() => setIsPromptBuilderOpen(false)}
+        repositories={repositories}
+        defaultRepoId={selectedRepoId !== 'all' ? selectedRepoId : undefined}
+      />
     </div>
   );
 }

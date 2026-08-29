@@ -5,6 +5,7 @@ import { getTraceSession } from '@trace/auth';
 import { schema } from '@trace/db';
 import { OnboardingForm } from '../components/onboarding-form';
 import { SetupProgress } from '../components/setup-progress';
+import { TraceMark } from '../components/public';
 import { createRequestDatabase } from '../../lib/request-database';
 import { isMockModeEnabled, mockDataProvider, MOCK_PRIMARY_USER } from '../../lib/mock';
 
@@ -42,10 +43,7 @@ export default async function OnboardingPage() {
     <main className="onboarding-shell">
       <div className="auth-shell__top">
         <span className="wordmark">
-          <span className="trace-mark" aria-hidden="true">
-            <span />
-            <span />
-          </span>
+          <TraceMark size={20} />
           <span>TRACE</span>
         </span>
         <span className="onboarding-step">Setup</span>

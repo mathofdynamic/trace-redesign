@@ -366,9 +366,10 @@ export function ActivityView({
         </div>
       </header>
 
-      {/* 2. Filter & Controls Toolbar */}
+      {/* 2. Filter & Controls Toolbar (Structured Two-Row Grid) */}
       <section className="activity-toolbar" aria-label="Filter and search workspace activity">
-        <div className="activity-toolbar__search">
+        {/* Row 1: Primary Search Input */}
+        <div className="activity-toolbar__row-search">
           <label htmlFor={searchInputId} className="sr-only">
             Search activity by title, commit SHA, PR number, or artifact ID
           </label>
@@ -409,7 +410,8 @@ export function ActivityView({
           </div>
         </div>
 
-        <div className="activity-toolbar__filters">
+        {/* Row 2: Secondary Filter Controls */}
+        <div className="activity-toolbar__row-controls">
           {/* Repository Scope Pills */}
           <div className="activity-repo-pills" role="group" aria-label="Repository filter">
             <button
@@ -505,6 +507,21 @@ export function ActivityView({
                 ]}
               />
             </div>
+
+            {/* Explicit Reset Button when active */}
+            {(selectedRepoId !== 'all' || selectedCategory !== 'all' || searchQuery.trim()) && (
+              <button
+                type="button"
+                className="activity-reset-btn"
+                onClick={() => {
+                  setSelectedRepoId('all');
+                  setSelectedCategory('all');
+                  setSearchQuery('');
+                }}
+              >
+                Reset filters
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -754,7 +771,7 @@ export function ActivityView({
             <strong>Workspace Audit Guarantee:</strong> TRACE logs structural boundary events, AST review checkpoints,
             and synchronized change briefs without collecting telemetry on individual developer velocity, score, or keystroke timing.
           </p>
-          <Link href="/docs#activity" className="privacy-link">
+          <Link href="/app/documentation#boundary-guarantees" className="privacy-link">
             Read privacy spec →
           </Link>
         </div>

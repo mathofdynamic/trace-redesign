@@ -1,5 +1,210 @@
 # TRACE Implementation Log
 
+### Phase 48: Governance Rule Definition & Prompt Builder
+
+- Status: Implemented, verified, and unit-tested. Enabled engineers to draft and define repository governance rules and boundary policies directly from the Governance Rules surface (`/app/rules`), mirroring the Decision draft workflow with zero source code transmission and deterministic local verification.
+- Date: 2026-08-28
+- Scope Executed:
+  - Rule Prompt Logic & Type Contracts (`apps/web/lib/rule-prompt.ts`):
+    - Defined `RulePromptDraft`, `INITIAL_RULE_PROMPT_DRAFT`, `generateRulePrompt`, and `isRuleDraftValid`.
+    - Captured essential policy parameters: repository, rule ID, title, purpose & boundary invariants, severity (`high`, `medium`, `low`, `info`), enforcement mode (`deterministic` AST/path vs. `advisory` model reasoning), scope (`repository`, `component`, `organization`, `mandatory_organization`, `workflow`), target file loci / path matchers, remediation guidance, and override policy.
+  - Interactive Centered Rule Prompt Builder Modal (`RulePromptBuilder`):
+    - Built on `OverlayPortal`, `ModalBackdrop`, and `CenteredDialog`.
+    - Implemented live form controls with semantic tokens and `TraceSelect` dropdowns.
+    - Added deterministic prompt code block with compact/expanded toggle.
+    - Added synchronization guidance explaining the local verification workflow (`trace rules check && trace sync`).
+    - Standardized footer with `Clear draft`, `Close`, and `Copy agent prompt` with feedback animation and validation guards.
+  - Surface Integration (`RulesView`):
+    - Added `Draft rule prompt` primary CTA button in the header top section.
+    - Connected modal trigger and repository selection context.
+    - Updated responsive styles in `globals.css`.
+- Verification & Quality:
+    - Unit tests added in `apps/web/lib/__tests__/phase47-rules-prompt-builder.test.ts` (4 test cases passing).
+    - Production build verification via `compile_applet` passed cleanly.
+
+- Status: Phase 47 implemented, verified, and unit-tested. Fixed remaining Bug Report 01 surfaces across Activity readability and crowded filter toolbar, Settings cognitive overload via tabbed organization, and Dashboard Documentation migration to an authenticated route (`/app/documentation`).
+- Date: 2026-08-27
+- Scope Executed:
+  - Activity View Readability & Filter Ergonomics:
+    - Structured Activity toolbar into two distinct rows: Search input with clear button in Row 1; Repository, Event Category, Chronology order, and "Reset filters" action button in Row 2.
+    - Enhanced timeline event rows (`.activity-event-row`) with elevated visual distinction from canvas, generous 16px/18px vertical padding, 1.6 line-height on detail copy, and categorized icon wrappers.
+    - Organized timeline events into clean date groups (`.activity-date-group`) with generous vertical spacing and visible item counters.
+    - Updated privacy footer link to point directly to the authenticated `/app/documentation` route.
+  - Settings Information Architecture & Tabbed Structure:
+    - Converted long stacked settings page into a tabbed sub-nav interface (`Workspace & GitHub`, `Authorized Computers`, `Privacy & Sync`, `Local CLI`, `Account`) with accessible `role="tablist"`, `role="tab"`, and `aria-selected` attributes.
+    - Refactored Workspace and GitHub sections into clean definition lists (`dl`, `dt`, `dd`) eliminating redundant nested cards.
+    - Implemented active computer badge counts on tabs and per-row device management (Rename and Revoke dialogs via `OverlayPortal`).
+    - Organized Privacy & Sync Trust Boundary into a high-contrast two-column matrix (Synchronized Records vs. Never Sent / Excluded by Design) with pre-flight dry-run guarantee.
+    - Structured Local CLI execution workflow into clear sequential steps (`trace analyze`, `trace sync --dry-run`, `trace sync`) with copyable command blocks.
+  - Authenticated Dashboard Documentation Route:
+    - Added dedicated `/app/documentation` dashboard route powered by `DocumentationView` inside the authenticated dashboard shell.
+    - Updated `navigation.ts` to include `/app/documentation` as an internal dashboard route and updated route label resolution and navigation unit tests.
+    - Reused existing documentation datasets (`docs-data.ts`) to avoid duplicate documentation drift while presenting a dashboard-first layout with sticky table of contents and technical reading column.
+- Verification & Quality:
+  - Unit tests in `apps/web/app/(app)/app/_components/navigation.test.ts` verified passing.
+  - Production compilation (`compile_applet`) and ESLint (`npm run lint`) verified clean with zero errors.
+
+### Phase 44: Conflicts Progressive Disclosure, Contrast & Information Architecture
+
+- Status: Phase 44 implemented, verified, and unit-tested. Addressed Bug Report 01 Conflicts page density issues by introducing high-signal progressive disclosure while fully preserving the `Change A ↔ Shared Boundary ↔ Change B` mental model. Extracted view-model layer into `apps/web/lib/conflict-view-model.ts`, condensed default conflict cards to clean high-contrast summaries with explicit decision lines, standardized action buttons, connected rich evidence and AST loci to a centered inspector dialog using the Phase 40 `CenteredDialog` foundation, and maintained 100% frozen mock data truth.
+- Date: 2026-08-26
+- Scope Executed:
+  - Conflict View Model Extraction (`apps/web/lib/conflict-view-model.ts`):
+    - Decoupled paired conflict coordination and resolution logic from React presentation components.
+    - Defined strongly-typed `PairedConflictModel`, `PairedSideSummary`, `PairedSharedBoundary`, and `PairedEvidenceItem` interfaces.
+    - Preserved deterministic handling for the 4 frozen mock universe conflicts (`Atlas PR #88 ↔ PR #89`, `Atlas PR #87 ↔ Core Auth`, `Orbit PR #54 ↔ PR #55`, and `TRACE PR #103 ↔ Ingestion Promoter`) along with resilient fallback resolution for dynamic data.
+  - High-Signal Progressive Disclosure Cards:
+    - Replaced the overwhelming initial multi-column dump with a compact, high-contrast paired comparison strip (`.conflict-compact-pair`).
+    - Topline displays repository provenance tag, semantic classification badge, and severity indicator (`HIGH` / `MEDIUM`).
+    - Header provides clear collision title and context statement with interactive trigger to open deep inspection.
+    - Compact comparison strip renders Side A and Side B side-by-side with the central Shared Boundary target, badge identifiers, and 2-line title clamps.
+    - Added an prominent Decision Line (`.conflict-card__decision-line`) emphasizing the immediate coordination required (e.g. `Action required: Align PR #89 with staged migration pipeline`).
+    - Footer presents evidence count indicators and standardized action triggers (`Inspect details →`, `Open PR #88 ↗`, `Open PR #89 ↗`).
+  - Centered Technical Conflict Inspector (`ConflictDetailModal`):
+    - Built on the Phase 40 `CenteredDialog` and `ModalBackdrop` overlay architecture.
+    - Provides full background blur over sidebar, topbar, and main canvas.
+    - Deep inspection view surfaces complete invariant specifications, side-by-side architectural assumptions, author and branch metadata, file loci, structured evidence items with AST paths, and local CLI coordination commands (`trace coordinate conflict-atlas-001`).
+  - Strict Design System & Anti-Surveillance Invariants:
+    - Neutral dark-first palette strictly limited to black, white, neutral grays, and single-purpose TRACE blue accents.
+    - Monospace font strictly reserved for actual technical values (branches, SHAs, paths, loci, CLI commands).
+    - Fully devoid of individual developer scoring, rankings, blame metrics, or false confidence percentages.
+  - Responsive Mobile Stacking:
+    - Implemented seamless 1-column stacking for mobile viewports (`@media (max-width: 960px)` and `@media (max-width: 640px)`).
+    - Boundary box reorders smoothly between Side A and Side B, with full-width touch-friendly buttons and zero horizontal scroll spill.
+- Verification & Quality:
+  - Unit test suite: `apps/web/lib/__tests__/phase44-conflicts-refinement.test.ts` (4 test cases passing).
+  - Existing suite `apps/web/lib/__tests__/conflicts-surface.test.ts` (6 test cases passing).
+  - Production compilation (`compile_applet`) and ESLint (`npm run lint`) verified green with zero errors.
+
+### Phase 42: Repositories Layout & Control Refinement
+
+- Status: Phase 42 implemented, verified, and unit-tested. Resolved Bug Report 01 Repositories issues: recomposed crowded header into clear operational zones, converted the GitHub installation summary into a quiet neutral metadata fact block, fixed helper text spacing and accessible table captioning, standardized filter toolbar controls and count separation, established clear action hierarchy across repository rows (primary only for needs-refresh, neutral for repeated actions), and upgraded lower GitHub App integration controls to standardized TRACE button styling.
+- Date: 2026-08-26
+- Scope Executed:
+  - Header Composition & Two-Zone Balance:
+    - Recomposed the page header into two distinct zones: Left zone containing the eyebrow (`CONNECTED REPOSITORIES`), main title (`H1`), and lead copy (`Manage which repositories TRACE evaluates...`); Right zone containing the quiet GitHub installation fact block and quick actions (`Manage repository access`, `Add repository ↗`).
+    - Fixed responsive wrapping on desktop (`@media (min-width: 860px)`) to preserve clean alignment and prevent vertical squishing.
+  - GitHub Installation Metadata Fact Block:
+    - Converted the GitHub installation element from an awkward button-like pill into a quiet neutral metadata block (`.repositories-installation-fact`).
+    - Features a micro-label (`GITHUB INSTALLATION`), account identifier in monospace (`northstar-engineering`), and status metadata (`Organization · Read-only permissions`), eliminating visual ambiguity and false clickable affordance.
+  - Search Toolbar & Category Filter Controls:
+    - Refined the toolbar layout with a dedicated search input and standardized filter buttons (`.repositories-filter-button`).
+    - Added clear visual separation between filter labels and count badges (`All · 5`, `Current · 2`, `Attention · 4`, `Not analyzed · 1`) using middle-dot separators (`.filter-button__sep`) and high-contrast pill counters (`.filter-count-badge`).
+    - Styled active filter state (`data-active="true"`) with elevated contrast and neutral borders.
+  - Table Collection & Helper Spacing:
+    - Added dedicated table collection header (`.repositories-collection__header`) with an operational helper line (`List of managed repositories and their synchronization status`), live visible count (`Showing 5 repositories`), and an accessible screen-reader table caption.
+    - Expanded table row padding (`padding: 16px 18px`), established robust column min-widths (`.col-identity`, `.col-state`, `.col-facts`, `.col-sync`, `.col-action`), and refined lifecycle status descriptions.
+  - Action Hierarchy & Button Standardization:
+    - Calibrated row action buttons to prevent blue noise: only the repository requiring attention (`TRACE` / `needs-refresh`) receives a primary TRACE blue action button; all other active repositories (`Nova`, `Radar`, `Atlas`, `Orbit`) display clean secondary neutral buttons (`trace-button--secondary`).
+    - Upgraded lower GitHub App Integration Card (`.repositories-installation-card`) controls from unstyled links to standardized TRACE buttons (`trace-button trace-button--secondary`).
+  - Repository Access Drawer Refinement:
+    - Refactored `.repositories-access-drawer` with structured grid items, responsive checkbox controls, explicit active/excluded badges, and clean save/cancel actions with inline feedback.
+  - Responsive Mobile Stacking:
+    - Implemented clean card-based stacking for mobile viewports (`@media (max-width: 768px)`), ensuring full-width touch-friendly buttons and zero horizontal layout overflow.
+- Verification & Quality:
+  - Unit test suite `apps/web/lib/__tests__/phase42-repositories-refinement.test.ts` (6 tests passing).
+  - Existing `repositories-management.test.ts` unit tests verified passing.
+  - TypeScript typecheck across all 26 packages (`npm run typecheck`), ESLint (`npm run lint`), and production compilation (`compile_applet`) verified clean with zero errors.
+
+### Phase 41: Overview Project Selector, Trace Rail & Readability
+
+- Status: Phase 41 implemented, verified, and unit-tested. Executed Bug Report 01 Overview fixes without altering repository truth, dashboard mock data, or backend behavior.
+- Date: 2026-08-26
+- Scope Executed:
+  - Compact Operational Project Selector:
+    - Redesigned the topbar `.repository-context__trigger` as a compact operational selector with standard control height (38px), constrained width (`max-width: 340px`), clean text truncation with ellipsis, dropdown chevron indicator, and compact project status badge (`state-pill`).
+    - Streamlined the accessible name (`aria-label="Current repository: {fullName}, state: {shortLabel}"`) and removed redundant wrapper elements.
+    - Updated mobile responsive breakpoints (`<= 640px` and `<= 480px`) to preserve ergonomics and prevent header overflow.
+  - Project Switcher Readability & Spacing:
+    - Refined `.repository-switcher` popover list rows (`.repository-switcher__row`) to provide 10-12px vertical breathing room (`padding: 10px 12px`, `gap: 12px`).
+    - Improved readability of repository full names (`font-size: 13px; font-weight: 600; line-height: 1.4`) and secondary branch/sync metadata (`font-size: 11.5px; line-height: 1.4; color: var(--trace-text-muted)`).
+    - Preserved search filtering, keyboard `Escape` dismissal, focus restoration, backdrop scrim, and highlighted active repository state.
+  - Trace Rail 4-Node Full-Width Distribution:
+    - Refactored `TraceRail` to use a responsive flex-based container layout where all 4 lifecycle nodes (`GitHub`, `Local analysis`, `Synced record`, `Freshness`) span the entire usable width of the project command surface.
+    - Connected nodes with dedicated horizontal connector lines (`.trace-rail__line`) spanning evenly between step centers (`flex: 1 1 auto; margin: 0 12px`).
+    - Implemented responsive label pairs (`.trace-rail__label-long` for desktop and `.trace-rail__label-short` for mobile viewport widths <= 680px) to prevent node wrapping or clipping.
+    - Maintained high-contrast node states: completed (solid outline and text), active (TRACE blue accent border and glow), and error (clear distinct indicator).
+  - Overview Copy Readability & Attention Density:
+    - Adjusted typography and line spacing across the project command surface and attention rows: primary description line-height increased to `1.6` for comfortable reading.
+    - Compacted `.attention-row` layout: compact severity badges (`CRITICAL`, `HIGH`, `GOVERNANCE`), high-contrast item title, 2-line maximum detail clamp (`-webkit-line-clamp: 2`), and vertically centered action button (`Review finding →`).
+    - Standardized `.overview-recent-row` typography, spacing, and metadata tags for pull requests and activity feeds.
+  - Spatial Balance & Responsive Ergonomics:
+    - Structured `.project-command-surface` to maintain a balanced layout: state headline and description on the left, local command action trigger on the right, Trace Rail spanning the bottom, and local-first execution metadata in the footer.
+    - Verified small mobile viewports (390px) with responsive stacking, full-width buttons, and 44px+ touch targets.
+- Verification & Quality:
+  - Unit test suite in `apps/web/lib/__tests__/phase41-overview-refinement.test.ts` (5 tests passing).
+  - TypeScript build (`compile_applet`), typecheck across all 26 workspace packages (`npm run typecheck`), and ESLint (`npm run lint`) verified green with zero errors.
+
+### Phase 40: Centered Overlay Portal & Full Background Blur
+
+- Status: Phase 40 implemented, verified, and unit-tested. Standardized modal dialogs and technical detail surfaces into centered overlay portals with full application background blur covering sidebar, topbar, project switcher, and content layers.
+- Date: 2026-08-26
+- Scope Executed:
+  - Centralized Overlay Portal Primitives:
+    - Created `OverlayPortal`, `ModalBackdrop`, and `CenteredDialog` in `apps/web/app/(app)/app/_components/overlay-portal.tsx`.
+    - Uses `ReactDOM.createPortal` directly to `document.body` to break out of local CSS stacking contexts and cover all application chrome.
+    - Manages `data-overlay-active="true"` on `document.body` to handle global overlay states.
+  - Full-Viewport Background Blur Scrim:
+    - Implemented `.trace-modal-backdrop-layer` and `.trace-dialog-scrim` fixed full-viewport layers (`inset: 0`, `z-index: var(--trace-z-modal, 1001)`).
+    - Configured backdrop blur (`backdrop-filter: blur(14px)` and `-webkit-backdrop-filter: blur(14px)`) over dark scrim (`var(--trace-overlay-scrim, rgba(0, 0, 0, 0.45))`), completely blurring the background behind modals (including sidebar, topbar, project switcher, and main canvas).
+  - Centered Modal Geometry & Responsive Bounds:
+    - Standardized modal container geometry: centered flex alignment, responsive width bounded by `min(840px, calc(100vw - 32px))`, max height `min(86dvh, 880px)`, internal scroll isolation (`overflow-y: auto`), rounded corners (`14px`), and floating shadow elevation.
+    - Defined size variants: small (`540px` for confirmation prompts), medium (`680px` for forms and settings), and large (`840px` for technical detail and AST inspect views).
+  - Comprehensive Surface Migration:
+    - Migrated `FindingDisclosure` and `LocalActionPanel` in `trace-redesign.tsx`.
+    - Migrated `ChangeDetailDrawer` in `changes-view.tsx`.
+    - Migrated `ConflictDetailDrawer` in `conflicts-view.tsx`.
+    - Migrated `ReportQuickDrawer` in `reports-view.tsx`.
+    - Migrated Rename Device and Revoke Device modals in `settings-view.tsx`.
+  - Accessibility & Interaction Contracts:
+    - Focus trap and initial focus management via `initialFocusRef` or first focusable element.
+    - Focus restoration to the previously active element on modal unmount.
+    - Body scroll lock (`overflow: hidden`) with scrollbar width compensation to prevent layout shift.
+    - Escape key keyboard handler to dismiss modals.
+    - Scrim backdrop click to dismiss with propagation stopped on dialog body.
+    - Accessibility fallbacks for `@media (prefers-reduced-motion: reduce)` and `@media (prefers-reduced-transparency: reduce)`.
+- Verification & Quality:
+  - Unit test suite: `apps/web/lib/__tests__/phase40-centered-overlay-portal.test.ts` (9 tests passing).
+  - Production build (`compile_applet`) and ESLint (`npm run lint`) verified green.
+
+### Phase 39: Systemic Readability, Contrast, Font & Spacing Foundation
+
+- Status: Phase 39 implemented, verified, and unit-tested. Established systemic readability, contrast, typography tokens, and spacing foundation across the authenticated TRACE application.
+- Date: 2026-08-26
+- Scope Executed:
+  - Font Selection & Configuration:
+    - Confirmed `Kunst Grotesk` as the primary UI font across regular (400) and medium (500) weights with `var(--trace-font-sans)` token and universal form control font inheritance.
+  - Authenticated-App Typography Tokens:
+    - Declared dedicated typography tokens in `:root`:
+      - `--trace-font-sans`, `--trace-font-mono`
+      - `--trace-text-page-title: clamp(26px, 2.5vw, 32px)`
+      - `--trace-text-section-title: 18px`
+      - `--trace-text-card-title: 15px`
+      - `--trace-text-item-title: 14px`
+      - `--trace-text-body: 14px`
+      - `--trace-text-body-sm: 13px`
+      - `--trace-text-meta: 12px`
+      - `--trace-text-eyebrow: 11px`
+      - `--trace-text-micro: 10px`
+    - Declared line-height and tracking tokens: `--trace-lh-tight: 1.15`, `--trace-lh-snug: 1.35`, `--trace-lh-normal: 1.55`, `--trace-lh-relaxed: 1.65`, `--trace-tracking-tight: -0.025em`, `--trace-tracking-eyebrow: 0.08em`.
+  - Global Spacing Rhythm (4/8 Grid System):
+    - Declared standard spacing tokens in `:root`: `--trace-space-1: 4px` through `--trace-space-16: 64px`.
+  - Neutral Contrast Refinements (WCAG AA Compliance):
+    - Refined dark-first contrast palette:
+      - Primary text: `--trace-text: #f5f5f7` (~17:1 on #080809)
+      - Secondary text: `--trace-text-secondary: #c5c5cb` (>= 10:1)
+      - Muted text: `--trace-muted: #92929a` (>= 5.5:1, WCAG AA compliant)
+      - Subtle text: `--trace-text-muted: #72727c`
+      - Border tokens: `--trace-border-subtle: rgba(255, 255, 255, 0.08)`, `--trace-border: rgba(255, 255, 255, 0.125)`, `--trace-border-strong: rgba(255, 255, 255, 0.19)`.
+  - Control Geometry Standardisation:
+    - Button controls: standard height `36px` (`--trace-control-height`), small `30px` (`--trace-control-height-sm`), large `40px` (`--trace-control-height-lg`), radius `8px` (`--trace-radius-control`).
+    - Search and filter controls: input height `38px`, select trigger height `36px`, filter reset button `36px`.
+  - Micro-Label De-escalation:
+    - Reduced forced uppercase across secondary and filter labels to reduce cognitive load while preserving standard uppercase on genuine section eyebrows and severity pills (`CRITICAL`, `HIGH`, `AST`).
+- Verification & Quality:
+  - Unit test suite: `apps/web/lib/__tests__/phase39-readability-system.test.ts` (7 tests passing).
+  - Production build (`compile_applet`) and linting (`npm run lint`) verified green.
+
 ### Phase 38: Final Visual Acceptance & Freeze
 
 - Status: Phase 38 completed, verified, audited, and frozen. Final visual refinement baseline frozen after Phase 38.
@@ -1634,8 +1839,70 @@
 - Monorepo unit tests: 286 tests passed across 44 test files.
 - Production build verified via `compile_applet`.
 
+## [2026-08-26] Phase 43 — Changes Toolbar & Inspect Details Refinement
 
+### Changes Implemented
+- **Summary Intelligence Bar & Subline**:
+  - Recomposed summary statistics into a clean 4-column balanced metric grid (`Active changes`, `Repositories`, `Conflict linked`, `With findings`).
+  - Separated the architectural integrity guarantee to a dedicated, unobtrusive secondary subline (`Local deterministic snapshots · Zero personal scoring`).
+- **Two-Row Changes Toolbar**:
+  - **Row 1 (Primary)**: Full-width responsive search input and dynamic results count indicator (`Showing X of Y changes`).
+  - **Row 2 (Filters & View Mode)**: Accessible `TraceSelect` dropdowns for Repository, Relationship, and Affected Area, paired with the segmented View Mode toggle (`Grouped` / `Flat list`) and active filter reset button.
+  - Standardized short, normal-case labels with dedicated spacing above select controls.
+- **Change Row & Card Visual Layers**:
+  - Balanced padding, high-contrast PR number badge, neutral dark `OPEN` state badge, repository tags, and multi-line clamped architectural intent.
+  - Reserved primary TRACE blue for the `Inspect details` primary action while styling `Open PR on GitHub ↗` with secondary neutral button styling to eliminate "blue noise".
+  - Monospace formatting applied only to technical values (git branches, commits, PR numbers).
+- **Centered Inspect Details Modal Architecture**:
+  - Built upon Phase 40's `CenteredDialog` modal foundation with an 860px max width and responsive two-column grid:
+    - **Left Column**: Architectural Intent narrative, Technical Context (repository, branch, author, last updated), and scrollable Affected Files list with code pills.
+    - **Right Column**: Active Coordination Conflict callout (colliding PRs, AST collision loci), Related AST Findings with severity badges, and copyable local CLI verification command (`trace pr inspect <number>`).
+  - Actions pinned in footer with neutral Close and Open on GitHub triggers.
+  - Responsive stacking to single-column on mobile viewports (<768px).
+- **Product Truth & Universe Integrity**:
+  - Preserved all 9 frozen mock changes, 4 active conflict mappings, and 31 findings.
+  - Zero developer velocity scoring, individual ratings, or surveillance metrics.
 
+### Verification
+- `apps/web/lib/__tests__/phase43-changes-refinement.test.ts`: Passed (14 unit tests).
+- `apps/web/lib/__tests__/changes-surface.test.ts`: Passed (13 unit tests).
+- `npm run lint`: Clean, 0 errors.
+- `npm run typecheck`: Clean, 26/26 Turbo tasks passed.
+- `npm run build` / `compile_applet`: Clean production compilation across all packages.
 
+## [2026-08-26] Phase 45 — Reports Library, Quick Inspect & Report Reading Experience
 
+### Changes Implemented
+- **Reports Library Contrast & Controls**:
+  - Enhanced contrast and visual distinction across the page hierarchy: Canvas (`#000000`/`#050608`), Summary Intelligence Bar (`#090a0e`), Toolbar (`#0b0c11`), Date Group Headers, and Report Item Cards (`#0c0d12` with hover state `#10121a`).
+  - Standardized the multi-dimensional filter toolbar with consistent height, clear labels, and unified `trace-button--secondary` styling for the reset button (`Reset filters`).
+  - Strengthened typographic hierarchy with readable card summaries constrained to balanced line measures (`max-width: 82ch`), clean metadata token chips, and crisp date section badges.
+- **Quick Inspect Modal Architecture**:
+  - Refactored `ReportQuickDrawer` into a centered dialog modal (`CenteredDialog` with `width: min(820px, calc(100vw - 32px))`, max-height `86dvh`) using TRACE floating background and backdrop blur.
+  - Reorganized modal content hierarchy logically:
+    1. Header with report type badge, repository tag, title, and formatted date.
+    2. Freshness status banner with deliberate warning/attention styling and clear CLI commands.
+    3. Executive Summary narrative with comfortable reading measure.
+    4. Top Findings list with severity indicators and deterministic file:line evidence tokens.
+    5. Linked Pull Requests with branch pills and author logins.
+    6. Provenance metadata grid detailing commit SHA, CLI version, engine version, and schema version.
+    7. Standardized modal footer with neutral secondary `Close` and `trace-button--primary` `Open full report ↗`.
+- **Full Report Detail Reading Experience**:
+  - Restructured the document surface with comfortable reading measure (`72–86ch`), generous line-height (`1.65–1.68`), and clean typographic hierarchy across document headings, finding cards, and bullet lists.
+  - Redesigned the refresh workflow into a native TRACE secondary action:
+    - Standardized `Copy refresh workflow` button with `trace-button--secondary` styling.
+    - Updated the right metadata rail with structured `rail-cli-box--workflow` presenting explicit CLI sequence commands (`trace report generate --repo ...`, `trace sync`).
+    - Standardized provenance audit definition table and raw markdown inspection tabs.
+- **Product Truth & Mobile Responsiveness**:
+  - Maintained all 12 frozen mock reports, 4 repository associations, and deterministic evidence invariants.
+  - Enhanced responsive layouts for mobile and tablet screens (<1080px and <640px) with stacked filters, inset modals, and collapsible metadata rails.
+  - Monospace font strictly restricted to technical identifiers (commits, branches, file paths, commands).
+
+### Verification
+- `apps/web/lib/__tests__/phase45-reports-refinement.test.ts`: Passed (6 unit tests).
+- `apps/web/lib/__tests__/reports-surface.test.ts`: Passed (6 unit tests).
+- `apps/web/lib/__tests__/report-detail.test.ts`: Passed (4 unit tests).
+- `npm run lint`: Clean, 0 errors.
+- `npm run typecheck`: Clean, 26/26 Turbo tasks passed.
+- `compile_applet`: Clean production build verified.
 

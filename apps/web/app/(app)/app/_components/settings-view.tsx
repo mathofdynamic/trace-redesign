@@ -3,6 +3,7 @@
 import { useId, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { OverlayPortal, ModalBackdrop, CenteredDialog } from './overlay-portal';
 import type { DashboardSummary } from '../../../../lib/dashboard';
 import type { TraceSession } from '@trace/auth';
 import { formatDate, formatRelativeDate } from '../../../../lib/dashboard-state';
@@ -26,9 +27,11 @@ export type SettingsViewProps = {
   devices: DeviceItem[];
 };
 
+export type SettingsTabId = 'workspace' | 'computers' | 'privacy' | 'cli' | 'account';
+
 export function SettingsView({ summary, session, devices: initialDevices }: SettingsViewProps) {
   const router = useRouter();
-  const searchInputId = useId();
+  const [activeTab, setActiveTab] = useState<SettingsTabId>('workspace');
   const [deviceList, setDeviceList] = useState<DeviceItem[]>(initialDevices);
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
 
@@ -164,6 +167,14 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
   const userEmail = session.user.email || 'mohammad@northstar.engineering';
   const githubHandle = (session.user as { githubLogin?: string }).githubLogin || 'mohammadm';
 
+  const tabs: { id: SettingsTabId; label: string; badge?: string | number }[] = [
+    { id: 'workspace', label: 'Workspace & GitHub' },
+    { id: 'computers', label: 'Authorized Computers', badge: activeDevices.length },
+    { id: 'privacy', label: 'Privacy & Sync' },
+    { id: 'cli', label: 'Local CLI' },
+    { id: 'account', label: 'Account' },
+  ];
+
   return (
     <div className="settings-surface" id="settings-surface">
       {/* 1. Header & Context Bar */}
@@ -192,10 +203,10 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
               </span>
             </div>
             <h1 className="settings-header__title">
-              Workspace & Trust Boundaries
+              Workspace Settings
             </h1>
             <p className="settings-header__lead">
-              Understand connected repositories, review local-to-cloud synchronization boundaries, manage authorized developer computers, and inspect CLI execution invariants.
+              Manage connected repositories, review local-to-cloud synchronization boundaries, manage authorized developer computers, and inspect CLI execution workflows.
             </p>
           </div>
 
@@ -207,765 +218,810 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
           </div>
         </div>
 
-        {/* Quick Jump Navigation */}
-        <nav className="settings-section-nav" aria-label="Settings section navigation">
-          <span className="settings-section-nav__label">Section Jump:</span>
-          <a href="#workspace-github" className="settings-section-nav__link">
-            Workspace & GitHub
-          </a>
-          <a href="#authorized-computers" className="settings-section-nav__link">
-            Authorized Computers ({activeDevices.length})
-          </a>
-          <a href="#privacy-sync" className="settings-section-nav__link">
-            Privacy & Boundary
-          </a>
-          <a href="#cli-workflow" className="settings-section-nav__link">
-            Local CLI Workflow
-          </a>
-          <a href="#account" className="settings-section-nav__link">
-            Account Identity
-          </a>
-        </nav>
-      </header>
-
-      {/* Section 1: Workspace + GitHub Connection */}
-      <section id="workspace-github" className="settings-section" aria-labelledby="workspace-github-heading">
-        <div className="settings-section__header">
-          <div>
-            <span className="settings-section__eyebrow">Identity & Integration</span>
-            <h2 id="workspace-github-heading" className="settings-section__title">
-              Workspace & Source Control Integration
-            </h2>
-          </div>
-          <span className="settings-section__meta-tag">
-            ws-northstar-001
-          </span>
-        </div>
-
-        <div className="settings-facts-grid">
-          {/* Workspace Panel */}
-          <div className="settings-panel">
-            <div className="settings-panel__header">
-              <div className="settings-panel__identity">
-                <div className="settings-panel__avatar">
-                  N
-                </div>
-                <div>
-                  <h3 className="settings-panel__title">
-                    {summary.workspace.name}
-                  </h3>
-                  <p className="settings-panel__sub">
-                    org_id: ws-northstar-001
-                  </p>
-                </div>
-              </div>
-              <span className="settings-panel__badge">
-                {summary.workspace.intendedUsage ?? 'Team'}
-              </span>
-            </div>
-
-            <dl className="settings-facts-list">
-              <div className="settings-fact-item">
-                <dt className="settings-fact-item__label">Current User</dt>
-                <dd className="settings-fact-item__val">
-                  {userName} <span className="settings-fact-item__note">(Engineering Lead)</span>
-                </dd>
-              </div>
-              <div className="settings-fact-item">
-                <dt className="settings-fact-item__label">Team Composition</dt>
-                <dd className="settings-fact-item__val">
-                  9 team members
-                </dd>
-              </div>
-              <div className="settings-fact-item">
-                <dt className="settings-fact-item__label">Execution Mode</dt>
-                <dd className="settings-fact-item__val settings-fact-item__val--mode">
-                  <span className="status-dot status-dot--blue" aria-hidden="true" />
-                  {summary.workspace.executionMode ?? 'Local TRACE'}
-                </dd>
-              </div>
-              <div className="settings-fact-item">
-                <dt className="settings-fact-item__label">Connected Repositories</dt>
-                <dd className="settings-fact-item__val">
-                  {summary.repositories.length} repositories selected
-                </dd>
-              </div>
-            </dl>
-          </div>
-
-          {/* GitHub Connection Panel */}
-          <div className="settings-panel">
-            <div className="settings-panel__header">
-              <div className="settings-panel__identity">
-                <div className="settings-panel__avatar settings-panel__avatar--github">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="settings-panel__title">
-                    GitHub App Installation
-                  </h3>
-                  <p className="settings-panel__sub">
-                    Northstar Engineering
-                  </p>
-                </div>
-              </div>
-              <span className="settings-connected-badge">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                Connected
-              </span>
-            </div>
-
-            <dl className="settings-facts-list">
-              <div className="settings-fact-item">
-                <dt className="settings-fact-item__label">Permission Scope</dt>
-                <dd className="settings-fact-item__val">
-                  Read-only (Metadata, PRs, Commits)
-                </dd>
-              </div>
-              <div className="settings-fact-item">
-                <dt className="settings-fact-item__label">Last Verification</dt>
-                <dd className="settings-fact-item__val">
-                  Aug 19, 2026, 10:45 AM
-                </dd>
-              </div>
-              <div className="settings-fact-item">
-                <dt className="settings-fact-item__label">Default Branch</dt>
-                <dd className="settings-fact-item__val font-mono">
-                  main
-                </dd>
-              </div>
-              <div className="settings-fact-item">
-                <dt className="settings-fact-item__label">Webhook Security</dt>
-                <dd className="settings-fact-item__val font-mono">
-                  HMAC-SHA256 Signed
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 2: Authorized Computers */}
-      <section id="authorized-computers" className="settings-section" aria-labelledby="authorized-computers-heading">
-        <div className="settings-section__header">
-          <div>
-            <span className="settings-section__eyebrow">Local CLI Authorization</span>
-            <h2 id="authorized-computers-heading" className="settings-section__title">
-              Authorized Computers
-            </h2>
-          </div>
-          <span className="settings-section__meta-tag">
-            {activeDevices.length} active · {revokedDevices.length} revoked
-          </span>
-        </div>
-
-        <p className="settings-section__lead">
-          These computers are authorized to compile local AST changes and send approved TRACE projection records to this workspace. Token digests are stored as one-way hashes on the server and never include your browser session credentials.
-        </p>
-
-        {/* Active Devices List */}
-        {activeDevices.length > 0 ? (
-          <div className="settings-device-list">
-            {activeDevices.map((device, idx) => {
-              const isMacBook = device.label.toLowerCase().includes('macbook');
-              const isCurrentDevice = idx === 0;
-
+        {/* Tab Navigation */}
+        <div className="settings-tabs-wrapper" role="region" aria-label="Settings categories">
+          <nav className="settings-tablist" role="tablist" aria-label="Settings categories">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
               return (
-                <div key={device.id} className="settings-device-row">
-                  <div className="settings-device-row__identity">
-                    <div className="settings-device-row__avatar">
-                      {isMacBook ? (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <rect x="2" y="4" width="20" height="12" rx="2" />
-                          <path d="M6 20h12" />
-                          <line x1="12" y1="16" x2="12" y2="20" />
-                        </svg>
-                      ) : (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <rect x="2" y="3" width="20" height="14" rx="2" />
-                          <line x1="8" y1="21" x2="16" y2="21" />
-                          <line x1="12" y1="17" x2="12" y2="21" />
-                        </svg>
-                      )}
-                    </div>
-
-                    <div className="settings-device-row__info">
-                      <div className="settings-device-row__title-group">
-                        <strong className="settings-device-row__name">
-                          {device.label}
-                        </strong>
-                        {isCurrentDevice ? (
-                          <span className="settings-device-tag settings-device-tag--current">
-                            Current Device
-                          </span>
-                        ) : null}
-                        <span className="settings-device-tag settings-device-tag--active">
-                          <span className="status-dot status-dot--active" aria-hidden="true" />
-                          Active
-                        </span>
-                      </div>
-                      <p className="settings-device-row__ids">
-                        ID: {device.id} · Org: {device.organizationId}
-                      </p>
-
-                      {/* Metadata items */}
-                      <div className="settings-device-row__meta">
-                        <span>
-                          <span className="meta-label">Authorized:</span>{' '}
-                          {formatDate(device.createdAt)}
-                        </span>
-                        <span className="meta-sep" aria-hidden="true">·</span>
-                        <span>
-                          <span className="meta-label">Last used:</span>{' '}
-                          <strong>
-                            {device.lastUsedAt ? formatRelativeDate(device.lastUsedAt) : 'Never'}
-                          </strong>
-                        </span>
-                        <span className="meta-sep" aria-hidden="true">·</span>
-                        <span>
-                          <span className="meta-label">Expires:</span>{' '}
-                          {device.expiresAt ? formatDate(device.expiresAt) : 'Never'}
-                        </span>
-                      </div>
-
-                      {/* Scopes badge list */}
-                      {device.scopes && device.scopes.length > 0 ? (
-                        <div className="settings-device-row__scopes">
-                          <span className="scopes-label">Scopes:</span>
-                          {device.scopes.map((scope) => (
-                            <span key={scope} className="scope-pill">
-                              {scope}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="settings-device-row__actions">
-                    <button
-                      type="button"
-                      onClick={() => openRenameModal(device)}
-                      className="trace-button trace-button--secondary trace-button--small"
-                    >
-                      Rename
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openRevokeModal(device)}
-                      className="trace-button trace-button--secondary trace-button--small trace-button--danger"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                      </svg>
-                      Revoke
-                    </button>
-                  </div>
-                </div>
+                <button
+                  key={tab.id}
+                  id={`tab-${tab.id}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`tabpanel-${tab.id}`}
+                  tabIndex={isActive ? 0 : -1}
+                  className={`settings-tab-btn ${isActive ? 'is-active' : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <span>{tab.label}</span>
+                  {tab.badge !== undefined ? (
+                    <span className="settings-tab-badge">{tab.badge}</span>
+                  ) : null}
+                </button>
               );
             })}
-          </div>
-        ) : (
-          <div className="settings-empty-devices">
-            <div className="settings-empty-devices__icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <rect x="2" y="3" width="20" height="14" rx="2" />
-                <line x1="8" y1="21" x2="16" y2="21" />
-                <line x1="12" y1="17" x2="12" y2="21" />
-              </svg>
-            </div>
-            <h3>No active authorized computers</h3>
-            <p>
-              Run <code>trace login</code> in your local terminal to authorize this machine.
-            </p>
-          </div>
-        )}
+          </nav>
+        </div>
+      </header>
 
-        {/* Revoked Devices Accordion */}
-        {revokedDevices.length > 0 ? (
-          <details className="settings-revoked-details">
-            <summary className="settings-revoked-details__summary">
-              <div className="settings-revoked-details__title">
-                <span className="status-dot status-dot--muted" aria-hidden="true" />
-                <span>Revoked Computers ({revokedDevices.length})</span>
-              </div>
-              <span className="settings-revoked-details__chevron" aria-hidden="true">▼</span>
-            </summary>
-            <div className="settings-revoked-details__content">
-              {revokedDevices.map((device) => (
-                <div key={device.id} className="settings-revoked-row">
-                  <div className="settings-revoked-row__info">
-                    <div className="settings-revoked-row__head">
-                      <strong className="settings-revoked-row__name">
-                        {device.label}
-                      </strong>
-                      <span className="settings-device-tag settings-device-tag--revoked">
-                        Revoked
-                      </span>
-                    </div>
-                    <p className="settings-revoked-row__sub">
-                      Revoked {device.revokedAt ? formatDate(device.revokedAt) : 'recently'} · Future synchronization blocked · Historical records preserved
+      {/* Tab Panel 1: Workspace + GitHub */}
+      {activeTab === 'workspace' && (
+        <section
+          id="tabpanel-workspace"
+          role="tabpanel"
+          aria-labelledby="tab-workspace"
+          className="settings-section"
+        >
+          <div className="settings-section__header">
+            <div>
+              <span className="settings-section__eyebrow">Identity & Integration</span>
+              <h2 className="settings-section__title">
+                Workspace & Source Control Integration
+              </h2>
+            </div>
+            <span className="settings-section__meta-tag">
+              ws-northstar-001
+            </span>
+          </div>
+
+          <div className="settings-facts-grid">
+            {/* Workspace Panel */}
+            <div className="settings-panel">
+              <div className="settings-panel__header">
+                <div className="settings-panel__identity">
+                  <div className="settings-panel__avatar">
+                    N
+                  </div>
+                  <div>
+                    <h3 className="settings-panel__title">
+                      {summary.workspace.name}
+                    </h3>
+                    <p className="settings-panel__sub">
+                      org_id: ws-northstar-001
                     </p>
                   </div>
-                  <span className="settings-revoked-row__time">
-                    Last used: {device.lastUsedAt ? formatDate(device.lastUsedAt) : 'Never'}
-                  </span>
                 </div>
-              ))}
+                <span className="settings-panel__badge">
+                  {summary.workspace.intendedUsage ?? 'Team'}
+                </span>
+              </div>
+
+              <dl className="settings-facts-list">
+                <div className="settings-fact-item">
+                  <dt className="settings-fact-item__label">Current User</dt>
+                  <dd className="settings-fact-item__val">
+                    {userName} <span className="settings-fact-item__note">(Engineering Lead)</span>
+                  </dd>
+                </div>
+                <div className="settings-fact-item">
+                  <dt className="settings-fact-item__label">Team Composition</dt>
+                  <dd className="settings-fact-item__val">
+                    9 team members
+                  </dd>
+                </div>
+                <div className="settings-fact-item">
+                  <dt className="settings-fact-item__label">Execution Mode</dt>
+                  <dd className="settings-fact-item__val settings-fact-item__val--mode">
+                    <span className="status-dot status-dot--blue" aria-hidden="true" />
+                    {summary.workspace.executionMode ?? 'Local TRACE'}
+                  </dd>
+                </div>
+                <div className="settings-fact-item">
+                  <dt className="settings-fact-item__label">Connected Repositories</dt>
+                  <dd className="settings-fact-item__val">
+                    {summary.repositories.length} repositories selected
+                  </dd>
+                </div>
+              </dl>
             </div>
-          </details>
-        ) : null}
-      </section>
 
-      {/* Section 3: Privacy & Synchronization */}
-      <section id="privacy-sync" className="settings-section" aria-labelledby="privacy-sync-heading">
-        <div className="settings-section__header">
-          <div>
-            <span className="settings-section__eyebrow">Trust & Data Architecture</span>
-            <h2 id="privacy-sync-heading" className="settings-section__title">
-              Privacy & Synchronization Trust Boundary
-            </h2>
-          </div>
-        </div>
-        <p className="settings-section__lead">
-          TRACE enforces a source-isolated local analysis architecture. Full source code, inline snippets, and developer credentials never leave your workstation.
-        </p>
-
-        {/* Two-Column Comparison Matrix: Sent vs Never Sent */}
-        <div className="settings-privacy-grid">
-          {/* Column 1: Synchronized Records */}
-          <div className="settings-privacy-panel">
-            <div className="settings-privacy-panel__header">
-              <div className="settings-privacy-panel__title-group">
-                <div className="settings-privacy-panel__icon settings-privacy-panel__icon--sync">
+            {/* GitHub Connection Panel */}
+            <div className="settings-panel">
+              <div className="settings-panel__header">
+                <div className="settings-panel__identity">
+                  <div className="settings-panel__avatar settings-panel__avatar--github">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="settings-panel__title">
+                      GitHub App Installation
+                    </h3>
+                    <p className="settings-panel__sub">
+                      Northstar Engineering
+                    </p>
+                  </div>
+                </div>
+                <span className="settings-connected-badge">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
-                </div>
-                <h3 className="settings-privacy-panel__title">
-                  Synchronized to Workspace
-                </h3>
+                  Connected
+                </span>
               </div>
-              <span className="settings-privacy-panel__badge">
-                Approved Projections
-              </span>
-            </div>
 
-            <ul className="settings-privacy-list">
-              <li className="settings-privacy-item">
-                <span className="settings-privacy-item__bullet" aria-hidden="true">✓</span>
-                <div>
-                  <strong>Approved .trace Projections:</strong>
-                  <p>Manifest manifests, checksum digests, and change metadata generated by the local CLI engine.</p>
+              <dl className="settings-facts-list">
+                <div className="settings-fact-item">
+                  <dt className="settings-fact-item__label">Permission Scope</dt>
+                  <dd className="settings-fact-item__val">
+                    Read-only (Metadata, PRs, Commits)
+                  </dd>
                 </div>
-              </li>
-              <li className="settings-privacy-item">
-                <span className="settings-privacy-item__bullet" aria-hidden="true">✓</span>
-                <div>
-                  <strong>Governance Rule Checks:</strong>
-                  <p>Automated policy checks, severity invariants, and AST pattern match results.</p>
+                <div className="settings-fact-item">
+                  <dt className="settings-fact-item__label">Last Verification</dt>
+                  <dd className="settings-fact-item__val">
+                    Aug 19, 2026, 10:45 AM
+                  </dd>
                 </div>
-              </li>
-              <li className="settings-privacy-item">
-                <span className="settings-privacy-item__bullet" aria-hidden="true">✓</span>
-                <div>
-                  <strong>Architecture Decisions (ADRs):</strong>
-                  <p>Structured architectural decision records, rationale statements, and evaluation records.</p>
+                <div className="settings-fact-item">
+                  <dt className="settings-fact-item__label">Default Branch</dt>
+                  <dd className="settings-fact-item__val font-mono">
+                    main
+                  </dd>
                 </div>
-              </li>
-              <li className="settings-privacy-item">
-                <span className="settings-privacy-item__bullet" aria-hidden="true">✓</span>
-                <div>
-                  <strong>Cryptographic Hashes & Git Metadata:</strong>
-                  <p>Commit SHAs, branch names, timestamp provenance, and payload verification signatures.</p>
+                <div className="settings-fact-item">
+                  <dt className="settings-fact-item__label">Webhook Security</dt>
+                  <dd className="settings-fact-item__val font-mono">
+                    HMAC-SHA256 Signed
+                  </dd>
                 </div>
-              </li>
-            </ul>
+              </dl>
+            </div>
           </div>
+        </section>
+      )}
 
-          {/* Column 2: Strictly Excluded */}
-          <div className="settings-privacy-panel">
-            <div className="settings-privacy-panel__header">
-              <div className="settings-privacy-panel__title-group">
-                <div className="settings-privacy-panel__icon settings-privacy-panel__icon--excluded">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </div>
-                <h3 className="settings-privacy-panel__title">
-                  Never Sent (Excluded by Design)
-                </h3>
-              </div>
-              <span className="settings-privacy-panel__badge">
-                Workstation Retained
-              </span>
-            </div>
-
-            <ul className="settings-privacy-list">
-              <li className="settings-privacy-item">
-                <span className="settings-privacy-item__bullet settings-privacy-item__bullet--cross" aria-hidden="true">✕</span>
-                <div>
-                  <strong>Repository Source Files:</strong>
-                  <p>Raw code never leaves your local file system. Remote cloud compilation of raw files is prohibited.</p>
-                </div>
-              </li>
-              <li className="settings-privacy-item">
-                <span className="settings-privacy-item__bullet settings-privacy-item__bullet--cross" aria-hidden="true">✕</span>
-                <div>
-                  <strong>Inline Code Snippets & Private ASTs:</strong>
-                  <p>AST construction and symbol resolution execute purely in-memory on your local CPU.</p>
-                </div>
-              </li>
-              <li className="settings-privacy-item">
-                <span className="settings-privacy-item__bullet settings-privacy-item__bullet--cross" aria-hidden="true">✕</span>
-                <div>
-                  <strong>Secrets, Env Files & Private Keys:</strong>
-                  <p>Files matching <code>.env*</code>, <code>.pem</code>, <code>.key</code>, or credentials patterns are ignored before packaging.</p>
-                </div>
-              </li>
-              <li className="settings-privacy-item">
-                <span className="settings-privacy-item__bullet settings-privacy-item__bullet--cross" aria-hidden="true">✕</span>
-                <div>
-                  <strong>Developer Velocity & Surveillance Metrics:</strong>
-                  <p>No individual developer ranking, keystroke tracking, or personal surveillance telemetry is ever generated.</p>
-                </div>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Security & Verification Guarantee Bar */}
-        <div className="settings-guarantee-bar">
-          <div className="settings-guarantee-bar__info">
-            <div className="settings-guarantee-bar__icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-            </div>
+      {/* Tab Panel 2: Authorized Computers */}
+      {activeTab === 'computers' && (
+        <section
+          id="tabpanel-computers"
+          role="tabpanel"
+          aria-labelledby="tab-computers"
+          className="settings-section"
+        >
+          <div className="settings-section__header">
             <div>
-              <strong>Pre-Flight Review Guarantee</strong>
+              <span className="settings-section__eyebrow">Local CLI Authorization</span>
+              <h2 className="settings-section__title">
+                Authorized Computers
+              </h2>
+            </div>
+            <span className="settings-section__meta-tag">
+              {activeDevices.length} active · {revokedDevices.length} revoked
+            </span>
+          </div>
+
+          <p className="settings-section__lead">
+            These computers are authorized to compile local AST changes and send approved TRACE projection records to this workspace. Token digests are stored as one-way hashes on the server and never include your browser session credentials.
+          </p>
+
+          {/* Active Devices List */}
+          {activeDevices.length > 0 ? (
+            <div className="settings-device-list">
+              {activeDevices.map((device, idx) => {
+                const isMacBook = device.label.toLowerCase().includes('macbook');
+                const isCurrentDevice = idx === 0;
+
+                return (
+                  <div key={device.id} className="settings-device-row">
+                    <div className="settings-device-row__identity">
+                      <div className="settings-device-row__avatar">
+                        {isMacBook ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <rect x="2" y="4" width="20" height="12" rx="2" />
+                            <path d="M6 20h12" />
+                            <line x1="12" y1="16" x2="12" y2="20" />
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                            <line x1="8" y1="21" x2="16" y2="21" />
+                            <line x1="12" y1="17" x2="12" y2="21" />
+                          </svg>
+                        )}
+                      </div>
+
+                      <div className="settings-device-row__info">
+                        <div className="settings-device-row__title-group">
+                          <strong className="settings-device-row__name">
+                            {device.label}
+                          </strong>
+                          {isCurrentDevice ? (
+                            <span className="settings-device-tag settings-device-tag--current">
+                              Current Device
+                            </span>
+                          ) : null}
+                          <span className="settings-device-tag settings-device-tag--active">
+                            <span className="status-dot status-dot--active" aria-hidden="true" />
+                            Active
+                          </span>
+                        </div>
+                        <p className="settings-device-row__ids">
+                          ID: {device.id} · Org: {device.organizationId}
+                        </p>
+
+                        {/* Metadata items */}
+                        <div className="settings-device-row__meta">
+                          <span>
+                            <span className="meta-label">Authorized:</span>{' '}
+                            {formatDate(device.createdAt)}
+                          </span>
+                          <span className="meta-sep" aria-hidden="true">·</span>
+                          <span>
+                            <span className="meta-label">Last used:</span>{' '}
+                            <strong>
+                              {device.lastUsedAt ? formatRelativeDate(device.lastUsedAt) : 'Never'}
+                            </strong>
+                          </span>
+                          <span className="meta-sep" aria-hidden="true">·</span>
+                          <span>
+                            <span className="meta-label">Expires:</span>{' '}
+                            {device.expiresAt ? formatDate(device.expiresAt) : 'Never'}
+                          </span>
+                        </div>
+
+                        {/* Scopes badge list */}
+                        {device.scopes && device.scopes.length > 0 ? (
+                          <div className="settings-device-row__scopes">
+                            <span className="scopes-label">Scopes:</span>
+                            {device.scopes.map((scope) => (
+                              <span key={scope} className="scope-pill">
+                                {scope}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="settings-device-row__actions">
+                      <button
+                        type="button"
+                        onClick={() => openRenameModal(device)}
+                        className="trace-button trace-button--secondary trace-button--small"
+                      >
+                        Rename
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openRevokeModal(device)}
+                        className="trace-button trace-button--secondary trace-button--small trace-button--danger"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                        </svg>
+                        Revoke
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="settings-empty-devices">
+              <div className="settings-empty-devices__icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <rect x="2" y="3" width="20" height="14" rx="2" />
+                  <line x1="8" y1="21" x2="16" y2="21" />
+                  <line x1="12" y1="17" x2="12" y2="21" />
+                </svg>
+              </div>
+              <h3>No active authorized computers</h3>
               <p>
-                Run <code>trace sync --dry-run</code> to audit every byte before synchronizing.
+                Run <code>trace login</code> in your local terminal to authorize this machine.
               </p>
             </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => handleCopy('trace sync --dry-run', 'dry-run-guarantee')}
-            className="trace-button trace-button--secondary trace-button--small"
-          >
-            {copiedCmd === 'dry-run-guarantee' ? 'Copied Dry-Run Command' : 'Copy dry-run command'}
-          </button>
-        </div>
-      </section>
+          )}
 
-      {/* Section 4: Local CLI Workflow */}
-      <section id="cli-workflow" className="settings-section" aria-labelledby="cli-workflow-heading">
-        <div className="settings-section__header">
-          <div>
-            <span className="settings-section__eyebrow">Developer Operations</span>
-            <h2 id="cli-workflow-heading" className="settings-section__title">
-              Local CLI Execution Workflow
-            </h2>
-          </div>
-        </div>
-        <p className="settings-section__lead">
-          Browser sessions do not execute repository analysis or touch local file systems. Run the TRACE CLI in your local terminal to parse AST boundaries and synchronize approved records.
-        </p>
+          {/* Revoked Devices Accordion */}
+          {revokedDevices.length > 0 ? (
+            <details className="settings-revoked-details">
+              <summary className="settings-revoked-details__summary">
+                <div className="settings-revoked-details__title">
+                  <span className="status-dot status-dot--muted" aria-hidden="true" />
+                  <span>Revoked Computers ({revokedDevices.length})</span>
+                </div>
+                <span className="settings-revoked-details__chevron" aria-hidden="true">▼</span>
+              </summary>
 
-        <div className="settings-cli-grid">
-          {/* Step 1: Analyze */}
-          <div className="settings-cli-card">
-            <div className="settings-cli-card__body">
-              <div className="settings-cli-card__head">
-                <span className="settings-cli-card__step-num">1</span>
-                <span className="settings-cli-card__badge">AST Parser</span>
+              <div className="settings-revoked-details__content">
+                {revokedDevices.map((device) => (
+                  <div key={device.id} className="settings-revoked-row">
+                    <div className="settings-revoked-row__info">
+                      <div className="settings-revoked-row__head">
+                        <strong className="settings-revoked-row__name">
+                          {device.label}
+                        </strong>
+                        <span className="settings-device-tag settings-device-tag--revoked">
+                          Revoked
+                        </span>
+                      </div>
+                      <p className="settings-revoked-row__sub">
+                        Revoked {device.revokedAt ? formatDate(device.revokedAt) : 'recently'} · Future synchronization blocked · Historical records preserved
+                      </p>
+                    </div>
+                    <span className="settings-revoked-row__time">
+                      Last used: {device.lastUsedAt ? formatDate(device.lastUsedAt) : 'Never'}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <h3 className="settings-cli-card__title">Run Local Analysis</h3>
-              <p className="settings-cli-card__desc">
-                Parses repository AST, checks architectural invariants, and compiles the local projection.
-              </p>
-            </div>
+            </details>
+          ) : null}
+        </section>
+      )}
 
-            <div className="settings-cli-card__footer">
-              <div className="settings-cli-box">
-                <code>trace analyze</code>
-                <button
-                  type="button"
-                  onClick={() => handleCopy('trace analyze', 'step-1')}
-                  className="settings-cli-copy-btn"
-                  aria-label="Copy trace analyze command"
-                >
-                  {copiedCmd === 'step-1' ? (
-                    <span className="copied-text">Copied</span>
-                  ) : (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+      {/* Tab Panel 3: Privacy & Synchronization */}
+      {activeTab === 'privacy' && (
+        <section
+          id="tabpanel-privacy"
+          role="tabpanel"
+          aria-labelledby="tab-privacy"
+          className="settings-section"
+        >
+          <div className="settings-section__header">
+            <div>
+              <span className="settings-section__eyebrow">Trust & Data Architecture</span>
+              <h2 className="settings-section__title">
+                Privacy & Synchronization Trust Boundary
+              </h2>
+            </div>
+          </div>
+          <p className="settings-section__lead">
+            TRACE enforces a source-isolated local analysis architecture. Full source code, inline snippets, and developer credentials never leave your workstation.
+          </p>
+
+          {/* Two-Column Comparison Matrix: Sent vs Never Sent */}
+          <div className="settings-privacy-grid">
+            {/* Column 1: Synchronized Records */}
+            <div className="settings-privacy-panel">
+              <div className="settings-privacy-panel__header">
+                <div className="settings-privacy-panel__title-group">
+                  <div className="settings-privacy-panel__icon settings-privacy-panel__icon--sync">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12" />
                     </svg>
-                  )}
-                </button>
+                  </div>
+                  <h3 className="settings-privacy-panel__title">
+                    Synchronized to Workspace
+                  </h3>
+                </div>
+                <span className="settings-privacy-panel__badge">
+                  Approved Projections
+                </span>
               </div>
-            </div>
-          </div>
 
-          {/* Step 2: Dry Run */}
-          <div className="settings-cli-card">
-            <div className="settings-cli-card__body">
-              <div className="settings-cli-card__head">
-                <span className="settings-cli-card__step-num">2</span>
-                <span className="settings-cli-card__badge">Pre-Flight</span>
-              </div>
-              <h3 className="settings-cli-card__title">Inspect Manifest Payload</h3>
-              <p className="settings-cli-card__desc">
-                Dry-run prints the exact metadata manifest and SHA checksums that will be transmitted.
-              </p>
+              <ul className="settings-privacy-list">
+                <li className="settings-privacy-item">
+                  <span className="settings-privacy-item__bullet" aria-hidden="true">✓</span>
+                  <div>
+                    <strong>Approved .trace Projections:</strong>
+                    <p>Manifest manifests, checksum digests, and change metadata generated by the local CLI engine.</p>
+                  </div>
+                </li>
+                <li className="settings-privacy-item">
+                  <span className="settings-privacy-item__bullet" aria-hidden="true">✓</span>
+                  <div>
+                    <strong>Governance Rule Checks:</strong>
+                    <p>Automated policy checks, severity invariants, and AST pattern match results.</p>
+                  </div>
+                </li>
+                <li className="settings-privacy-item">
+                  <span className="settings-privacy-item__bullet" aria-hidden="true">✓</span>
+                  <div>
+                    <strong>Architecture Decisions (ADRs):</strong>
+                    <p>Structured architectural decision records, rationale statements, and evaluation records.</p>
+                  </div>
+                </li>
+                <li className="settings-privacy-item">
+                  <span className="settings-privacy-item__bullet" aria-hidden="true">✓</span>
+                  <div>
+                    <strong>Cryptographic Hashes & Git Metadata:</strong>
+                    <p>Commit SHAs, branch names, timestamp provenance, and payload verification signatures.</p>
+                  </div>
+                </li>
+              </ul>
             </div>
 
-            <div className="settings-cli-card__footer">
-              <div className="settings-cli-box">
-                <code>trace sync --dry-run</code>
-                <button
-                  type="button"
-                  onClick={() => handleCopy('trace sync --dry-run', 'step-2')}
-                  className="settings-cli-copy-btn"
-                  aria-label="Copy trace sync dry run command"
-                >
-                  {copiedCmd === 'step-2' ? (
-                    <span className="copied-text">Copied</span>
-                  ) : (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+            {/* Column 2: Strictly Excluded */}
+            <div className="settings-privacy-panel">
+              <div className="settings-privacy-panel__header">
+                <div className="settings-privacy-panel__title-group">
+                  <div className="settings-privacy-panel__icon settings-privacy-panel__icon--excluded">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
-                  )}
-                </button>
+                  </div>
+                  <h3 className="settings-privacy-panel__title">
+                    Never Sent (Excluded by Design)
+                  </h3>
+                </div>
+                <span className="settings-privacy-panel__badge">
+                  Workstation Retained
+                </span>
               </div>
+
+              <ul className="settings-privacy-list">
+                <li className="settings-privacy-item">
+                  <span className="settings-privacy-item__bullet settings-privacy-item__bullet--cross" aria-hidden="true">✕</span>
+                  <div>
+                    <strong>Repository Source Files:</strong>
+                    <p>Raw code never leaves your local file system. Remote cloud compilation of raw files is prohibited.</p>
+                  </div>
+                </li>
+                <li className="settings-privacy-item">
+                  <span className="settings-privacy-item__bullet settings-privacy-item__bullet--cross" aria-hidden="true">✕</span>
+                  <div>
+                    <strong>Inline Code Snippets & Private ASTs:</strong>
+                    <p>AST construction and symbol resolution execute purely in-memory on your local CPU.</p>
+                  </div>
+                </li>
+                <li className="settings-privacy-item">
+                  <span className="settings-privacy-item__bullet settings-privacy-item__bullet--cross" aria-hidden="true">✕</span>
+                  <div>
+                    <strong>Secrets, Env Files & Private Keys:</strong>
+                    <p>Files matching <code>.env*</code>, <code>.pem</code>, <code>.key</code>, or credentials patterns are ignored before packaging.</p>
+                  </div>
+                </li>
+                <li className="settings-privacy-item">
+                  <span className="settings-privacy-item__bullet settings-privacy-item__bullet--cross" aria-hidden="true">✕</span>
+                  <div>
+                    <strong>Developer Velocity & Surveillance Metrics:</strong>
+                    <p>No individual developer ranking, keystroke tracking, or personal surveillance telemetry is ever generated.</p>
+                  </div>
+                </li>
+              </ul>
             </div>
           </div>
 
-          {/* Step 3: Synchronize */}
-          <div className="settings-cli-card">
-            <div className="settings-cli-card__body">
-              <div className="settings-cli-card__head">
-                <span className="settings-cli-card__step-num">3</span>
-                <span className="settings-cli-card__badge">Sync</span>
+          {/* Security & Verification Guarantee Bar */}
+          <div className="settings-guarantee-bar">
+            <div className="settings-guarantee-bar__info">
+              <div className="settings-guarantee-bar__icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
               </div>
-              <h3 className="settings-cli-card__title">Synchronize Records</h3>
-              <p className="settings-cli-card__desc">
-                Signs and synchronizes approved project memory to your central workspace ledger.
-              </p>
-            </div>
-
-            <div className="settings-cli-card__footer">
-              <div className="settings-cli-box">
-                <code>trace sync</code>
-                <button
-                  type="button"
-                  onClick={() => handleCopy('trace sync', 'step-3')}
-                  className="settings-cli-copy-btn"
-                  aria-label="Copy trace sync command"
-                >
-                  {copiedCmd === 'step-3' ? (
-                    <span className="copied-text">Copied</span>
-                  ) : (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-                    </svg>
-                  )}
-                </button>
+              <div>
+                <strong>Pre-Flight Review Guarantee</strong>
+                <p>
+                  Run <code>trace sync --dry-run</code> to audit every byte before synchronizing.
+                </p>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 5: Account */}
-      <section id="account" className="settings-section" aria-labelledby="account-heading">
-        <div className="settings-section__header">
-          <div>
-            <span className="settings-section__eyebrow">Identity & Session</span>
-            <h2 id="account-heading" className="settings-section__title">
-              Account Details
-            </h2>
-          </div>
-        </div>
-
-        <div className="settings-account-card">
-          <div className="settings-account-card__info">
-            <div className="settings-account-card__avatar">
-              MM
-            </div>
-            <div className="settings-account-card__details">
-              <div className="settings-account-card__name-row">
-                <h3 className="settings-account-card__name">{userName}</h3>
-                <span className="settings-account-card__role">Engineering Lead</span>
-              </div>
-              <p className="settings-account-card__sub">
-                {userEmail} · @{githubHandle}
-              </p>
-            </div>
-          </div>
-
-          <div className="settings-account-card__actions">
-            <a
-              href="/api/auth/sign-out"
-              className="trace-button trace-button--secondary"
+            <button
+              type="button"
+              onClick={() => handleCopy('trace sync --dry-run', 'dry-run-guarantee')}
+              className="trace-button trace-button--secondary trace-button--small"
             >
-              Sign out
-            </a>
+              {copiedCmd === 'dry-run-guarantee' ? 'Copied Dry-Run Command' : 'Copy dry-run command'}
+            </button>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Rename Modal */}
-      {renameTarget ? (
-        <div className="trace-dialog-scrim">
-          <div
-            className="trace-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="rename-dialog-title"
-          >
-            <div className="trace-dialog__header">
-              <h3 id="rename-dialog-title" className="trace-dialog__title">
-                Rename Authorized Computer
-              </h3>
-              <button
-                type="button"
-                onClick={closeRenameModal}
-                disabled={renamePending}
-                className="trace-dialog__close"
-                aria-label="Close dialog"
-              >
-                ✕
-              </button>
+      {/* Tab Panel 4: Local CLI Workflow */}
+      {activeTab === 'cli' && (
+        <section
+          id="tabpanel-cli"
+          role="tabpanel"
+          aria-labelledby="tab-cli"
+          className="settings-section"
+        >
+          <div className="settings-section__header">
+            <div>
+              <span className="settings-section__eyebrow">Developer Operations</span>
+              <h2 className="settings-section__title">
+                Local CLI Execution Workflow
+              </h2>
             </div>
+          </div>
+          <p className="settings-section__lead">
+            Browser sessions do not execute repository analysis or touch local file systems. Run the TRACE CLI in your local terminal to parse AST boundaries and synchronize approved records.
+          </p>
 
-            <form onSubmit={handleRenameSubmit} className="settings-modal-form">
-              <div className="settings-form-group">
-                <label htmlFor="device-label-input" className="settings-form-label">
-                  Computer Label
-                </label>
-                <input
-                  id="device-label-input"
-                  type="text"
-                  value={renameInput}
-                  onChange={(e) => setRenameInput(e.target.value)}
-                  disabled={renamePending}
-                  maxLength={80}
-                  className="trace-input"
-                  autoFocus
-                />
-                <p className="settings-form-hint">
-                  Device ID: {renameTarget.id}
+          <div className="settings-cli-grid">
+            {/* Step 1: Analyze */}
+            <div className="settings-cli-card">
+              <div className="settings-cli-card__body">
+                <div className="settings-cli-card__head">
+                  <span className="settings-cli-card__step-num">1</span>
+                  <span className="settings-cli-card__badge">AST Parser</span>
+                </div>
+                <h3 className="settings-cli-card__title">Run Local Analysis</h3>
+                <p className="settings-cli-card__desc">
+                  Parses repository AST, checks architectural invariants, and compiles the local projection.
                 </p>
               </div>
 
-              {renameError ? (
+              <div className="settings-cli-card__footer">
+                <div className="settings-cli-box">
+                  <code>trace analyze</code>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy('trace analyze', 'step-1')}
+                    className="settings-cli-copy-btn"
+                    aria-label="Copy trace analyze command"
+                  >
+                    {copiedCmd === 'step-1' ? (
+                      <span className="copied-text">Copied</span>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2: Dry Run */}
+            <div className="settings-cli-card">
+              <div className="settings-cli-card__body">
+                <div className="settings-cli-card__head">
+                  <span className="settings-cli-card__step-num">2</span>
+                  <span className="settings-cli-card__badge">Pre-Flight</span>
+                </div>
+                <h3 className="settings-cli-card__title">Inspect Manifest Payload</h3>
+                <p className="settings-cli-card__desc">
+                  Dry-run prints the exact metadata manifest and SHA checksums that will be transmitted.
+                </p>
+              </div>
+
+              <div className="settings-cli-card__footer">
+                <div className="settings-cli-box">
+                  <code>trace sync --dry-run</code>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy('trace sync --dry-run', 'step-2')}
+                    className="settings-cli-copy-btn"
+                    aria-label="Copy trace sync dry run command"
+                  >
+                    {copiedCmd === 'step-2' ? (
+                      <span className="copied-text">Copied</span>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3: Synchronize */}
+            <div className="settings-cli-card">
+              <div className="settings-cli-card__body">
+                <div className="settings-cli-card__head">
+                  <span className="settings-cli-card__step-num">3</span>
+                  <span className="settings-cli-card__badge">Sync</span>
+                </div>
+                <h3 className="settings-cli-card__title">Synchronize Records</h3>
+                <p className="settings-cli-card__desc">
+                  Signs and synchronizes approved project memory to your central workspace ledger.
+                </p>
+              </div>
+
+              <div className="settings-cli-card__footer">
+                <div className="settings-cli-box">
+                  <code>trace sync</code>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy('trace sync', 'step-3')}
+                    className="settings-cli-copy-btn"
+                    aria-label="Copy trace sync command"
+                  >
+                    {copiedCmd === 'step-3' ? (
+                      <span className="copied-text">Copied</span>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Tab Panel 5: Account */}
+      {activeTab === 'account' && (
+        <section
+          id="tabpanel-account"
+          role="tabpanel"
+          aria-labelledby="tab-account"
+          className="settings-section"
+        >
+          <div className="settings-section__header">
+            <div>
+              <span className="settings-section__eyebrow">Identity & Session</span>
+              <h2 className="settings-section__title">
+                Account Details
+              </h2>
+            </div>
+          </div>
+
+          <div className="settings-account-card">
+            <div className="settings-account-card__info">
+              <div className="settings-account-card__avatar">
+                MM
+              </div>
+              <div className="settings-account-card__details">
+                <div className="settings-account-card__name-row">
+                  <h3 className="settings-account-card__name">{userName}</h3>
+                  <span className="settings-account-card__role">Engineering Lead</span>
+                </div>
+                <p className="settings-account-card__sub">
+                  {userEmail} · @{githubHandle}
+                </p>
+              </div>
+            </div>
+
+            <div className="settings-account-card__actions">
+              <a
+                href="/api/auth/sign-out"
+                className="trace-button trace-button--secondary"
+              >
+                Sign out
+              </a>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Rename Modal */}
+      {renameTarget ? (
+        <OverlayPortal>
+          <ModalBackdrop onClose={closeRenameModal} ariaLabel="Close dialog">
+            <CenteredDialog
+              size="md"
+              titleId="rename-dialog-title"
+              onClose={closeRenameModal}
+            >
+              <div className="trace-dialog__header">
+                <h3 id="rename-dialog-title" className="trace-dialog__title">
+                  Rename Authorized Computer
+                </h3>
+                <button
+                  type="button"
+                  onClick={closeRenameModal}
+                  disabled={renamePending}
+                  className="trace-dialog__close"
+                  aria-label="Close dialog"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleRenameSubmit} className="settings-modal-form">
+                <div className="settings-form-group">
+                  <label htmlFor="device-label-input" className="settings-form-label">
+                    Computer Label
+                  </label>
+                  <input
+                    id="device-label-input"
+                    type="text"
+                    value={renameInput}
+                    onChange={(e) => setRenameInput(e.target.value)}
+                    disabled={renamePending}
+                    maxLength={80}
+                    className="trace-input"
+                    autoFocus
+                  />
+                  <p className="settings-form-hint">
+                    Device ID: {renameTarget.id}
+                  </p>
+                </div>
+
+                {renameError ? (
+                  <p className="settings-form-error" role="alert">
+                    {renameError}
+                  </p>
+                ) : null}
+
+                <div className="trace-dialog__actions">
+                  <button
+                    type="button"
+                    onClick={closeRenameModal}
+                    disabled={renamePending}
+                    className="trace-button trace-button--secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={renamePending || !renameInput.trim()}
+                    className="trace-button trace-button--primary"
+                  >
+                    {renamePending ? 'Saving...' : 'Save Label'}
+                  </button>
+                </div>
+              </form>
+            </CenteredDialog>
+          </ModalBackdrop>
+        </OverlayPortal>
+      ) : null}
+
+      {/* Revoke Modal */}
+      {revokeTarget ? (
+        <OverlayPortal>
+          <ModalBackdrop onClose={closeRevokeModal} ariaLabel="Close dialog">
+            <CenteredDialog
+              size="md"
+              titleId="revoke-dialog-title"
+              onClose={closeRevokeModal}
+            >
+              <div className="trace-dialog__header">
+                <div className="settings-modal-title-with-icon">
+                  <div className="settings-modal-warning-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                    </svg>
+                  </div>
+                  <h3 id="revoke-dialog-title" className="trace-dialog__title">
+                    Revoke Computer Authorization
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeRevokeModal}
+                  disabled={revokePending}
+                  className="trace-dialog__close"
+                  aria-label="Close dialog"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="settings-modal-body">
+                <p className="settings-modal-lead">
+                  Are you sure you want to revoke authorization for <strong>“{revokeTarget.label}”</strong>?
+                </p>
+                <div className="settings-modal-note">
+                  <p>• Future local synchronization from this computer will stop immediately.</p>
+                  <p>• Historical project records, AST metrics, and architectural decisions will remain preserved in workspace memory.</p>
+                </div>
+              </div>
+
+              {revokeError ? (
                 <p className="settings-form-error" role="alert">
-                  {renameError}
+                  {revokeError}
                 </p>
               ) : null}
 
               <div className="trace-dialog__actions">
                 <button
                   type="button"
-                  onClick={closeRenameModal}
-                  disabled={renamePending}
+                  onClick={closeRevokeModal}
+                  disabled={revokePending}
                   className="trace-button trace-button--secondary"
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
-                  disabled={renamePending || !renameInput.trim()}
-                  className="trace-button trace-button--primary"
+                  type="button"
+                  onClick={handleRevokeConfirm}
+                  disabled={revokePending}
+                  className="trace-button trace-button--secondary trace-button--danger"
                 >
-                  {renamePending ? 'Saving...' : 'Save Label'}
+                  {revokePending ? 'Revoking...' : 'Revoke Authorization'}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Revoke Modal */}
-      {revokeTarget ? (
-        <div className="trace-dialog-scrim">
-          <div
-            className="trace-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="revoke-dialog-title"
-          >
-            <div className="trace-dialog__header">
-              <div className="settings-modal-title-with-icon">
-                <div className="settings-modal-warning-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                  </svg>
-                </div>
-                <h3 id="revoke-dialog-title" className="trace-dialog__title">
-                  Revoke Computer Authorization
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={closeRevokeModal}
-                disabled={revokePending}
-                className="trace-dialog__close"
-                aria-label="Close dialog"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="settings-modal-body">
-              <p className="settings-modal-lead">
-                Are you sure you want to revoke authorization for <strong>“{revokeTarget.label}”</strong>?
-              </p>
-              <div className="settings-modal-note">
-                <p>• Future local synchronization from this computer will stop immediately.</p>
-                <p>• Historical project records, AST metrics, and architectural decisions will remain preserved in workspace memory.</p>
-              </div>
-            </div>
-
-            {revokeError ? (
-              <p className="settings-form-error" role="alert">
-                {revokeError}
-              </p>
-            ) : null}
-
-            <div className="trace-dialog__actions">
-              <button
-                type="button"
-                onClick={closeRevokeModal}
-                disabled={revokePending}
-                className="trace-button trace-button--secondary"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleRevokeConfirm}
-                disabled={revokePending}
-                className="trace-button trace-button--secondary trace-button--danger"
-              >
-                {revokePending ? 'Revoking...' : 'Revoke Authorization'}
-              </button>
-            </div>
-          </div>
-        </div>
+            </CenteredDialog>
+          </ModalBackdrop>
+        </OverlayPortal>
       ) : null}
     </div>
   );

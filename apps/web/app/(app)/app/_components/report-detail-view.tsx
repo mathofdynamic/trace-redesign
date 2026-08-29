@@ -178,16 +178,16 @@ export function ReportDetailView({
                   </div>
                   <button
                     type="button"
-                    className="trace-button trace-button--ghost trace-button--sm"
+                    className="trace-button trace-button--secondary trace-button--sm"
                     onClick={() =>
                       copyToClipboard(
                         'trace analyze && trace sync --dry-run && trace sync',
                         'refresh-cmd',
                       )
                     }
-                    aria-label="Copy refresh commands"
+                    aria-label="Copy refresh workflow commands"
                   >
-                    {copiedText === 'refresh-cmd' ? 'Copied' : 'Copy refresh commands'}
+                    {copiedText === 'refresh-cmd' ? 'Copied' : 'Copy refresh workflow'}
                   </button>
                 </div>
               </div>
@@ -294,7 +294,7 @@ export function ReportDetailView({
                               href={change.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="trace-button trace-button--ghost trace-button--sm doc-gh-link"
+                              className="trace-button trace-button--secondary trace-button--small doc-gh-link"
                             >
                               GitHub PR ↗
                             </a>
@@ -402,7 +402,7 @@ export function ReportDetailView({
                   <span className="raw-toolbar__label">Canonical TRACE Markdown Record</span>
                   <button
                     type="button"
-                    className="trace-button trace-button--ghost trace-button--sm"
+                    className="trace-button trace-button--secondary trace-button--small"
                     onClick={() => copyToClipboard(report.content, 'raw-markdown')}
                   >
                     {copiedText === 'raw-markdown' ? 'Copied to clipboard' : 'Copy markdown'}
@@ -551,21 +551,25 @@ export function ReportDetailView({
               </div>
 
               {isNeedsRefresh ? (
-                <div className="rail-cli-box">
-                  <code>trace analyze && trace sync --dry-run && trace sync</code>
+                <div className="rail-cli-box rail-cli-box--workflow">
+                  <div className="rail-cli-workflow-lines">
+                    <code>trace analyze</code>
+                    <code>trace sync --dry-run</code>
+                    <code>trace sync</code>
+                  </div>
                   <button
                     type="button"
-                    className="rail-cli-copy-btn"
+                    className="trace-button trace-button--secondary trace-button--sm rail-workflow-btn"
                     onClick={() =>
                       copyToClipboard(
                         'trace analyze && trace sync --dry-run && trace sync',
                         'cli-refresh',
                       )
                     }
-                    title="Copy analyze & sync workflow"
-                    aria-label="Copy CLI analyze and sync command"
+                    title="Copy refresh workflow"
+                    aria-label="Copy refresh workflow commands"
                   >
-                    {copiedText === 'cli-refresh' ? '✓' : 'Copy'}
+                    {copiedText === 'cli-refresh' ? 'Copied' : 'Copy refresh workflow'}
                   </button>
                 </div>
               ) : null}

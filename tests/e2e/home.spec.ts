@@ -644,4 +644,88 @@ test.describe('authenticated product journey', () => {
       await seeded.cleanup();
     }
   });
+
+  test('decisions view supports prompt drafting modal, copy workflow, and search filters without mutating repositories', async ({
+    page,
+  }) => {
+    const seeded = await seedWorkspace({
+      installation: true,
+      repositoryState: 'active',
+      analysis: 'completed',
+      localSync: true,
+    });
+    try {
+      await page
+        .context()
+        .addCookies([{ name: 'trace_session', value: seeded.cookie, url: appBaseUrl }]);
+      await page.goto('/app/decisions');
+      await expect(page.getByRole('heading', { name: 'Architectural Decisions' })).toBeVisible();
+
+      // Open Draft Decision Prompt modal
+      const draftBtn = page.getByRole('button', { name: 'Draft decision prompt' });
+      await expect(draftBtn).toBeVisible();
+      await draftBtn.click();
+
+      // Verify centered modal rendered via OverlayPortal
+      const modal = page.locator('.decision-builder-dialog');
+      await expect(modal).toBeVisible();
+      await expect(page.getByText('Browser does not mutate repository')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Draft Decision Prompt' })).toBeVisible();
+
+      // Check copy button is disabled initially until required fields filled
+      const copyBtn = modal.getByRole('button', { name: 'Copy agent prompt' });
+      await expect(copyBtn).toBeDisabled();
+
+      // Fill in required fields
+      await modal.locator('input[placeholder*="Migrate Session Tokens"]').fill('ADR 0042: Boundary Invariant Verification');
+      await modal.locator('textarea[placeholder*="Describe the architectural challenge"]').fill('Cross-boundary services need deterministic AST proofs.');
+      await modal.locator('textarea[placeholder*="State the exact architectural choice"]').fill('Mandate compile-time boundary invariants in all API handlers.');
+
+      // Copy button is now enabled
+      await expect(copyBtn).toBeEnabled();
+
+      // Test clear draft
+      const clearBtn = modal.getByRole('button', { name: 'Clear draft' });
+      await clearBtn.click();
+      await expect(copyBtn).toBeDisabled();
+
+      // Close modal
+      await modal.getByRole('button', { name: 'Close' }).click();
+      await expect(modal).toBeHidden();
+    } finally {
+      await seeded.cleanup();
+    }
+  });
+
+  test('rules view supports structured toolbar filtering, severity scoping, and expanded policy invariants', async ({
+    page,
+  }) => {
+    const seeded = await seedWorkspace({
+      installation: true,
+      repositoryState: 'active',
+      analysis: 'completed',
+      localSync: true,
+    });
+    try {
+      await page
+        .context()
+        .addCookies([{ name: 'trace_session', value: seeded.cookie, url: appBaseUrl }]);
+      await page.goto('/app/rules');
+      await expect(page.getByRole('heading', { name: 'Governance & Policy Rules' })).toBeVisible();
+      await expect(page.getByText('DURABLE GOVERNANCE')).toBeVisible();
+
+      // Verify search and severity filters exist
+      const searchInput = page.getByPlaceholder('Search governance rules by title, summary, constraints, or evidence paths...');
+      await expect(searchInput).toBeVisible();
+      await searchInput.fill('cryptographic');
+      await expect(searchInput).toHaveValue('cryptographic');
+
+      // Clear search
+      await page.getByRole('button', { name: 'Reset filters' }).click();
+      await expect(searchInput).toHaveValue('');
+    } finally {
+      await seeded.cleanup();
+    }
+  });
 });
+

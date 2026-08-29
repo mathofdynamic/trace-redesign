@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import type { FormEvent } from 'react';
 import Link from 'next/link';
 import type { DashboardAttention, DashboardRepository, DashboardSyncedRecord } from '../../lib/dashboard';
@@ -10,6 +10,7 @@ import {
   localTraceCommandsForState,
 } from '../../lib/dashboard-state';
 import { LocalActionPanel, ProjectStatusGlyph } from '../(app)/app/_components/trace-redesign';
+import { OverlayPortal, ModalBackdrop, CenteredDialog } from '../(app)/app/_components/overlay-portal';
 
 export type RepositorySelectorProps = {
   repositories: DashboardRepository[];
@@ -49,6 +50,7 @@ export function RepositorySelector({
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('all');
   const [showAccessForm, setShowAccessForm] = useState(false);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
 
   // Enriched repository list with derived facts
   const enrichedRepositories = useMemo(() => {
@@ -150,7 +152,7 @@ export function RepositorySelector({
 
   return (
     <div className="repositories-management" id="repositories-management">
-      {/* 1. Page Header */}
+      {/* 1. Page Header: Two Clear Zones */}
       <header className="repositories-header">
         <div className="repositories-header__title-group">
           <span className="eyebrow">WORKSPACE REPOSITORIES</span>
@@ -162,24 +164,31 @@ export function RepositorySelector({
           </p>
         </div>
 
-        <div className="repositories-header__meta-strip">
+        <div className="repositories-header__right">
           {primaryInstallation ? (
-            <div className="repositories-installation-badge" aria-label="GitHub installation metadata">
-              <span className="installation-badge__label">GitHub installation</span>
-              <code className="installation-badge__account">{primaryInstallation.accountLogin}</code>
-              <span className="installation-badge__meta">Read-only · {primaryInstallation.accountType}</span>
+            <div className="repositories-installation-fact" aria-label="GitHub installation details">
+              <span className="installation-fact__icon" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+                </svg>
+              </span>
+              <span className="installation-fact__label">GitHub</span>
+              <span className="installation-fact__sep" aria-hidden="true">/</span>
+              <code className="installation-fact__account">{primaryInstallation.accountLogin}</code>
+              <span className="installation-fact__meta">
+                {primaryInstallation.accountType === 'Organization' ? 'Org' : 'User'} · Read-only
+              </span>
             </div>
           ) : null}
 
           <div className="repositories-header__actions">
             <button
               type="button"
-              className={`trace-button ${showAccessForm ? 'trace-button--primary' : 'trace-button--secondary'}`}
-              onClick={() => setShowAccessForm((prev) => !prev)}
-              aria-expanded={showAccessForm}
-              aria-controls="repositories-access-drawer"
+              className="trace-button trace-button--secondary"
+              onClick={() => setShowAccessForm(true)}
+              aria-haspopup="dialog"
             >
-              {showAccessForm ? 'Close access panel' : 'Adjust access'}
+              Adjust access
             </button>
             <Link
               className="trace-button trace-button--secondary"
@@ -210,84 +219,163 @@ export function RepositorySelector({
         </aside>
       ) : null}
 
-      {/* 2. Access Management Drawer (collapsible) */}
+      {/* 2. Access Management Modal Window Popup */}
       {showAccessForm ? (
-        <section
-          className="repositories-access-drawer"
-          id="repositories-access-drawer"
-          aria-label="Adjust repository access"
-        >
-          <div className="repositories-access-drawer__header">
-            <div>
-              <span className="eyebrow">ACCESS CONFIGURATION</span>
-              <h2>Manage repository access</h2>
-              <p>
-                Select which repositories from{' '}
-                <strong>{primaryInstallation?.accountLogin ?? 'GitHub'}</strong> TRACE should track
-                in this workspace.
-              </p>
-            </div>
-            <span className="access-selected-badge">{selected.size} active</span>
-          </div>
-
-          <form className="repositories-access-form" onSubmit={save}>
-            <fieldset className="repositories-access-fieldset">
-              <legend className="sr-only">Available repositories</legend>
-              <div className="repositories-access-grid">
-                {repositories.map((repo) => (
-                  <label className="repositories-access-item" key={repo.id}>
-                    <input
-                      type="checkbox"
-                      checked={selected.has(repo.id)}
-                      onChange={() => toggle(repo.id)}
-                    />
-                    <div className="repositories-access-item__info">
-                      <strong>{repo.fullName}</strong>
-                      <small>
-                        {repo.visibility ?? 'repository'} · {repo.defaultBranch ?? 'main'}
-                      </small>
-                    </div>
-                    <span
-                      className={`access-item-state ${selected.has(repo.id) ? 'is-active' : ''}`}
-                    >
-                      {selected.has(repo.id) ? 'Active' : 'Excluded'}
-                    </span>
-                  </label>
-                ))}
+        <OverlayPortal>
+          <ModalBackdrop
+            onClose={() => setShowAccessForm(false)}
+            ariaLabel="Close repository access configuration"
+          >
+            <CenteredDialog
+              size="md"
+              titleId="repositories-access-title"
+              onClose={() => setShowAccessForm(false)}
+              initialFocusRef={closeBtnRef}
+              className="repositories-access-dialog"
+            >
+              <div className="repositories-access-dialog__header">
+                <div className="repositories-access-dialog__eyebrow-row">
+                  <span className="eyebrow">ACCESS CONFIGURATION</span>
+                  <span className="access-selected-badge">
+                    {selected.size} of {repositories.length} active
+                  </span>
+                </div>
+                <button
+                  ref={closeBtnRef}
+                  className="trace-dialog__close"
+                  type="button"
+                  aria-label="Close access configuration"
+                  onClick={() => setShowAccessForm(false)}
+                >
+                  ×
+                </button>
               </div>
-            </fieldset>
 
-            <div className="repositories-access-actions">
-              <button
-                className="trace-button trace-button--primary"
-                type="submit"
-                disabled={status === 'loading'}
-              >
-                {status === 'loading' ? 'Saving access...' : 'Save repository access'}
-              </button>
-              <button
-                className="trace-button trace-button--secondary"
-                type="button"
-                onClick={() => setShowAccessForm(false)}
-              >
-                Cancel
-              </button>
-              {status === 'saved' ? (
-                <span className="access-save-feedback is-success">
-                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}>
-                    <path d="M2.5 7.5 5.5 10.5 11.5 3.5" />
-                  </svg>
-                  Repository access saved successfully.
-                </span>
-              ) : null}
-              {status === 'error' ? (
-                <span className="access-save-feedback is-error" role="alert">
-                  Failed to save selection. Please try again.
-                </span>
-              ) : null}
-            </div>
-          </form>
-        </section>
+              <div className="repositories-access-dialog__intro">
+                <h2 id="repositories-access-title">Manage repository access</h2>
+                <p>
+                  Select which repositories from{' '}
+                  <strong>{primaryInstallation?.accountLogin ?? 'GitHub'}</strong> TRACE should track
+                  in this workspace.
+                </p>
+              </div>
+
+              <form className="repositories-access-form" onSubmit={save}>
+                <div className="repositories-access-toolbar">
+                  <span className="repositories-access-toolbar__label">Available repositories</span>
+                  <div className="repositories-access-toolbar__actions">
+                    <button
+                      type="button"
+                      className="trace-link-btn"
+                      onClick={() => {
+                        setSelected(new Set(repositories.map((r) => r.id)));
+                        setStatus('idle');
+                      }}
+                    >
+                      Select all
+                    </button>
+                    <span className="trace-bullet-sep" aria-hidden="true">·</span>
+                    <button
+                      type="button"
+                      className="trace-link-btn"
+                      onClick={() => {
+                        setSelected(new Set());
+                        setStatus('idle');
+                      }}
+                    >
+                      Deselect all
+                    </button>
+                  </div>
+                </div>
+
+                <fieldset className="repositories-access-fieldset">
+                  <legend className="sr-only">Available repositories</legend>
+                  <div className="repositories-access-grid">
+                    {repositories.map((repo) => {
+                      const isActive = selected.has(repo.id);
+                      return (
+                        <label
+                          className={`repositories-access-item ${isActive ? 'is-selected' : ''}`}
+                          key={repo.id}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isActive}
+                            onChange={() => toggle(repo.id)}
+                            className="repositories-access-checkbox"
+                          />
+                          <div className="repositories-access-item__info">
+                            <strong>{repo.fullName}</strong>
+                            <small>
+                              {repo.visibility ?? 'repository'} · {repo.defaultBranch ?? 'main'}
+                            </small>
+                          </div>
+                          <span
+                            className={`access-item-state ${isActive ? 'is-active' : 'is-excluded'}`}
+                          >
+                            {isActive ? 'Active' : 'Excluded'}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+
+                <div className="repositories-access-actions">
+                  <div className="repositories-access-actions__left">
+                    <button
+                      className="trace-button trace-button--primary"
+                      type="submit"
+                      disabled={status === 'loading'}
+                    >
+                      {status === 'loading' ? 'Saving access...' : 'Save repository access'}
+                    </button>
+                    <Link
+                      className="trace-button trace-button--tertiary"
+                      href="/api/github/install?next=/app/repositories"
+                      onClick={() => setShowAccessForm(false)}
+                    >
+                      Configure on GitHub ↗
+                    </Link>
+                  </div>
+                  <div className="repositories-access-actions__right">
+                    <button
+                      className="trace-button trace-button--secondary"
+                      type="button"
+                      onClick={() => setShowAccessForm(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {status === 'saved' ? (
+                    <span className="access-save-feedback is-success" role="status">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                        style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}
+                      >
+                        <path d="M2.5 7.5 5.5 10.5 11.5 3.5" />
+                      </svg>
+                      Repository access saved successfully.
+                    </span>
+                  ) : null}
+                  {status === 'error' ? (
+                    <span className="access-save-feedback is-error" role="alert">
+                      Failed to save selection. Please try again.
+                    </span>
+                  ) : null}
+                </div>
+              </form>
+            </CenteredDialog>
+          </ModalBackdrop>
+        </OverlayPortal>
       ) : null}
 
       {/* 3. Search and Category Filter Toolbar */}
@@ -338,6 +426,7 @@ export function RepositorySelector({
             onClick={() => setActiveFilter('all')}
           >
             <span className="filter-button__label">All</span>
+            <span className="filter-button__sep" aria-hidden="true">·</span>
             <span className="filter-count-badge">{counts.all}</span>
           </button>
           <button
@@ -348,6 +437,7 @@ export function RepositorySelector({
             onClick={() => setActiveFilter('current')}
           >
             <span className="filter-button__label">Current</span>
+            <span className="filter-button__sep" aria-hidden="true">·</span>
             <span className="filter-count-badge">{counts.current}</span>
           </button>
           <button
@@ -358,6 +448,7 @@ export function RepositorySelector({
             onClick={() => setActiveFilter('attention')}
           >
             <span className="filter-button__label">Attention</span>
+            <span className="filter-button__sep" aria-hidden="true">·</span>
             <span className="filter-count-badge">{counts.attention}</span>
           </button>
           <button
@@ -368,6 +459,7 @@ export function RepositorySelector({
             onClick={() => setActiveFilter('not-analyzed')}
           >
             <span className="filter-button__label">Not analyzed</span>
+            <span className="filter-button__sep" aria-hidden="true">·</span>
             <span className="filter-count-badge">{counts.notAnalyzed}</span>
           </button>
         </nav>
@@ -408,128 +500,140 @@ export function RepositorySelector({
             </div>
           </div>
         ) : (
-          <div className="repositories-table-wrapper">
-            <table className="repositories-table">
-              <caption className="sr-only">
+          <div className="repositories-table-container">
+            <div className="repositories-collection__header">
+              <p className="repositories-collection__caption">
                 List of managed repositories and their synchronization status
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col" className="col-identity">
-                    Repository
-                  </th>
-                  <th scope="col" className="col-state">
-                    Lifecycle State
-                  </th>
-                  <th scope="col" className="col-facts">
-                    Findings & Reports
-                  </th>
-                  <th scope="col" className="col-sync">
-                    Last Sync
-                  </th>
-                  <th scope="col" className="col-action">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRepositories.map((repo) => (
-                  <tr className="repositories-row" key={repo.id}>
-                    {/* Zone 1: Identity */}
-                    <td className="col-identity">
-                      <div className="repo-identity-cell">
-                        <Link className="repo-identity-name" href={`/app/repositories/${repo.id}`}>
-                          {repo.fullName}
-                        </Link>
-                        <div className="repo-identity-tags">
-                          <span className="repo-branch-pill">
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 14 14"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              aria-hidden="true"
-                            >
-                              <circle cx="4" cy="10" r="2" />
-                              <circle cx="10" cy="4" r="2" />
-                              <path d="M4 8V4c0-1.1.9-2 2-2h2" />
-                            </svg>
-                            {repo.defaultBranch ?? 'main'}
-                          </span>
-                          <span className="repo-visibility-pill">
-                            {repo.visibility ?? 'private'}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
+              </p>
+              <span className="repositories-collection__count">
+                {filteredRepositories.length}{' '}
+                {filteredRepositories.length === 1 ? 'repository' : 'repositories'}
+              </span>
+            </div>
 
-                    {/* Zone 2: Lifecycle */}
-                    <td className="col-state">
-                      <div className="repo-state-cell">
-                        <div className="repo-state-head">
-                          <ProjectStatusGlyph stateKey={repo.state.key} />
-                          <span className="repo-state-label">{repo.state.label}</span>
-                        </div>
-                        <p className="repo-state-description">{repo.state.description}</p>
-                      </div>
-                    </td>
-
-                    {/* Zone 3: Intelligence Facts (14 findings · 5 reports) */}
-                    <td className="col-facts">
-                      <div className="repo-intelligence-cell">
-                        <span className="intelligence-count-group">
-                          <strong className="intelligence-number">{repo.findingsCount}</strong> {repo.findingsCount === 1 ? 'finding' : 'findings'}
-                        </span>
-                        <span className="intelligence-sep" aria-hidden="true">·</span>
-                        <span className="intelligence-count-group">
-                          <strong className="intelligence-number">{repo.reportsCount}</strong> {repo.reportsCount === 1 ? 'report' : 'reports'}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Zone 4: Synchronization (5d ago · 4953add) */}
-                    <td className="col-sync">
-                      <div className="repo-sync-cell">
-                        <span className="sync-time">
-                          {formatRelativeDate(repo.lastSynchronizedAt)}
-                        </span>
-                        <span className="sync-sep" aria-hidden="true">·</span>
-                        {repo.shortSha ? (
-                          <code className="sync-sha">{repo.shortSha}</code>
-                        ) : (
-                          <span className="sync-sha-none">No sync commit</span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Zone 5: Action */}
-                    <td className="col-action">
-                      <div className="repo-action-cell">
-                        {repo.state.actionKind === 'local' ? (
-                          <LocalActionPanel
-                            repositoryName={repo.fullName}
-                            title={repo.state.actionLabel ?? 'Update TRACE intelligence'}
-                            description={repo.state.description}
-                            commands={repo.localCommands}
-                            triggerLabel={repo.state.actionLabel ?? 'Update TRACE'}
-                            variant={repo.state.key === 'needs-refresh' ? 'primary' : 'secondary'}
-                          />
-                        ) : null}
-                        <Link
-                          className="trace-button trace-button--secondary repo-open-btn"
-                          href={`/app/repositories/${repo.id}`}
-                        >
-                          Open project
-                        </Link>
-                      </div>
-                    </td>
+            <div className="repositories-table-wrapper">
+              <table className="repositories-table">
+                <caption className="sr-only">
+                  List of managed repositories and their synchronization status
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col" className="col-identity">
+                      Repository
+                    </th>
+                    <th scope="col" className="col-state">
+                      Lifecycle State
+                    </th>
+                    <th scope="col" className="col-facts">
+                      Findings & Reports
+                    </th>
+                    <th scope="col" className="col-sync">
+                      Last Sync
+                    </th>
+                    <th scope="col" className="col-action">
+                      Action
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredRepositories.map((repo) => (
+                    <tr className="repositories-row" key={repo.id}>
+                      {/* Zone 1: Identity */}
+                      <td className="col-identity">
+                        <div className="repo-identity-cell">
+                          <Link className="repo-identity-name" href={`/app/repositories/${repo.id}`}>
+                            {repo.fullName}
+                          </Link>
+                          <div className="repo-identity-tags">
+                            <span className="repo-branch-pill">
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 14 14"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                aria-hidden="true"
+                              >
+                                <circle cx="4" cy="10" r="2" />
+                                <circle cx="10" cy="4" r="2" />
+                                <path d="M4 8V4c0-1.1.9-2 2-2h2" />
+                              </svg>
+                              {repo.defaultBranch ?? 'main'}
+                            </span>
+                            <span className="repo-visibility-pill">
+                              {repo.visibility ?? 'private'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Zone 2: Lifecycle */}
+                      <td className="col-state">
+                        <div className="repo-state-cell">
+                          <div className="repo-state-head">
+                            <ProjectStatusGlyph stateKey={repo.state.key} />
+                            <span className="repo-state-label">{repo.state.label}</span>
+                          </div>
+                          <p className="repo-state-description">{repo.state.description}</p>
+                        </div>
+                      </td>
+
+                      {/* Zone 3: Intelligence Facts (14 findings · 5 reports) */}
+                      <td className="col-facts">
+                        <div className="repo-intelligence-cell">
+                          <span className="intelligence-count-group">
+                            <strong className="intelligence-number">{repo.findingsCount}</strong> {repo.findingsCount === 1 ? 'finding' : 'findings'}
+                          </span>
+                          <span className="intelligence-sep" aria-hidden="true">·</span>
+                          <span className="intelligence-count-group">
+                            <strong className="intelligence-number">{repo.reportsCount}</strong> {repo.reportsCount === 1 ? 'report' : 'reports'}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Zone 4: Synchronization (5d ago · 4953add) */}
+                      <td className="col-sync">
+                        <div className="repo-sync-cell">
+                          <span className="sync-time">
+                            {formatRelativeDate(repo.lastSynchronizedAt)}
+                          </span>
+                          <span className="sync-sep" aria-hidden="true">·</span>
+                          {repo.shortSha ? (
+                            <code className="sync-sha">{repo.shortSha}</code>
+                          ) : (
+                            <span className="sync-sha-none">No sync commit</span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Zone 5: Action */}
+                      <td className="col-action">
+                        <div className="repo-action-cell">
+                          {repo.state.actionKind === 'local' ? (
+                            <LocalActionPanel
+                              repositoryName={repo.fullName}
+                              title={repo.state.actionLabel ?? 'Update TRACE intelligence'}
+                              description={repo.state.description}
+                              commands={repo.localCommands}
+                              triggerLabel={repo.state.actionLabel ?? 'Update TRACE'}
+                              variant={repo.state.key === 'needs-refresh' ? 'primary' : 'secondary'}
+                            />
+                          ) : null}
+                          <Link
+                            className="trace-button trace-button--secondary repo-open-btn"
+                            href={`/app/repositories/${repo.id}`}
+                          >
+                            Open project
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </section>
@@ -576,17 +680,14 @@ export function RepositorySelector({
           <div className="installation-card__footer">
             <button
               type="button"
-              className="text-action-link"
-              onClick={() => {
-                setShowAccessForm(true);
-                const el = document.getElementById('repositories-access-drawer');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
+              className="trace-button trace-button--secondary"
+              onClick={() => setShowAccessForm(true)}
+              aria-haspopup="dialog"
             >
-              Adjust repository selection ↑
+              Adjust repository access
             </button>
             <Link
-              className="text-action-link"
+              className="trace-button trace-button--secondary"
               href="/api/github/install?next=/app/repositories"
             >
               Configure GitHub App permissions ↗

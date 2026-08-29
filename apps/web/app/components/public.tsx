@@ -12,15 +12,29 @@ export const navItems = [
   ['Docs', '/docs'],
 ] as const;
 
-export function TraceMark({ size = 20 }: { size?: number }) {
+export const TRACE_LOGO_URL =
+  'https://famjljl5gg.ufs.sh/f/aej4FOV7nKCWxlYdm74WLq4h6ZbegtSl8A7Xw2YKRnmpcVyi';
+
+export function TraceMark({
+  size = 20,
+  className = '',
+}: {
+  size?: number;
+  className?: string;
+}) {
   return (
     <span
-      className="trace-mark"
+      className={`trace-mark ${className}`.trim()}
       aria-hidden="true"
       style={{ width: size, height: size }}
     >
-      <span className="trace-mark__ray trace-mark__ray--primary" />
-      <span className="trace-mark__ray trace-mark__ray--secondary" />
+      <img
+        src={TRACE_LOGO_URL}
+        alt="TRACE logo"
+        className="trace-mark__img"
+        width={size}
+        height={size}
+      />
     </span>
   );
 }

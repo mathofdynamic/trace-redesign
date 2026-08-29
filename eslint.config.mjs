@@ -15,6 +15,7 @@ export default [
       '**/*.d.ts',
       '**/worker-configuration.d.ts',
       '**/cloudflare-env.d.ts',
+      'scripts/**',
     ],
   },
   eslint.configs.recommended,

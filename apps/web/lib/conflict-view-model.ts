@@ -1,4 +1,5 @@
 import type {
+  DashboardAttention,
   DashboardChange,
   DashboardRepository,
   DashboardSyncedRecord,
@@ -48,7 +49,7 @@ export function resolvePairedConflict(
       conflict.items?.some((i) => i.changeId === c.id || i.changeNumber === c.number),
   );
 
-  // High-precision pairing for known universe conflicts
+  // Exact pairing for the 4 frozen mock conflicts with precision data
   if (conflict.id === 'conflict-atlas-001' || conflict.artifactId === 'art-conflict-atlas-001') {
     const pr88 = relatedChanges.find((c) => c.number === 88) ?? changes.find((c) => c.number === 88);
     const pr89 = relatedChanges.find((c) => c.number === 89) ?? changes.find((c) => c.number === 89);
@@ -90,7 +91,7 @@ export function resolvePairedConflict(
           'Contradictory NOT NULL column constraints without default fallback. Background workers under PR #89 will crash on deserializing null role bitmasks written by pre-migration transactions.',
         actionRequired: 'Align PR #89 with staged migration pipeline in PR #88 before merge.',
       },
-      items: conflict.items ?? [],
+      items: conflict.items,
     };
   }
 
@@ -127,81 +128,144 @@ export function resolvePairedConflict(
         url: null,
       },
       sharedBoundary: {
-        target: 'Contract: Session Expiration Protocol',
+        target: 'Microservice Auth Contract: Token TTL',
         statement:
-          'Mismatched session expiration TTL across boundary. Users with valid gateway cookies will be rejected at the API edge after 24 hours without an orderly refresh prompt.',
-        actionRequired: 'Normalize session TTL to 24 hours with active refresh window in gateway config.',
+          'Gateway grants 7-day session cookies while validator rejects tokens older than 24 hours with HTTP 401 Unauthorized, causing premature user sign-out on downstream requests.',
+        actionRequired: 'Align token validator max age with gateway session configuration before deploying PR #87.',
       },
-      items: conflict.items ?? [],
+      items: conflict.items,
     };
   }
 
-  // Generic paired conflict derivation from synced record items and related changes
-  const prA = relatedChanges[0];
-  const prB = relatedChanges[1];
+  if (conflict.id === 'conflict-trace-001' || conflict.artifactId === 'art-conflict-trace-001') {
+    const pr103 = relatedChanges.find((c) => c.number === 103) ?? changes.find((c) => c.number === 103);
 
-  const sideA: ConflictSide = prA
-    ? {
+    return {
+      conflict,
+      repository,
+      classification: 'Deterministic collision',
+      severity: 'medium',
+      sideA: {
         kind: 'pr',
-        badge: `PR #${prA.number}`,
-        title: prA.title,
-        author: prA.authorLogin,
-        branch: prA.branch,
-        area: prA.affectedAreas?.[0] ?? 'Core',
-        assumption: conflict.items?.[0]?.detail ?? 'Active branch change set',
-        locus: conflict.items?.[0]?.evidence?.[0] ?? 'packages/core',
-        url: prA.url,
-        changeId: prA.id,
-        changeNumber: prA.number,
-      }
-    : {
+        badge: 'PR #103',
+        title: pr103?.title ?? 'Refactor artifact identity computation to use UUID v7 schema',
+        author: pr103?.authorLogin ?? 'dpark',
+        branch: pr103?.branch ?? 'refactor/artifact-identity-uuid',
+        area: pr103?.affectedAreas?.[0] ?? 'Core Architecture',
+        assumption: 'Refactors synchronized artifact identity computation to generate random UUID v7 keys (art_uuid7_*).',
+        locus: 'packages/trace-core/src/artifact.ts:88',
+        url: pr103?.url ?? 'https://github.com/northstar-engineering/TRACE/pull/103',
+        changeId: pr103?.id ?? 'change-trace-103',
+        changeNumber: 103,
+      },
+      sideB: {
         kind: 'system',
-        badge: 'Base Contract',
-        title: conflict.items?.[0]?.title ?? 'Baseline Specification',
-        author: 'Repository',
+        badge: 'Bridge: Promoter',
+        title: 'Synchronized Artifact Ingestion Promoter',
+        author: 'Sync Engine',
         branch: 'main',
-        area: 'Schema / Core',
-        assumption: conflict.items?.[0]?.detail ?? 'Declared repository contract',
-        locus: conflict.items?.[0]?.evidence?.[0] ?? 'src/schema.ts',
-      };
+        area: 'Sync Infrastructure',
+        assumption: 'Local promotion queue requires content-addressed SHA-256 prefixes (art_[a-f0-9]{32,64}) for idempotent deduplication.',
+        locus: 'apps/web/lib/sync/promoter.ts:42',
+        url: null,
+      },
+      sharedBoundary: {
+        target: 'Ingestion Protocol: Artifact Identifier Schema',
+        statement:
+          'Ingestion bridge rejects new artifact manifests during upload negotiation due to ID prefix format regex schema mismatch.',
+        actionRequired: 'Update promoter regex schema before merging PR #103 to accept UUID v7 prefixes.',
+      },
+      items: conflict.items,
+    };
+  }
 
-  const sideB: ConflictSide = prB
-    ? {
+  if (conflict.id === 'conflict-orbit-001' || conflict.artifactId === 'art-conflict-orbit-001') {
+    const pr54 = relatedChanges.find((c) => c.number === 54) ?? changes.find((c) => c.number === 54);
+    const pr55 = relatedChanges.find((c) => c.number === 55) ?? changes.find((c) => c.number === 55);
+
+    return {
+      conflict,
+      repository,
+      classification: 'Deterministic collision',
+      severity: 'high',
+      sideA: {
         kind: 'pr',
-        badge: `PR #${prB.number}`,
-        title: prB.title,
-        author: prB.authorLogin,
-        branch: prB.branch,
-        area: prB.affectedAreas?.[0] ?? 'Integration',
-        assumption: conflict.items?.[1]?.detail ?? 'Concurrent branch mutation',
-        locus: conflict.items?.[1]?.evidence?.[0] ?? 'packages/integration',
-        url: prB.url,
-        changeId: prB.id,
-        changeNumber: prB.number,
-      }
-    : {
+        badge: 'PR #54',
+        title: pr54?.title ?? 'Add automated sync retry and session recovery handling',
+        author: pr54?.authorLogin ?? 'erostova',
+        branch: pr54?.branch ?? 'feature/sync-recovery',
+        area: pr54?.affectedAreas?.[0] ?? 'Sync Protocol',
+        assumption: 'Recovery worker produces extended retry envelopes containing retry_count and resume_offset fields.',
+        locus: 'crates/orbit-sync/src/recovery.rs:112',
+        url: pr54?.url ?? 'https://github.com/northstar-engineering/Orbit/pull/54',
+        changeId: pr54?.id ?? 'change-orbit-54',
+        changeNumber: 54,
+      },
+      sideB: {
         kind: 'pr',
-        badge: conflict.items?.[1]?.title ? 'Secondary Target' : 'Target Branch',
-        title: conflict.items?.[1]?.title ?? 'Downstream contract consumer',
-        author: 'Reviewer',
-        branch: 'feature',
-        area: 'Consumers',
-        assumption: conflict.items?.[1]?.detail ?? 'Downstream assumption',
-        locus: conflict.items?.[1]?.evidence?.[0] ?? 'src/consumer.ts',
-      };
+        badge: 'PR #55',
+        title: pr55?.title ?? 'Implement strict schema validation for bridge ingestion manifests',
+        author: pr55?.authorLogin ?? 'mlin',
+        branch: pr55?.branch ?? 'feature/manifest-validator',
+        area: pr55?.affectedAreas?.[0] ?? 'Sync Protocol',
+        assumption: 'Enforces strict manifest v1.0.0 validation before ingest, disallowing unknown or extra envelope fields.',
+        locus: 'crates/orbit-bridge/src/validator.rs:65',
+        url: pr55?.url ?? 'https://github.com/northstar-engineering/Orbit/pull/55',
+        changeId: pr55?.id ?? 'change-orbit-55',
+        changeNumber: 55,
+      },
+      sharedBoundary: {
+        target: 'Manifest Envelope Protocol: v1.0.0 vs v1.1.0',
+        statement:
+          'Manifest validator in PR #55 rejects valid recovery envelopes generated by PR #54 during session resumption, breaking interrupted sync recovery.',
+        actionRequired: 'Update manifest validator to accept optional retry envelope metadata during session resumption.',
+      },
+      items: conflict.items,
+    };
+  }
+
+  // Dynamic fallback for any other record
+  const changeA = relatedChanges[0];
+  const changeB = relatedChanges[1];
+  const itemA = conflict.items?.[0];
+  const itemB = conflict.items?.[1];
 
   return {
     conflict,
     repository,
-    classification: conflict.category ?? 'Deterministic collision',
-    severity: (conflict.severity as 'high' | 'medium' | 'low') ?? 'high',
-    sideA,
-    sideB,
-    sharedBoundary: {
-      target: conflict.items?.[0]?.evidence?.[0] ?? 'Shared Interface',
-      statement: conflict.summary,
-      actionRequired: conflict.items?.[0]?.detail ?? 'Reconcile conflicting definitions before merge.',
+    classification: itemA?.classification === 'deterministic' ? 'Deterministic collision' : 'Probabilistic collision',
+    severity: (itemA?.severity as 'high' | 'medium' | 'low') ?? 'high',
+    sideA: {
+      kind: 'pr',
+      badge: changeA ? `PR #${changeA.number}` : 'Change A',
+      title: changeA?.title ?? itemA?.title ?? conflict.title,
+      author: changeA?.authorLogin ?? 'Author',
+      branch: changeA?.branch ?? 'feature-branch',
+      area: changeA?.affectedAreas?.[0] ?? 'System Component',
+      assumption: itemA?.detail ?? conflict.summary,
+      locus: itemA?.evidence?.[0] ?? 'source locus',
+      url: changeA?.url,
+      changeId: changeA?.id,
+      changeNumber: changeA?.number,
     },
-    items: conflict.items ?? [],
+    sideB: {
+      kind: changeB ? 'pr' : 'system',
+      badge: changeB ? `PR #${changeB.number}` : 'System Boundary',
+      title: changeB?.title ?? itemB?.title ?? 'Target Architecture',
+      author: changeB?.authorLogin ?? 'System Invariant',
+      branch: changeB?.branch ?? 'main',
+      area: changeB?.affectedAreas?.[0] ?? 'Architecture Core',
+      assumption: itemB?.detail ?? 'Existing system invariants enforce strict compatibility contracts.',
+      locus: itemB?.evidence?.[0] ?? itemA?.evidence?.[1] ?? 'system locus',
+      url: changeB?.url,
+      changeId: changeB?.id,
+      changeNumber: changeB?.number,
+    },
+    sharedBoundary: {
+      target: conflict.title,
+      statement: conflict.summary,
+      actionRequired: 'Review AST evidence and coordinate branch alignment before merge.',
+    },
+    items: conflict.items,
   };
 }

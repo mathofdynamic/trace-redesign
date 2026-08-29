@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { TraceSelect } from './trace-select';
+import { OverlayPortal, ModalBackdrop, CenteredDialog } from './overlay-portal';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -211,7 +212,7 @@ export function ChangesView({
 
   return (
     <div className="changes-surface" id="active-changes-surface">
-      {/* Top Header Summary Bar */}
+      {/* Top Intelligence Summary Strip */}
       <section className="changes-summary-bar" aria-label="Changes intelligence metrics">
         <div className="changes-summary-metric">
           <span className="changes-summary-metric__value">{totalChangesCount}</span>
@@ -224,7 +225,11 @@ export function ChangesView({
         </div>
         <div className="changes-summary-divider" aria-hidden="true" />
         <div className="changes-summary-metric">
-          <span className="changes-summary-metric__value changes-summary-metric__value--conflict">
+          <span
+            className={`changes-summary-metric__value ${
+              conflictLinkedChangesCount > 0 ? 'changes-summary-metric__value--conflict' : ''
+            }`}
+          >
             {conflictLinkedChangesCount}
           </span>
           <span className="changes-summary-metric__label">Conflict linked</span>
@@ -241,148 +246,162 @@ export function ChangesView({
 
       {/* Changes Toolbar */}
       <div className="changes-toolbar" role="search" aria-label="Filter and sort active changes">
-        <div className="changes-toolbar__search">
-          <div className="search-input-wrapper">
-            <svg
-              className="search-icon"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              id="changes-search-input"
-              className="trace-input changes-search-input"
-              type="search"
-              placeholder="Search by PR #, title, branch, author, or area…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search pull requests"
-            />
-            {searchQuery ? (
+        {/* Row 1: Search and View Mode Controls */}
+        <div className="changes-toolbar__row changes-toolbar__row--primary">
+          <div className="changes-toolbar__search">
+            <div className="search-input-wrapper">
+              <svg
+                className="search-icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                id="changes-search-input"
+                className="trace-input changes-search-input"
+                type="search"
+                placeholder="Search by PR #, title, branch, author, or area…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Search pull requests"
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  className="search-clear-button"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search input"
+                >
+                  ×
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="changes-toolbar__count">
+            <span>
+              Showing <strong>{filteredChanges.length}</strong> of {totalChangesCount} change{totalChangesCount === 1 ? '' : 's'}
+            </span>
+          </div>
+
+          <div className="changes-toolbar__view-group">
+            {/* Grouping Toggle */}
+            <div className="view-mode-toggle" role="radiogroup" aria-label="Grouping mode">
               <button
                 type="button"
-                className="search-clear-button"
-                onClick={() => setSearchQuery('')}
-                aria-label="Clear search input"
+                className={`view-mode-button ${groupingMode === 'by-repository' ? 'view-mode-button--active' : ''}`}
+                onClick={() => setGroupingMode('by-repository')}
+                aria-checked={groupingMode === 'by-repository'}
+                role="radio"
               >
-                ×
+                Grouped
               </button>
-            ) : null}
+              <button
+                type="button"
+                className={`view-mode-button ${groupingMode === 'flat' ? 'view-mode-button--active' : ''}`}
+                onClick={() => setGroupingMode('flat')}
+                aria-checked={groupingMode === 'flat'}
+                role="radio"
+              >
+                Flat list
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="changes-toolbar__controls">
-          {/* Repository Selector */}
-          <div className="filter-select-group">
-            <label htmlFor="changes-repo-filter" className="filter-select-label">
-              Repository
-            </label>
-            <TraceSelect
-              id="changes-repo-filter"
-              value={repositoryFilter}
-              onChange={setRepositoryFilter}
-              ariaLabel="Filter by repository"
-              options={[
-                { value: 'all', label: `All repositories (${changes.length})` },
-                ...repositories.map((repo) => ({
-                  value: repo.id,
-                  label: repo.name,
-                  count: changes.filter((c) => c.repositoryId === repo.id).length,
-                })),
-              ]}
-            />
-          </div>
-
-          {/* Relationship / Status Filter */}
-          <div className="filter-select-group">
-            <label htmlFor="changes-relationship-filter" className="filter-select-label">
-              Relationship
-            </label>
-            <TraceSelect
-              id="changes-relationship-filter"
-              value={relationshipFilter}
-              onChange={setRelationshipFilter}
-              ariaLabel="Filter by relationship"
-              options={[
-                { value: 'all', label: `All relationships (${changes.length})` },
-                {
-                  value: 'conflict-linked',
-                  label: 'Conflict linked only',
-                  count: conflictLinkedChangesCount,
-                },
-                {
-                  value: 'with-findings',
-                  label: 'With findings only',
-                  count: changesWithFindingsCount,
-                },
-                {
-                  value: 'clean',
-                  label: 'Clean / Uncontested',
-                  count: changes.length - conflictLinkedChangesCount,
-                },
-              ]}
-            />
-          </div>
-
-          {/* Affected Area Filter */}
-          {allAffectedAreas.length ? (
+        {/* Row 2: Filter Selects, Reset, and Facets */}
+        <div className="changes-toolbar__row changes-toolbar__row--filters">
+          <div className="changes-toolbar__filters-group">
+            {/* Repository Selector */}
             <div className="filter-select-group">
-              <label htmlFor="changes-area-filter" className="filter-select-label">
-                Affected area
+              <label htmlFor="changes-repo-filter" className="filter-select-label">
+                Repository
               </label>
               <TraceSelect
-                id="changes-area-filter"
-                value={affectedAreaFilter}
-                onChange={setAffectedAreaFilter}
-                ariaLabel="Filter by architectural area"
+                id="changes-repo-filter"
+                value={repositoryFilter}
+                onChange={setRepositoryFilter}
+                ariaLabel="Filter by repository"
                 options={[
-                  { value: 'all', label: 'All architectural areas' },
-                  ...allAffectedAreas.map((area) => ({
-                    value: area,
-                    label: area,
+                  { value: 'all', label: `All repositories (${changes.length})` },
+                  ...repositories.map((repo) => ({
+                    value: repo.id,
+                    label: repo.name,
+                    count: changes.filter((c) => c.repositoryId === repo.id).length,
                   })),
                 ]}
               />
             </div>
-          ) : null}
 
-          {/* Grouping Toggle */}
-          <div className="view-mode-toggle" role="radiogroup" aria-label="Grouping mode">
-            <button
-              type="button"
-              className={`view-mode-button ${groupingMode === 'by-repository' ? 'view-mode-button--active' : ''}`}
-              onClick={() => setGroupingMode('by-repository')}
-              aria-checked={groupingMode === 'by-repository'}
-              role="radio"
-            >
-              Grouped
-            </button>
-            <button
-              type="button"
-              className={`view-mode-button ${groupingMode === 'flat' ? 'view-mode-button--active' : ''}`}
-              onClick={() => setGroupingMode('flat')}
-              aria-checked={groupingMode === 'flat'}
-              role="radio"
-            >
-              Flat list
-            </button>
+            {/* Relationship / Status Filter */}
+            <div className="filter-select-group">
+              <label htmlFor="changes-relationship-filter" className="filter-select-label">
+                Relationship
+              </label>
+              <TraceSelect
+                id="changes-relationship-filter"
+                value={relationshipFilter}
+                onChange={setRelationshipFilter}
+                ariaLabel="Filter by relationship"
+                options={[
+                  { value: 'all', label: `All relationships (${changes.length})` },
+                  {
+                    value: 'conflict-linked',
+                    label: 'Conflict linked only',
+                    count: conflictLinkedChangesCount,
+                  },
+                  {
+                    value: 'with-findings',
+                    label: 'With findings only',
+                    count: changesWithFindingsCount,
+                  },
+                  {
+                    value: 'clean',
+                    label: 'Clean / Uncontested',
+                    count: changes.length - conflictLinkedChangesCount,
+                  },
+                ]}
+              />
+            </div>
+
+            {/* Affected Area Filter */}
+            {allAffectedAreas.length ? (
+              <div className="filter-select-group">
+                <label htmlFor="changes-area-filter" className="filter-select-label">
+                  Affected area
+                </label>
+                <TraceSelect
+                  id="changes-area-filter"
+                  value={affectedAreaFilter}
+                  onChange={setAffectedAreaFilter}
+                  ariaLabel="Filter by architectural area"
+                  options={[
+                    { value: 'all', label: 'All architectural areas' },
+                    ...allAffectedAreas.map((area) => ({
+                      value: area,
+                      label: area,
+                    })),
+                  ]}
+                />
+              </div>
+            ) : null}
           </div>
 
           {/* Reset Filters */}
           {activeFilterCount > 0 ? (
             <button
               type="button"
-              className="trace-button trace-button--tertiary trace-button--small filter-reset-button"
+              className="trace-button trace-button--secondary trace-button--small filter-reset-button"
               onClick={resetFilters}
             >
-              Reset ({activeFilterCount})
+              Reset filters ({activeFilterCount})
             </button>
           ) : null}
         </div>
@@ -688,200 +707,247 @@ function ChangeDetailDrawer({
   };
 
   return (
-    <div className="trace-dialog-layer" role="presentation">
-      <button
-        className="trace-dialog-scrim"
-        type="button"
-        aria-label="Close change details"
-        onClick={onClose}
-      />
-      <aside
-        className="change-drawer"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={`change-drawer-title-${change.id}`}
-      >
-        <div className="change-drawer__header">
-          <div className="change-drawer__eyebrow">
-            <span className="change-pr-badge">PR #{change.number}</span>
-            <span className="change-state-badge" data-state={change.state}>
-              {change.state.toUpperCase()}
-            </span>
-            <span className="change-repo-tag">{change.repositoryName}</span>
-          </div>
-          <button
-            ref={closeRef}
-            className="trace-dialog__close"
-            type="button"
-            aria-label="Close change details"
-            onClick={onClose}
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Title and Intent */}
-        <div className="change-drawer__intro">
-          <h2 id={`change-drawer-title-${change.id}`}>{change.title}</h2>
-          {change.intent ? (
-            <p className="change-drawer__lead">{change.intent}</p>
-          ) : null}
-        </div>
-
-        {/* Conflict Intelligence & Coordination Section */}
-        {conflictInfo ? (
-          <section className="change-drawer__section change-drawer__section--conflict">
-            <span className="eyebrow">Active Coordination Conflict</span>
-            <div className="change-drawer__conflict-box">
-              <div className="conflict-box__header">
-                <strong>{conflictInfo.conflict.title}</strong>
-              </div>
-              <p>{conflictInfo.conflict.summary}</p>
-              {conflictInfo.collidingChanges.length ? (
-                <div className="conflict-box__colliding">
-                  <span className="conflict-box__subhead">Colliding pull requests:</span>
-                  <ul>
-                    {conflictInfo.collidingChanges.map((c) => (
-                      <li key={c.id}>
-                        <strong>PR #{c.number}</strong> ({c.title}) — Branch: <code>{c.branch}</code> by @{c.authorLogin}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-              {conflictInfo.conflict.items?.length ? (
-                <div className="conflict-box__evidence">
-                  <span className="conflict-box__subhead">Deterministic AST collision points:</span>
-                  <ul>
-                    {conflictInfo.conflict.items.map((item) => (
-                      <li key={item.id}>
-                        <strong>{item.title}</strong>: {item.detail}
-                        {item.evidence?.length ? (
-                          <div className="conflict-box__file-tags">
-                            {item.evidence.map((e) => (
-                              <code key={e}>{e}</code>
-                            ))}
-                          </div>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
+    <OverlayPortal>
+      <ModalBackdrop onClose={onClose} ariaLabel="Close change details">
+        <CenteredDialog
+          size="lg"
+          titleId={`change-drawer-title-${change.id}`}
+          onClose={onClose}
+          initialFocusRef={closeRef}
+          className="change-drawer"
+        >
+          {/* Header */}
+          <div className="change-drawer__header">
+            <div className="change-drawer__eyebrow">
+              <span className="change-pr-badge">PR #{change.number}</span>
+              <span className="change-state-badge" data-state={change.state}>
+                {change.state.toUpperCase()}
+              </span>
+              <span className="change-repo-tag">{change.repositoryName}</span>
             </div>
-          </section>
-        ) : null}
-
-        {/* Technical Provenance Details */}
-        <section className="change-drawer__section">
-          <span className="eyebrow">Technical context</span>
-          <div className="change-drawer__grid">
-            <div>
-              <span className="detail-label">Author</span>
-              <strong>@{change.authorLogin ?? 'Author unavailable'}</strong>
-            </div>
-            <div>
-              <span className="detail-label">Source branch</span>
-              <code>{change.branch ?? 'branch unavailable'}</code>
-            </div>
-            <div>
-              <span className="detail-label">Base branch</span>
-              <code>{change.baseBranch ?? 'main'}</code>
-            </div>
-            <div>
-              <span className="detail-label">Head commit SHA</span>
-              <code>{change.headSha ?? 'SHA unavailable'}</code>
-            </div>
-            {change.affectedAreas?.length ? (
-              <div>
-                <span className="detail-label">Affected areas</span>
-                <span>{change.affectedAreas.join(', ')}</span>
-              </div>
-            ) : null}
-            <div>
-              <span className="detail-label">Snapshot timestamp</span>
-              <span>{formatDate(change.updatedAt)}</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Affected Files */}
-        {change.affectedFiles?.length ? (
-          <section className="change-drawer__section">
-            <span className="eyebrow">
-              Affected files ({change.affectedFiles.length})
-            </span>
-            <ul className="change-drawer__file-list">
-              {change.affectedFiles.map((file) => (
-                <li key={file}>
-                  <code>{file}</code>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {/* Related Findings */}
-        {relatedFindings.length ? (
-          <section className="change-drawer__section">
-            <span className="eyebrow">
-              Related AST findings ({relatedFindings.length})
-            </span>
-            <div className="change-drawer__findings-list">
-              {relatedFindings.map((finding) => (
-                <div key={finding.id} className="change-drawer__finding-card">
-                  <div className="finding-card__header">
-                    <span className="severity-badge" data-severity={finding.severity}>
-                      {finding.severity}
-                    </span>
-                    <strong>{finding.title}</strong>
-                  </div>
-                  <p>{finding.detail}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {/* Local Verification Command */}
-        <section className="change-drawer__section">
-          <span className="eyebrow">Local review command</span>
-          <div className="change-drawer__cli-box">
-            <code>trace pr inspect {change.number}</code>
             <button
+              ref={closeRef}
+              className="trace-dialog__close"
               type="button"
-              className="trace-button trace-button--ghost trace-button--sm"
-              onClick={copyCliCommand}
+              aria-label="Close change details"
+              onClick={onClose}
             >
-              {copied ? 'Copied' : 'Copy command'}
+              ×
             </button>
           </div>
-          <p className="change-drawer__cli-note">
-            Run on your local computer to verify AST invariants before merging.
-          </p>
-        </section>
 
-        {/* Drawer Actions */}
-        <div className="change-drawer__footer">
-          <button
-            type="button"
-            className="trace-button trace-button--secondary"
-            onClick={onClose}
-          >
-            Close
-          </button>
-          {change.url ? (
-            <a
-              className="trace-button trace-button--primary"
-              href={change.url}
-              target="_blank"
-              rel="noreferrer"
+          {/* Title and Intro */}
+          <div className="change-drawer__intro">
+            <h2 id={`change-drawer-title-${change.id}`}>{change.title}</h2>
+          </div>
+
+          {/* Main Two-Column Content Layout */}
+          <div className="change-drawer__columns">
+            {/* Left Column: Intent, Technical Context, Affected Files */}
+            <div className="change-drawer__column change-drawer__column--left">
+              {change.intent ? (
+                <section className="change-drawer__section">
+                  <span className="eyebrow">Architectural intent</span>
+                  <p className="change-drawer__lead">{change.intent}</p>
+                </section>
+              ) : null}
+
+              <section className="change-drawer__section">
+                <span className="eyebrow">Technical context</span>
+                <div className="change-drawer__grid">
+                  <div>
+                    <span className="detail-label">Author</span>
+                    <strong>@{change.authorLogin ?? 'Author unavailable'}</strong>
+                  </div>
+                  <div>
+                    <span className="detail-label">Source branch</span>
+                    <code title={change.branch ?? 'branch unavailable'}>
+                      {change.branch ?? 'branch unavailable'}
+                    </code>
+                  </div>
+                  <div>
+                    <span className="detail-label">Base branch</span>
+                    <code title={change.baseBranch ?? 'main'}>{change.baseBranch ?? 'main'}</code>
+                  </div>
+                  <div>
+                    <span className="detail-label">Head commit SHA</span>
+                    <code title={change.headSha ?? 'SHA unavailable'}>
+                      {change.headSha ? change.headSha.slice(0, 7) : 'SHA unavailable'}
+                    </code>
+                  </div>
+                  {change.affectedAreas?.length ? (
+                    <div>
+                      <span className="detail-label">Affected areas</span>
+                      <span>{change.affectedAreas.join(', ')}</span>
+                    </div>
+                  ) : null}
+                  <div>
+                    <span className="detail-label">Snapshot timestamp</span>
+                    <span>{formatDate(change.updatedAt)}</span>
+                  </div>
+                </div>
+              </section>
+
+              {change.affectedFiles?.length ? (
+                <section className="change-drawer__section">
+                  <span className="eyebrow">
+                    Affected files ({change.affectedFiles.length})
+                  </span>
+                  <ul className="change-drawer__file-list">
+                    {change.affectedFiles.map((file) => (
+                      <li key={file}>
+                        <code title={file}>{file}</code>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+            </div>
+
+            {/* Right Column: Coordination Conflict, AST Findings, Local Review Command */}
+            <div className="change-drawer__column change-drawer__column--right">
+              {conflictInfo ? (
+                <section className="change-drawer__section change-drawer__section--conflict">
+                  <span className="eyebrow">Active Coordination Conflict</span>
+                  <div className="change-drawer__conflict-box">
+                    <div className="conflict-box__header">
+                      <strong>{conflictInfo.conflict.title}</strong>
+                    </div>
+                    <p>{conflictInfo.conflict.summary}</p>
+                    {conflictInfo.collidingChanges.length ? (
+                      <div className="conflict-box__colliding">
+                        <span className="conflict-box__subhead">Colliding pull requests:</span>
+                        <ul>
+                          {conflictInfo.collidingChanges.map((c) => (
+                            <li key={c.id}>
+                              <strong>PR #{c.number}</strong> ({c.title}) — Branch: <code>{c.branch}</code> by @{c.authorLogin}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {conflictInfo.conflict.items?.length ? (
+                      <div className="conflict-box__evidence">
+                        <span className="conflict-box__subhead">Deterministic AST collision points:</span>
+                        <ul>
+                          {conflictInfo.conflict.items.map((item) => (
+                            <li key={item.id}>
+                              <strong>{item.title}</strong>: {item.detail}
+                              {item.evidence?.length ? (
+                                <div className="conflict-box__file-tags">
+                                  {item.evidence.map((e) => (
+                                    <code key={e}>{e}</code>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </div>
+                </section>
+              ) : null}
+
+              {relatedFindings.length ? (
+                <section className="change-drawer__section">
+                  <span className="eyebrow">
+                    Related AST findings ({relatedFindings.length})
+                  </span>
+                  <div className="change-drawer__findings-list">
+                    {relatedFindings.map((finding) => (
+                      <div key={finding.id} className="change-drawer__finding-card">
+                        <div className="finding-card__header">
+                          <span className="severity-badge" data-severity={finding.severity}>
+                            {finding.severity}
+                          </span>
+                          <strong>{finding.title}</strong>
+                        </div>
+                        <p>{finding.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              <section className="change-drawer__section">
+                <span className="eyebrow">Local review command</span>
+                <div className="change-drawer__cli-box">
+                  <code>trace pr inspect {change.number}</code>
+                  <button
+                    type="button"
+                    className="trace-button trace-button--secondary trace-button--small"
+                    onClick={copyCliCommand}
+                  >
+                    {copied ? (
+                      <>
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                          style={{ marginRight: '6px' }}
+                        >
+                          <polyline points="3 8 7 12 13 4" />
+                        </svg>
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.75"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                          style={{ marginRight: '6px' }}
+                        >
+                          <rect x="5" y="5" width="9" height="9" rx="1.5" />
+                          <path d="M3 11V3a1.5 1.5 0 011.5-1.5H11" />
+                        </svg>
+                        Copy command
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="change-drawer__cli-note">
+                  Run on your local computer to verify AST invariants before merging.
+                </p>
+              </section>
+            </div>
+          </div>
+
+          {/* Drawer Actions */}
+          <div className="change-drawer__footer">
+            <button
+              type="button"
+              className="trace-button trace-button--secondary"
+              onClick={onClose}
             >
-              Open PR #{change.number} on GitHub ↗
-            </a>
-          ) : null}
-        </div>
-      </aside>
-    </div>
+              Close
+            </button>
+            {change.url ? (
+              <a
+                className="trace-button trace-button--secondary"
+                href={change.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open PR #{change.number} on GitHub ↗
+              </a>
+            ) : null}
+          </div>
+        </CenteredDialog>
+      </ModalBackdrop>
+    </OverlayPortal>
   );
 }

@@ -3,6 +3,7 @@
 import { useId, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TraceSelect } from './trace-select';
+import { DecisionPromptBuilder } from './decision-prompt-builder';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -98,7 +99,6 @@ function parseDecisionSections(content: string): {
 }
 
 function cleanMarkdownLine(line: string): string {
-  // Remove markdown bullet markers or numbers if desired, or strip bold marks
   return line.replace(/^\s*[-*]\s+/, '').replace(/^\s*\d+\.\s+/, '');
 }
 
@@ -114,6 +114,7 @@ export function DecisionsView({
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'repository' | 'title'>('newest');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState<boolean>(false);
 
   const searchInputId = useId();
   const repoSelectId = useId();
@@ -218,6 +219,8 @@ export function DecisionsView({
     return repositories.find((r) => r.id === selectedRepoId);
   }, [repositories, selectedRepoId]);
 
+  const isFiltered = selectedRepoId !== 'all' || searchQuery.trim().length > 0;
+
   // Derive active repository count and names dynamically from decisions
   const activeReposCount = useMemo(() => {
     return new Set(decisions.map((d) => d.repositoryId)).size;
@@ -237,18 +240,43 @@ export function DecisionsView({
 
   return (
     <div className="decisions-surface" id="decisions-root">
-      {/* 1. Header & Summary Intelligence Bar */}
+      {/* 1. Header & Action Row */}
       <header className="decisions-header">
-        <div className="decisions-header__copy">
-          <div className="decisions-header__eyebrow">
-            <span className="decisions-eyebrow-tag">DURABLE ENGINEERING MEMORY</span>
-            <span className="decisions-eyebrow-count">{decisions.length} Synchronized Records</span>
+        <div className="decisions-header__top">
+          <div className="decisions-header__copy">
+            <div className="decisions-header__eyebrow">
+              <span className="decisions-eyebrow-tag">DURABLE ENGINEERING MEMORY</span>
+              <span className="decisions-eyebrow-count">{decisions.length} Records</span>
+            </div>
+            <h1 className="decisions-header__title">Architectural Decisions</h1>
+            <p className="decisions-header__description">
+              Durable record of architectural choices, boundary invariants, and engineering tradeoffs.
+              Preserves rationale beyond ephemeral pull requests without transmitting source code.
+            </p>
           </div>
-          <h1 className="decisions-header__title">Architectural Decisions</h1>
-          <p className="decisions-header__description">
-            Durable record of architectural choices, boundary invariants, and engineering tradeoffs.
-            Preserves rationale beyond ephemeral pull requests without transmitting source code.
-          </p>
+
+          <div className="decisions-header__action">
+            <button
+              type="button"
+              className="trace-button trace-button--primary"
+              onClick={() => setIsPromptBuilderOpen(true)}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span>Draft decision prompt</span>
+            </button>
+          </div>
         </div>
 
         {/* Intelligence Metrics Bar */}
@@ -281,9 +309,10 @@ export function DecisionsView({
         </div>
       </header>
 
-      {/* 2. Filter & Search Controls Toolbar */}
+      {/* 2. Structured Two-Row Filter & Search Toolbar */}
       <section className="decisions-toolbar" aria-label="Filter and search decisions">
-        <div className="decisions-toolbar__search">
+        {/* Row 1: Search flexible/full width */}
+        <div className="decisions-toolbar__row decisions-toolbar__row--search">
           <label htmlFor={searchInputId} className="sr-only">
             Search decisions by title, context, rationale, or evidence
           </label>
@@ -324,7 +353,8 @@ export function DecisionsView({
           </div>
         </div>
 
-        <div className="decisions-toolbar__filters">
+        {/* Row 2: Repository pills, sort, bulk toggle, reset button */}
+        <div className="decisions-toolbar__row decisions-toolbar__row--controls">
           {/* Repository Pills */}
           <div className="decisions-repo-pills" role="group" aria-label="Repository filter">
             <button
@@ -384,12 +414,26 @@ export function DecisionsView({
                 {expandedIds.size === sortedDecisions.length ? 'Collapse all' : 'Expand all'}
               </button>
             </div>
+
+            {/* Reset Filters at End */}
+            {isFiltered && (
+              <button
+                type="button"
+                className="trace-button trace-button--secondary trace-button--sm decisions-reset-btn"
+                onClick={() => {
+                  setSelectedRepoId('all');
+                  setSearchQuery('');
+                }}
+              >
+                Reset filters
+              </button>
+            )}
           </div>
         </div>
       </section>
 
       {/* Active Filter State Subtitle */}
-      {(selectedRepoId !== 'all' || searchQuery.trim()) && (
+      {isFiltered && (
         <div className="decisions-filter-status">
           <span>
             Showing <strong>{sortedDecisions.length}</strong> of <strong>{decisions.length}</strong> decisions
@@ -404,16 +448,6 @@ export function DecisionsView({
               </>
             )}
           </span>
-          <button
-            type="button"
-            className="filter-reset-link"
-            onClick={() => {
-              setSelectedRepoId('all');
-              setSearchQuery('');
-            }}
-          >
-            Reset filters
-          </button>
         </div>
       )}
 
@@ -441,6 +475,8 @@ export function DecisionsView({
                 (decision.relatedChangeIds?.includes(c.id) ||
                   decision.items.some((i) => i.changeId === c.id || i.changeNumber === c.number)),
             );
+
+            const evidenceCount = decision.items.reduce((acc, i) => acc + i.evidence.length, 0);
 
             return (
               <article
@@ -479,14 +515,14 @@ export function DecisionsView({
                     {/* Title */}
                     <h2 className="decision-title">{decision.title}</h2>
 
-                    {/* Summary Statement */}
+                    {/* Summary Statement with comfortable line measure */}
                     <p className="decision-summary">{decision.summary}</p>
 
                     {/* Collapsed Metadata Tokens */}
                     <div className="decision-meta-row">
                       <span className="meta-token">
                         <strong className="token-label">Evidence:</strong>{' '}
-                        {decision.items.reduce((acc, i) => acc + i.evidence.length, 0)} files
+                        {evidenceCount} files
                       </span>
                       <span className="meta-token-divider">·</span>
                       {linkedFindings.length > 0 && (
@@ -771,6 +807,14 @@ export function DecisionsView({
           </Link>
         </div>
       </footer>
+
+      {/* Decision Definition Prompt Builder Dialog */}
+      <DecisionPromptBuilder
+        isOpen={isPromptBuilderOpen}
+        onClose={() => setIsPromptBuilderOpen(false)}
+        repositories={repositories}
+        defaultRepoId={selectedRepoId !== 'all' ? selectedRepoId : undefined}
+      />
     </div>
   );
 }

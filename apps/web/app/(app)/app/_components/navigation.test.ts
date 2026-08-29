@@ -17,6 +17,7 @@ describe('dashboard navigation', () => {
   it('derives the visible route label from the current path', () => {
     expect(getRouteLabel('/app/conflicts')).toBe('Conflicts');
     expect(getRouteLabel('/app/repositories/trace')).toBe('Repositories');
+    expect(getRouteLabel('/app/documentation')).toBe('Documentation');
     expect(getRouteLabel('/app/unknown-view')).toBe('Unknown view');
   });
 });
