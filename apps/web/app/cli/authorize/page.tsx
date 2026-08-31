@@ -51,8 +51,12 @@ export default async function CliAuthorizePage({
 
   return (
     <main className="auth-page">
-        <section className="auth-card cli-auth-card">
-          <p className="section-label">TRACE CLI</p>
+      <section
+        className="auth-card cli-auth-card"
+        data-trace-motion="item"
+        style={{ '--motion-index': 0 } as React.CSSProperties}
+      >
+        <p className="section-label">TRACE CLI</p>
           <h1>{approved ? 'Connection approved.' : 'Connect this terminal.'}</h1>
           <p>
             {approved

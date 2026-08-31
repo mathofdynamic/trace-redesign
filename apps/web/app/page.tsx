@@ -10,7 +10,7 @@ export default function HomePage() {
             Hero Section (Two-Column Editorial on Desktop)
             ================================================================= */}
         <section className="hero public-container" aria-label="Introduction to TRACE">
-          <div className="hero__copy">
+          <div className="hero__copy" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <SectionLabel>Change intelligence for human and AI software teams</SectionLabel>
             <h1>Git is the history of code. TRACE is the history of understanding.</h1>
             <p>
@@ -30,7 +30,12 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="hero-intelligence-card" aria-label="TRACE Change Intelligence Path">
+          <div
+            className="hero-intelligence-card"
+            aria-label="TRACE Change Intelligence Path"
+            data-trace-motion="item"
+            style={{ '--motion-index': 1 } as React.CSSProperties}
+          >
             <div className="intelligence-card__header">
               <div className="intelligence-card__title">
                 <TraceMark size={14} />
@@ -99,8 +104,13 @@ export default function HomePage() {
         {/* =================================================================
             The Bottleneck (Editorial Section)
             ================================================================= */}
-        <section className="public-section public-container public-section--split" aria-labelledby="bottleneck-heading">
-          <div>
+        <section
+          className="public-section public-container public-section--split"
+          data-trace-motion="section"
+          data-motion-section="bottleneck"
+          aria-labelledby="bottleneck-heading"
+        >
+          <div data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <SectionLabel>The bottleneck</SectionLabel>
             <h2 id="bottleneck-heading">More changes do not create more review capacity.</h2>
             <div className="bottleneck-points">
@@ -121,7 +131,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="section-copy">
+          <div className="section-copy" data-trace-motion="item" style={{ '--motion-index': 1 } as React.CSSProperties}>
             <p>
               Human teams and coding agents can increase code volume almost without friction. The
               expensive part is understanding: whether work fits together across branches, whether
@@ -164,16 +174,26 @@ export default function HomePage() {
         {/* =================================================================
             What TRACE Preserves (Asymmetric Connected Narrative)
             ================================================================= */}
-        <section className="public-section public-container" aria-labelledby="preserves-heading">
-          <div className="section-header-compact">
+        <section
+          className="public-section public-container"
+          data-trace-motion="section"
+          data-motion-section="preserves"
+          aria-labelledby="preserves-heading"
+        >
+          <div className="section-header-compact" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <SectionLabel>What TRACE preserves</SectionLabel>
             <h2 id="preserves-heading">Three layers of durable engineering context.</h2>
             <p>Structured engineering memory designed for longevity across repository lifecycles.</p>
           </div>
 
           <div className="narrative-rail">
-            {narrativeItems.map((item) => (
-              <article className="narrative-node" key={item.index}>
+            {narrativeItems.map((item, idx) => (
+              <article
+                className="narrative-node"
+                key={item.index}
+                data-trace-motion="item"
+                style={{ '--motion-index': idx + 1 } as React.CSSProperties}
+              >
                 <div className="narrative-node__header">
                   <span className="narrative-node__index">{item.index}</span>
                   <div className="narrative-node__line" aria-hidden="true" />
@@ -194,8 +214,13 @@ export default function HomePage() {
         {/* =================================================================
             Repository-Native Memory (.trace Spec Section)
             ================================================================= */}
-        <section className="public-section public-container trace-section" aria-labelledby="memory-heading">
-          <div className="trace-section__copy">
+        <section
+          className="public-section public-container trace-section"
+          data-trace-motion="section"
+          data-motion-section="memory"
+          aria-labelledby="memory-heading"
+        >
+          <div className="trace-section__copy" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <SectionLabel>Repository-native memory</SectionLabel>
             <h2 id="memory-heading">The dashboard is a view. The record belongs to the project.</h2>
             <p>
@@ -218,7 +243,12 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="trace-memory-split" aria-label="Example .trace directory and artifact preview">
+          <div
+            className="trace-memory-split"
+            aria-label="Example .trace directory and artifact preview"
+            data-trace-motion="item"
+            style={{ '--motion-index': 1 } as React.CSSProperties}
+          >
             <div className="trace-tree-pane" aria-label="Directory tree">
               <div className="trace-pane-header">Repository Tree</div>
               <div className="trace-tree-content">
@@ -260,14 +290,25 @@ export default function HomePage() {
         {/* =================================================================
             Execution Without Lock-In (Comparison Band / Table)
             ================================================================= */}
-        <section className="public-section public-container execution-section" aria-labelledby="execution-heading">
-          <div className="section-header-compact">
+        <section
+          className="public-section public-container execution-section"
+          data-trace-motion="section"
+          data-motion-section="execution"
+          aria-labelledby="execution-heading"
+        >
+          <div className="section-header-compact" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <SectionLabel>Execution without lock-in</SectionLabel>
             <h2 id="execution-heading">Engineered for local control and selective synchronization.</h2>
             <p>Clear separation between verified local execution and optional coordination layers.</p>
           </div>
 
-          <div className="execution-comparison-band" role="region" aria-label="Execution mode comparison">
+          <div
+            className="execution-comparison-band"
+            role="region"
+            aria-label="Execution mode comparison"
+            data-trace-motion="item"
+            style={{ '--motion-index': 1 } as React.CSSProperties}
+          >
             <div className="comparison-table-wrapper">
               <table className="comparison-table">
                 <thead>
@@ -304,8 +345,13 @@ export default function HomePage() {
         {/* =================================================================
             Final CTA (High-Intent Tight Lockup)
             ================================================================= */}
-        <section className="final-cta public-container" aria-labelledby="cta-heading">
-          <div className="final-cta__content">
+        <section
+          className="final-cta public-container"
+          data-trace-motion="section"
+          data-motion-section="cta"
+          aria-labelledby="cta-heading"
+        >
+          <div className="final-cta__content" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <SectionLabel>Start with the evidence trail</SectionLabel>
             <h2 id="cta-heading">Make the reasoning around change durable.</h2>
             <p>
@@ -321,7 +367,12 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="final-cta__token" aria-label="Artifact ledger verification summary">
+          <div
+            className="final-cta__token"
+            aria-label="Artifact ledger verification summary"
+            data-trace-motion="item"
+            style={{ '--motion-index': 1 } as React.CSSProperties}
+          >
             <div className="final-cta__token-header">
               <div className="final-cta__token-brand">
                 <TraceMark size={14} />

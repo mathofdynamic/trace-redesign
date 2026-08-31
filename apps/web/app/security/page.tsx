@@ -25,7 +25,12 @@ export default function SecurityPage() {
         {/* =================================================================
             Trust-Boundary Diagram (Local Repo -> Boundary -> Dashboard)
             ================================================================= */}
-        <section className="security-boundary-section" aria-label="TRACE Trust Boundary Architecture">
+        <section
+          className="security-boundary-section"
+          aria-label="TRACE Trust Boundary Architecture"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <div className="security-boundary__header">
             <div className="security-boundary__title-group">
               <TraceMark size={14} />
@@ -40,6 +45,8 @@ export default function SecurityPage() {
                 key={node.stage}
                 className={`trust-node ${node.active ? 'trust-node--active' : ''}`}
                 role="listitem"
+                data-trace-motion="item"
+                style={{ '--motion-index': index + 2 } as React.CSSProperties}
               >
                 <div className="trust-node__header">
                   <span className="trust-node__stage">{node.stage}</span>
@@ -61,8 +68,13 @@ export default function SecurityPage() {
               <span className="trust-gates__label">Data Transmission Perimeter Invariants:</span>
             </div>
             <div className="trust-gates__grid">
-              {trustBoundaryGates.map((gate) => (
-                <div className="gate-item" key={gate.label}>
+              {trustBoundaryGates.map((gate, gIdx) => (
+                <div
+                  className="gate-item"
+                  key={gate.label}
+                  data-trace-motion="item"
+                  style={{ '--motion-index': gIdx + 6 } as React.CSSProperties}
+                >
                   <div className="gate-item__badge">
                     <span className="gate-item__icon" aria-hidden="true">■</span>
                     <code>{gate.label}</code>
@@ -77,16 +89,26 @@ export default function SecurityPage() {
         {/* =================================================================
             Security Principles: Structured Boundary Matrix
             ================================================================= */}
-        <section className="security-matrix-section" aria-labelledby="matrix-heading">
-          <div className="section-header-compact">
+        <section
+          className="security-matrix-section"
+          data-trace-motion="section"
+          data-motion-section="matrix"
+          aria-labelledby="matrix-heading"
+        >
+          <div className="section-header-compact" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <SectionLabel>Operational boundaries</SectionLabel>
             <h2 id="matrix-heading">Structured boundary matrix & invariants.</h2>
             <p>Precise mapping of operational behavior versus explicit non-claims across every system layer.</p>
           </div>
 
           <div className="security-matrix">
-            {securityMatrix.map((item) => (
-              <article className="security-matrix-card" key={item.title}>
+            {securityMatrix.map((item, idx) => (
+              <article
+                className="security-matrix-card"
+                key={item.title}
+                data-trace-motion="item"
+                style={{ '--motion-index': idx + 1 } as React.CSSProperties}
+              >
                 <div className="security-matrix-card__header">
                   <div className="security-matrix-card__tags">
                     <span className="boundary-tag">{item.boundary}</span>
@@ -113,8 +135,13 @@ export default function SecurityPage() {
         {/* =================================================================
             "Not Claimed" Explicit Disclosure (Neutral Dark Inset, No Red/Amber)
             ================================================================= */}
-        <section className="security-not-claimed" aria-labelledby="not-claimed-heading">
-          <div className="security-not-claimed__header">
+        <section
+          className="security-not-claimed"
+          data-trace-motion="section"
+          data-motion-section="not-claimed"
+          aria-labelledby="not-claimed-heading"
+        >
+          <div className="security-not-claimed__header" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <div className="security-not-claimed__title-group">
               <span className="not-claimed-badge" aria-hidden="true">NOT CLAIMED</span>
               <h3 id="not-claimed-heading">Explicit limits & certification transparency</h3>
@@ -123,13 +150,18 @@ export default function SecurityPage() {
           </div>
 
           <div className="security-not-claimed__body">
-            <p className="security-not-claimed__summary">
+            <p className="security-not-claimed__summary" data-trace-motion="item" style={{ '--motion-index': 1 } as React.CSSProperties}>
               TRACE does not currently claim SOC 2, ISO 27001, GDPR certification, zero retention, compliance guarantees, or a completed enterprise security program. Operational boundaries reflect verified software invariants, not external regulatory attestations.
             </p>
 
             <div className="not-claimed-points-grid">
-              {notClaimedPoints.map((point) => (
-                <div className="not-claimed-point" key={point.label}>
+              {notClaimedPoints.map((point, idx) => (
+                <div
+                  className="not-claimed-point"
+                  key={point.label}
+                  data-trace-motion="item"
+                  style={{ '--motion-index': idx + 2 } as React.CSSProperties}
+                >
                   <div className="not-claimed-point__title">
                     <span className="point-bullet" aria-hidden="true">—</span>
                     <strong>{point.label}</strong>
@@ -144,8 +176,13 @@ export default function SecurityPage() {
         {/* =================================================================
             Responsible Disclosure
             ================================================================= */}
-        <section className="security-disclosure" aria-labelledby="disclosure-heading">
-          <div className="security-disclosure__inner">
+        <section
+          className="security-disclosure"
+          data-trace-motion="section"
+          data-motion-section="disclosure"
+          aria-labelledby="disclosure-heading"
+        >
+          <div className="security-disclosure__inner" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <div className="security-disclosure__copy">
               <h3 id="disclosure-heading">Responsible disclosure</h3>
               <p>

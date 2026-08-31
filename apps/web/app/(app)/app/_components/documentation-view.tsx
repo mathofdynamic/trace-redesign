@@ -20,7 +20,11 @@ export function DocumentationView() {
     <div className="dashboard-docs-surface" id="dashboard-docs-root">
       {/* 1. Header & Technical Grounding */}
       <header className="dashboard-docs-header">
-        <div className="dashboard-docs-header__copy">
+        <div
+          className="dashboard-docs-header__copy"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <div className="dashboard-docs-header__eyebrow-row">
             <span className="docs-eyebrow-tag">IN-TREE SPECIFICATIONS &amp; MANUALS</span>
             <span className="docs-header-divider" aria-hidden="true">·</span>
@@ -42,7 +46,13 @@ export function DocumentationView() {
         </div>
 
         {/* Quick Spec Metadata Indicators */}
-        <div className="dashboard-docs-metrics" role="region" aria-label="Documentation specifications">
+        <div
+          className="dashboard-docs-metrics"
+          role="region"
+          aria-label="Documentation specifications"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <div className="docs-metric-item">
             <span className="docs-metric-label">AUTHORITATIVE SOURCE</span>
             <span className="docs-metric-val">In-Tree Git Records</span>
@@ -61,7 +71,12 @@ export function DocumentationView() {
       {/* 2. Main Content Layout with Sticky Sidebar TOC */}
       <div className="dashboard-docs-layout">
         {/* Sticky Table of Contents Sidebar */}
-        <aside className="dashboard-docs-toc" aria-label="Documentation table of contents">
+        <aside
+          className="dashboard-docs-toc"
+          aria-label="Documentation table of contents"
+          data-trace-motion="item"
+          style={{ '--motion-index': 2 } as React.CSSProperties}
+        >
           <div className="dashboard-docs-toc__inner">
             <span className="dashboard-docs-toc__title">DOCUMENTATION INDEX</span>
             <nav className="dashboard-docs-toc__nav">
@@ -119,8 +134,18 @@ export function DocumentationView() {
         {/* Main Technical Reading Column */}
         <div className="dashboard-docs-main">
           {/* Section 1: In-Tree Source Documents */}
-          <section id="source-documents" className="dashboard-docs-section" aria-labelledby="source-docs-heading">
-            <div className="dashboard-docs-section__header">
+          <section
+            id="source-documents"
+            className="dashboard-docs-section"
+            aria-labelledby="source-docs-heading"
+            data-trace-motion="section"
+            data-motion-section="docs-source-documents"
+          >
+            <div
+              className="dashboard-docs-section__header"
+              data-trace-motion="item"
+              style={{ '--motion-index': 0 } as React.CSSProperties}
+            >
               <span className="dashboard-docs-section__num">01</span>
               <div>
                 <h2 id="source-docs-heading" className="dashboard-docs-section__title">
@@ -132,7 +157,13 @@ export function DocumentationView() {
               </div>
             </div>
 
-            <div className="dashboard-docs-table-wrapper" role="region" aria-label="Source documents table">
+            <div
+              className="dashboard-docs-table-wrapper"
+              role="region"
+              aria-label="Source documents table"
+              data-trace-motion="item"
+              style={{ '--motion-index': 1 } as React.CSSProperties}
+            >
               <table className="dashboard-docs-table">
                 <thead>
                   <tr>
@@ -176,8 +207,18 @@ export function DocumentationView() {
           </section>
 
           {/* Section 2: Local → Dashboard Flow */}
-          <section id="execution-pipeline" className="dashboard-docs-section" aria-labelledby="execution-pipeline-heading">
-            <div className="dashboard-docs-section__header">
+          <section
+            id="execution-pipeline"
+            className="dashboard-docs-section"
+            aria-labelledby="execution-pipeline-heading"
+            data-trace-motion="section"
+            data-motion-section="docs-pipeline"
+          >
+            <div
+              className="dashboard-docs-section__header"
+              data-trace-motion="item"
+              style={{ '--motion-index': 0 } as React.CSSProperties}
+            >
               <span className="dashboard-docs-section__num">02</span>
               <div>
                 <h2 id="execution-pipeline-heading" className="dashboard-docs-section__title">
@@ -189,7 +230,11 @@ export function DocumentationView() {
               </div>
             </div>
 
-            <div className="dashboard-workflow-grid">
+            <div
+              className="dashboard-workflow-grid"
+              data-trace-motion="item"
+              style={{ '--motion-index': 1 } as React.CSSProperties}
+            >
               {localToDashboardStages.map((stage) => (
                 <div key={stage.step} className="dashboard-workflow-card">
                   <div className="dashboard-workflow-card__top">
@@ -208,8 +253,18 @@ export function DocumentationView() {
           </section>
 
           {/* Section 3: Local Analysis CLI */}
-          <section id="local-cli" className="dashboard-docs-section" aria-labelledby="local-cli-heading">
-            <div className="dashboard-docs-section__header">
+          <section
+            id="local-cli"
+            className="dashboard-docs-section"
+            aria-labelledby="local-cli-heading"
+            data-trace-motion="section"
+            data-motion-section="docs-local-cli"
+          >
+            <div
+              className="dashboard-docs-section__header"
+              data-trace-motion="item"
+              style={{ '--motion-index': 0 } as React.CSSProperties}
+            >
               <span className="dashboard-docs-section__num">03</span>
               <div>
                 <h2 id="local-cli-heading" className="dashboard-docs-section__title">
@@ -221,7 +276,11 @@ export function DocumentationView() {
               </div>
             </div>
 
-            <div className="dashboard-cli-list">
+            <div
+              className="dashboard-cli-list"
+              data-trace-motion="item"
+              style={{ '--motion-index': 1 } as React.CSSProperties}
+            >
               {localAnalysisCommands.map((item) => (
                 <div className="dashboard-cli-card" key={item.id}>
                   <div className="dashboard-cli-card__head">
@@ -248,8 +307,18 @@ export function DocumentationView() {
           </section>
 
           {/* Section 4: Cloud Sync & Verification CLI */}
-          <section id="cloud-sync" className="dashboard-docs-section" aria-labelledby="cloud-sync-heading">
-            <div className="dashboard-docs-section__header">
+          <section
+            id="cloud-sync"
+            className="dashboard-docs-section"
+            aria-labelledby="cloud-sync-heading"
+            data-trace-motion="section"
+            data-motion-section="docs-sync-cli"
+          >
+            <div
+              className="dashboard-docs-section__header"
+              data-trace-motion="item"
+              style={{ '--motion-index': 0 } as React.CSSProperties}
+            >
               <span className="dashboard-docs-section__num">04</span>
               <div>
                 <h2 id="cloud-sync-heading" className="dashboard-docs-section__title">
@@ -261,7 +330,11 @@ export function DocumentationView() {
               </div>
             </div>
 
-            <div className="dashboard-cli-list">
+            <div
+              className="dashboard-cli-list"
+              data-trace-motion="item"
+              style={{ '--motion-index': 1 } as React.CSSProperties}
+            >
               {syncWorkflowCommands.map((item) => (
                 <div className="dashboard-cli-card" key={item.id}>
                   <div className="dashboard-cli-card__head">
@@ -283,8 +356,18 @@ export function DocumentationView() {
           </section>
 
           {/* Section 5: Boundary & Invariant Guarantees */}
-          <section id="boundary-guarantees" className="dashboard-docs-section" aria-labelledby="boundary-guarantees-heading">
-            <div className="dashboard-docs-section__header">
+          <section
+            id="boundary-guarantees"
+            className="dashboard-docs-section"
+            aria-labelledby="boundary-guarantees-heading"
+            data-trace-motion="section"
+            data-motion-section="docs-guarantees"
+          >
+            <div
+              className="dashboard-docs-section__header"
+              data-trace-motion="item"
+              style={{ '--motion-index': 0 } as React.CSSProperties}
+            >
               <span className="dashboard-docs-section__num">05</span>
               <div>
                 <h2 id="boundary-guarantees-heading" className="dashboard-docs-section__title">
@@ -296,7 +379,11 @@ export function DocumentationView() {
               </div>
             </div>
 
-            <div className="dashboard-guarantees-grid">
+            <div
+              className="dashboard-guarantees-grid"
+              data-trace-motion="item"
+              style={{ '--motion-index': 1 } as React.CSSProperties}
+            >
               <div className="dashboard-guarantee-card">
                 <div className="guarantee-card-icon">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

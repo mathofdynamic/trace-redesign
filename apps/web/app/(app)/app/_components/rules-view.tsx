@@ -4,6 +4,7 @@ import { useId, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TraceSelect } from './trace-select';
 import { RulePromptBuilder } from './rule-prompt-builder';
+import { usePresence, getMotionItemProps } from '../../../../lib/entrance-motion';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -222,7 +223,11 @@ export function RulesView({
     <div className="rules-surface" id="rules-root">
       {/* 1. Header & Summary Intelligence Bar */}
       <header className="rules-header">
-        <div className="rules-header__top">
+        <div
+          className="rules-header__top"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <div className="rules-header__copy">
             <div className="rules-header__eyebrow">
               <span className="rules-eyebrow-tag">GOVERNANCE &amp; BOUNDARY POLICIES</span>
@@ -261,7 +266,13 @@ export function RulesView({
         </div>
 
         {/* Intelligence Metrics Bar */}
-        <div className="rules-metrics-bar" role="region" aria-label="Governance rules overview metrics">
+        <div
+          className="rules-metrics-bar"
+          role="region"
+          aria-label="Governance rules overview metrics"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <div className="rule-metric-item">
             <span className="rule-metric-label">TOTAL RULES</span>
             <span className="rule-metric-value">{rules.length}</span>
@@ -291,7 +302,12 @@ export function RulesView({
       </header>
 
       {/* 2. Filter & Search Controls Toolbar */}
-      <section className="rules-toolbar" aria-label="Filter and search governance rules">
+      <section
+        className="rules-toolbar"
+        aria-label="Filter and search governance rules"
+        data-trace-motion="item"
+        style={{ '--motion-index': 2 } as React.CSSProperties}
+      >
         {/* Row 1: Search flexible / full width */}
         <div className="rules-toolbar__row rules-toolbar__row--search">
           <label htmlFor={searchInputId} className="sr-only">
@@ -463,8 +479,13 @@ export function RulesView({
 
       {/* 3. Rules List Surface */}
       {sortedRules.length > 0 ? (
-        <main className="rules-list" aria-label="Governance rules list">
-          {sortedRules.map((rule) => {
+        <main
+          className="rules-list"
+          aria-label="Governance rules list"
+          data-trace-motion="section"
+          data-motion-section="rules-list"
+        >
+          {sortedRules.map((rule, idx) => {
             const isExpanded = expandedIds.has(rule.id);
             const parsed = parseRuleContent(rule.content);
             const repo = repositories.find((r) => r.id === rule.repositoryId);
@@ -498,6 +519,8 @@ export function RulesView({
                 key={rule.id}
                 id={`rule-${rule.id}`}
                 className={`rule-record ${isExpanded ? 'rule-record--expanded' : ''}`}
+                data-trace-motion="item"
+                style={{ '--motion-index': idx } as React.CSSProperties}
               >
                 {/* Clickable Header Row */}
                 <header
@@ -590,152 +613,28 @@ export function RulesView({
                 </header>
 
                 {/* Expanded Governance Policy Body */}
-                {isExpanded && (
-                  <div id={`rule-content-${rule.id}`} className="rule-record__body">
-                    <div className="rule-body-grid">
-                      {/* Left: What It Protects & Constraints */}
-                      <div className="rule-body-column">
-                        {/* What This Rule Protects */}
-                        <div className="rule-content-section">
-                          <h3 className="section-title">What This Rule Protects</h3>
-                          <p className="section-paragraph">{rule.summary}</p>
-                        </div>
-
-                        {/* Checks & Constraints */}
-                        <div className="rule-content-section">
-                          <h3 className="section-title">Automated Checks &amp; Constraints</h3>
-                          <div className="rule-constraints-stack">
-                            {rule.items.map((item) => (
-                              <div key={item.id} className="rule-constraint-card">
-                                <div className="constraint-card-top">
-                                  <strong className="constraint-card-title">{item.title}</strong>
-                                  <div className="constraint-badge-group">
-                                    <span className="constraint-sev-pill">
-                                      {item.severity ?? 'high'}
-                                    </span>
-                                    <span className="constraint-class-pill">
-                                      {item.classification ?? 'deterministic'}
-                                    </span>
-                                  </div>
-                                </div>
-                                <p className="constraint-card-detail">{item.detail}</p>
-                                {item.evidence.length > 0 && (
-                                  <div className="constraint-loci">
-                                    <span className="loci-header">MATCH PATTERNS:</span>
-                                    <div className="loci-pills-row">
-                                      {item.evidence.map((path, pIdx) => (
-                                        <code key={pIdx} className="loci-code-pill">
-                                          {path}
-                                        </code>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Policy Requirements Specification */}
-                        {parsed.requirements.length > 0 && (
-                          <div className="rule-content-section">
-                            <h3 className="section-title">Policy Invariants &amp; Rules</h3>
-                            <ul className="rule-requirements-list">
-                              {parsed.requirements.map((req, rIdx) => (
-                                <li key={rIdx} className="requirement-item">
-                                  <span className="req-bullet" aria-hidden="true">▸</span>
-                                  <span className="req-text">{req}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right: Applicability & Provenance Rail */}
-                      <aside className="rule-aside-column" aria-label="Rule scope and provenance">
-                        {/* Target Scope & Matchers Box */}
-                        <div className="aside-box">
-                          <h4 className="aside-box__title">Applicable Path Scope</h4>
-                          <div className="scope-paths-list">
-                            {allEvidencePaths.map((path, pIdx) => (
-                              <div key={pIdx} className="scope-path-row">
-                                <code className="scope-code-pill">{path}</code>
-                              </div>
-                            ))}
-                          </div>
-                          <p className="scope-explanation">
-                            Changes matching these file path patterns trigger automated boundary validation during `trace analyze`.
-                          </p>
-                        </div>
-
-                        {/* Linked Findings */}
-                        {linkedFindings.length > 0 && (
-                          <div className="aside-box">
-                            <h4 className="aside-box__title">Linked Attention Findings</h4>
-                            <div className="linked-findings-list">
-                              {linkedFindings.map((finding) => (
-                                <div key={finding.id} className="linked-finding-card">
-                                  <div className="linked-finding-top">
-                                    <span className="finding-kind-tag">{finding.kind}</span>
-                                    <span className="finding-class-tag">{finding.classification}</span>
-                                  </div>
-                                  <h5 className="linked-finding-title">{finding.title}</h5>
-                                  <p className="linked-finding-detail">
-                                    {presentFindingDetail(finding.detail)}
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Local CLI Inspection */}
-                        <div className="aside-box aside-box--cli">
-                          <h4 className="aside-box__title">Local CLI Inspection</h4>
-                          <p className="cli-desc">
-                            Inspect rule evaluation and check local compliance in your terminal:
-                          </p>
-                          <div className="cli-code-block">
-                            <code>trace rules explain {rule.id}</code>
-                            <button
-                              type="button"
-                              className="cli-copy-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                copyCliCommand(rule);
-                              }}
-                              title="Copy CLI command to clipboard"
-                            >
-                              {copiedId === rule.id ? 'Copied' : 'Copy'}
-                            </button>
-                          </div>
-                          <div className="provenance-facts">
-                            <div className="fact-row">
-                              <span className="fact-key">Artifact ID:</span>
-                              <code className="fact-val">{rule.artifactId}</code>
-                            </div>
-                            <div className="fact-row">
-                              <span className="fact-key">Repository:</span>
-                              <span className="fact-val">{rule.repositoryName}</span>
-                            </div>
-                            <div className="fact-row">
-                              <span className="fact-key">Synchronized:</span>
-                              <span className="fact-val">{formatRelativeDate(rule.syncedAt)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </aside>
-                    </div>
-                  </div>
-                )}
+                <RuleDisclosureBody
+                  isExpanded={isExpanded}
+                  rule={rule}
+                  parsed={parsed}
+                  allEvidencePaths={allEvidencePaths}
+                  linkedFindings={linkedFindings}
+                  copiedId={copiedId}
+                  copyCliCommand={copyCliCommand}
+                />
               </article>
             );
           })}
         </main>
       ) : (
         /* Empty / Zero-Rules State */
-        <div className="rules-empty-surface" role="region" aria-label="No governance rules found">
+        <div
+          className="rules-empty-surface"
+          role="region"
+          aria-label="No governance rules found"
+          data-trace-motion="item"
+          style={{ '--motion-index': 3 } as React.CSSProperties}
+        >
           <div className="empty-surface-inner">
             <div className="empty-glyph-box">
               <svg
@@ -787,7 +686,11 @@ export function RulesView({
       )}
 
       {/* 4. Privacy & Governance Truth Footer Note */}
-      <footer className="rules-privacy-footer">
+      <footer
+        className="rules-privacy-footer"
+        data-trace-motion="item"
+        style={{ '--motion-index': 4 } as React.CSSProperties}
+      >
         <div className="privacy-footer-inner">
           <span className="privacy-dot" aria-hidden="true">
             <svg
@@ -821,6 +724,177 @@ export function RulesView({
         repositories={repositories}
         defaultRepoId={selectedRepoId !== 'all' ? selectedRepoId : undefined}
       />
+    </div>
+  );
+}
+
+interface RuleDisclosureBodyProps {
+  isExpanded: boolean;
+  rule: DashboardSyncedRecord;
+  parsed: ParsedRuleContent;
+  allEvidencePaths: string[];
+  linkedFindings: DashboardAttention[];
+  copiedId: string | null;
+  copyCliCommand: (rule: DashboardSyncedRecord) => void;
+}
+
+function RuleDisclosureBody({
+  isExpanded,
+  rule,
+  parsed,
+  allEvidencePaths,
+  linkedFindings,
+  copiedId,
+  copyCliCommand,
+}: RuleDisclosureBodyProps) {
+  const presence = usePresence(isExpanded);
+
+  if (!presence.isMounted) {
+    return null;
+  }
+
+  return (
+    <div
+      id={`rule-content-${rule.id}`}
+      className="rule-record__body"
+      data-trace-motion="disclosure"
+      {...presence.presenceProps}
+    >
+      <div className="rule-body-grid">
+        {/* Left: What It Protects & Constraints */}
+        <div className="rule-body-column">
+          {/* What This Rule Protects */}
+          <div className="rule-content-section" {...getMotionItemProps(0)}>
+            <h3 className="section-title">What This Rule Protects</h3>
+            <p className="section-paragraph">{rule.summary}</p>
+          </div>
+
+          {/* Checks & Constraints */}
+          <div className="rule-content-section" {...getMotionItemProps(1)}>
+            <h3 className="section-title">Automated Checks &amp; Constraints</h3>
+            <div className="rule-constraints-stack">
+              {rule.items.map((item) => (
+                <div key={item.id} className="rule-constraint-card">
+                  <div className="constraint-card-top">
+                    <strong className="constraint-card-title">{item.title}</strong>
+                    <div className="constraint-badge-group">
+                      <span className="constraint-sev-pill">
+                        {item.severity ?? 'high'}
+                      </span>
+                      <span className="constraint-class-pill">
+                        {item.classification ?? 'deterministic'}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="constraint-card-detail">{item.detail}</p>
+                  {item.evidence.length > 0 && (
+                    <div className="constraint-loci">
+                      <span className="loci-header">MATCH PATTERNS:</span>
+                      <div className="loci-pills-row">
+                        {item.evidence.map((path, pIdx) => (
+                          <code key={pIdx} className="loci-code-pill">
+                            {path}
+                          </code>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Policy Requirements Specification */}
+          {parsed.requirements.length > 0 && (
+            <div className="rule-content-section" {...getMotionItemProps(2)}>
+              <h3 className="section-title">Policy Invariants &amp; Rules</h3>
+              <ul className="rule-requirements-list">
+                {parsed.requirements.map((req, rIdx) => (
+                  <li key={rIdx} className="requirement-item">
+                    <span className="req-bullet" aria-hidden="true">▸</span>
+                    <span className="req-text">{req}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* Right: Applicability & Provenance Rail */}
+        <aside className="rule-aside-column" aria-label="Rule scope and provenance" {...getMotionItemProps(1)}>
+          {/* Target Scope & Matchers Box */}
+          <div className="aside-box">
+            <h4 className="aside-box__title">Applicable Path Scope</h4>
+            <div className="scope-paths-list">
+              {allEvidencePaths.map((path, pIdx) => (
+                <div key={pIdx} className="scope-path-row">
+                  <code className="scope-code-pill">{path}</code>
+                </div>
+              ))}
+            </div>
+            <p className="scope-explanation">
+              Changes matching these file path patterns trigger automated boundary validation during `trace analyze`.
+            </p>
+          </div>
+
+          {/* Linked Findings */}
+          {linkedFindings.length > 0 && (
+            <div className="aside-box">
+              <h4 className="aside-box__title">Linked Attention Findings</h4>
+              <div className="linked-findings-list">
+                {linkedFindings.map((finding) => (
+                  <div key={finding.id} className="linked-finding-card">
+                    <div className="linked-finding-top">
+                      <span className="finding-kind-tag">{finding.kind}</span>
+                      <span className="finding-class-tag">{finding.classification}</span>
+                    </div>
+                    <h5 className="linked-finding-title">{finding.title}</h5>
+                    <p className="linked-finding-detail">
+                      {presentFindingDetail(finding.detail)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Local CLI Inspection */}
+          <div className="aside-box aside-box--cli">
+            <h4 className="aside-box__title">Local CLI Inspection</h4>
+            <p className="cli-desc">
+              Inspect rule evaluation and check local compliance in your terminal:
+            </p>
+            <div className="cli-code-block">
+              <code>trace rules explain {rule.id}</code>
+              <button
+                type="button"
+                className="cli-copy-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyCliCommand(rule);
+                }}
+                title="Copy CLI command to clipboard"
+              >
+                {copiedId === rule.id ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+            <div className="provenance-facts">
+              <div className="fact-row">
+                <span className="fact-key">Artifact ID:</span>
+                <code className="fact-val">{rule.artifactId}</code>
+              </div>
+              <div className="fact-row">
+                <span className="fact-key">Repository:</span>
+                <span className="fact-val">{rule.repositoryName}</span>
+              </div>
+              <div className="fact-row">
+                <span className="fact-key">Synchronized:</span>
+                <span className="fact-val">{formatRelativeDate(rule.syncedAt)}</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

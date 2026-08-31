@@ -12,7 +12,11 @@ export default async function ReportsPage({
 
   return (
     <div className="dashboard-page redesign-page reports-page">
-      <header className="redesign-header">
+      <header
+        className="redesign-header"
+        data-trace-motion="item"
+        style={{ '--motion-index': 0 } as React.CSSProperties}
+      >
         <div>
           <span className="eyebrow">Reports Library</span>
           <h1>Synchronized Reports</h1>

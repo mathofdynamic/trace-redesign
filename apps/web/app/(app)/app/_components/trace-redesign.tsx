@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { OverlayPortal, ModalBackdrop, CenteredDialog } from './overlay-portal';
+import {
+  usePresence,
+  getMotionItemProps,
+} from '../../../../lib/entrance-motion';
 import type { DashboardAttention, DashboardRepository } from '../../../../lib/dashboard';
 import {
   deriveTraceProjectState,
@@ -203,6 +207,7 @@ export function LocalActionPanel({
   buttonClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const presence = usePresence(open);
   const [copied, setCopied] = useState<string | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -242,7 +247,7 @@ export function LocalActionPanel({
       >
         {triggerLabel}
       </button>
-      {open ? (
+      {presence.isMounted ? (
         <OverlayPortal>
           <ModalBackdrop onClose={() => setOpen(false)} ariaLabel="Close local action panel">
             <CenteredDialog
@@ -260,19 +265,19 @@ export function LocalActionPanel({
               >
                 ×
               </button>
-              <span className="eyebrow">Local TRACE workflow</span>
-              <h2 id="local-action-title">{title}</h2>
-              <p>
+              <span className="eyebrow" {...getMotionItemProps(0)}>Local TRACE workflow</span>
+              <h2 id="local-action-title" {...getMotionItemProps(0)}>{title}</h2>
+              <p {...getMotionItemProps(1)}>
                 {description ??
                   `Run these commands from ${repositoryName ? `${repositoryName} on ` : ''}your computer.`}
               </p>
-              <div className="local-action-panel__notice">
+              <div className="local-action-panel__notice" {...getMotionItemProps(1)}>
                 <StateMark tone="info" />
                 <span>
                   Analysis stays on your computer. Only approved TRACE records are synchronized.
                 </span>
               </div>
-              <ol className="local-action-commands">
+              <ol className="local-action-commands" {...getMotionItemProps(2)}>
                 {commands.map((command, index) => (
                   <li key={command}>
                     <span>{index + 1}</span>
@@ -284,12 +289,12 @@ export function LocalActionPanel({
                 ))}
               </ol>
               {!commands.some((command) => command.startsWith('trace sync')) ? (
-                <p className="local-action-panel__hint">
+                <p className="local-action-panel__hint" {...getMotionItemProps(2)}>
                   Synchronization becomes available after local analysis creates an approved record
                   and a dashboard connection is present.
                 </p>
               ) : null}
-              <div className="trace-dialog__actions">
+              <div className="trace-dialog__actions" {...getMotionItemProps(3)}>
                 <button
                   className="trace-button trace-button--primary"
                   type="button"
@@ -325,6 +330,7 @@ export function RepositorySwitcher({
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const presence = usePresence(open);
   const [query, setQuery] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -408,16 +414,27 @@ export function RepositorySwitcher({
           ⌄
         </span>
       </button>
-      {open ? (
+      {presence.isMounted ? (
         <>
           <button
             className="repository-switcher__scrim"
             type="button"
             aria-label="Close project switcher"
             onClick={() => setOpen(false)}
+            data-trace-motion="surface"
+            data-motion-variant="backdrop"
+            data-presence-state={presence.presenceState}
           />
-          <div className="repository-switcher" role="dialog" aria-label="Switch repository" aria-modal="true">
-            <div className="repository-switcher__head">
+          <div
+            className="repository-switcher"
+            role="dialog"
+            aria-label="Switch repository"
+            aria-modal="true"
+            data-trace-motion="surface"
+            data-motion-variant="popover"
+            data-presence-state={presence.presenceState}
+          >
+            <div className="repository-switcher__head" {...getMotionItemProps(0)}>
               <div>
                 <span className="eyebrow">Project context</span>
                 <strong>{current?.fullName ?? 'No repository selected'}</strong>
@@ -430,7 +447,7 @@ export function RepositorySwitcher({
                 ×
               </button>
             </div>
-            <div className="repository-switcher__search-wrapper">
+            <div className="repository-switcher__search-wrapper" {...getMotionItemProps(1)}>
               <span className="repository-switcher__search-icon" aria-hidden="true">
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="7" cy="7" r="5" />
@@ -456,7 +473,7 @@ export function RepositorySwitcher({
                 </button>
               ) : null}
             </div>
-            <div className="repository-switcher__body">
+            <div className="repository-switcher__body" {...getMotionItemProps(2)}>
               {filtered.length === 0 ? (
                 <p className="repository-switcher__empty">
                   No repositories found matching &ldquo;{query}&rdquo;.
@@ -499,6 +516,7 @@ export function RepositorySwitcher({
               className="repository-switcher__manage"
               href="/app/repositories"
               onClick={() => setOpen(false)}
+              {...getMotionItemProps(3)}
             >
               <span>Manage repositories</span>
               <span aria-hidden="true">→</span>
@@ -586,6 +604,7 @@ export function FindingDisclosure({
   repository?: DashboardRepository | null;
 }) {
   const [open, setOpen] = useState(false);
+  const presence = usePresence(open);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const fileEvidence = finding.evidence.filter(isFileEvidenceReference);
@@ -633,7 +652,7 @@ export function FindingDisclosure({
       >
         Review
       </button>
-      {open ? (
+      {presence.isMounted ? (
         <OverlayPortal>
           <ModalBackdrop onClose={handleClose} ariaLabel="Close finding details">
             <CenteredDialog
@@ -643,7 +662,7 @@ export function FindingDisclosure({
               initialFocusRef={closeRef}
               className="finding-drawer"
             >
-              <div className="finding-drawer__header">
+              <div className="finding-drawer__header" {...getMotionItemProps(0)}>
                 <div className="finding-drawer__eyebrow">
                   <span className="severity-badge" data-severity={finding.severity}>
                     {finding.severity}
@@ -672,13 +691,13 @@ export function FindingDisclosure({
               </div>
 
               {/* 1. What Happened */}
-              <div className="finding-drawer__intro">
+              <div className="finding-drawer__intro" {...getMotionItemProps(1)}>
                 <h2 id={`finding-title-${finding.id}`}>{finding.title}</h2>
                 <p className="finding-drawer__lead">{presentFindingDetail(finding.detail)}</p>
               </div>
 
               {/* Responsive 2-Column Content Layout */}
-              <div className="finding-drawer__body-grid">
+              <div className="finding-drawer__body-grid" {...getMotionItemProps(2)}>
                 {/* Primary Left Column: Context, Reasoning & Evidence */}
                 <div className="finding-drawer__col-main">
                   {/* 2. Why this matters */}
@@ -872,10 +891,10 @@ export function FindingDisclosure({
                   </details>
                 </div>
               </div>
-          </CenteredDialog>
-        </ModalBackdrop>
-      </OverlayPortal>
-    ) : null}
-  </>
-);
+            </CenteredDialog>
+          </ModalBackdrop>
+        </OverlayPortal>
+      ) : null}
+    </>
+  );
 }

@@ -97,7 +97,12 @@ export function ReportDetailView({
   return (
     <div className="report-detail-surface">
       {/* 1. Breadcrumb Top Bar */}
-      <nav className="report-detail-breadcrumb" aria-label="Breadcrumb navigation">
+      <nav
+        className="report-detail-breadcrumb"
+        aria-label="Breadcrumb navigation"
+        data-trace-motion="item"
+        style={{ '--motion-index': 0 } as React.CSSProperties}
+      >
         <Link href="/app/reports" className="report-breadcrumb-link">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <line x1="19" y1="12" x2="5" y2="12" />
@@ -114,7 +119,11 @@ export function ReportDetailView({
       {/* 2. Main Two-Column Document Layout */}
       <div className="report-detail-layout">
         {/* Left/Center Document Column */}
-        <main className="report-document-column">
+        <main
+          className="report-document-column"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <article className="report-document-surface" aria-label={`Report: ${report.title}`}>
             {/* Document Header */}
             <header className="report-doc-header">
@@ -257,7 +266,14 @@ export function ReportDetailView({
 
             {/* Tab 1: Readable Structured Document */}
             {activeTab === 'readable' && (
-              <div className="report-doc-body" id="panel-readable" role="tabpanel" aria-labelledby="tab-readable">
+              <div
+                className="report-doc-body"
+                id="panel-readable"
+                role="tabpanel"
+                aria-labelledby="tab-readable"
+                data-trace-motion="section"
+                data-motion-section="report-readable"
+              >
                 {/* 1. Related Pull Requests */}
                 {relatedChanges.length > 0 ? (
                   <section className="report-doc-section" aria-labelledby="section-changes-heading">
@@ -397,7 +413,14 @@ export function ReportDetailView({
 
             {/* Tab 2: Raw Canonical TRACE Markdown */}
             {activeTab === 'raw' && (
-              <div className="report-doc-raw" id="panel-raw" role="tabpanel" aria-labelledby="tab-raw">
+              <div
+                className="report-doc-raw"
+                id="panel-raw"
+                role="tabpanel"
+                aria-labelledby="tab-raw"
+                data-trace-motion="section"
+                data-motion-section="report-raw"
+              >
                 <div className="raw-toolbar">
                   <span className="raw-toolbar__label">Canonical TRACE Markdown Record</span>
                   <button
@@ -416,7 +439,14 @@ export function ReportDetailView({
 
             {/* Tab 3: Verification & Provenance */}
             {activeTab === 'provenance' && (
-              <div className="report-doc-provenance" id="panel-provenance" role="tabpanel" aria-labelledby="tab-provenance">
+              <div
+                className="report-doc-provenance"
+                id="panel-provenance"
+                role="tabpanel"
+                aria-labelledby="tab-provenance"
+                data-trace-motion="section"
+                data-motion-section="report-provenance"
+              >
                 <div className="doc-section-header">
                   <span className="doc-section-eyebrow">Audit Trail</span>
                   <h2 className="doc-section-title">Cryptographic & AST Provenance</h2>
@@ -467,7 +497,12 @@ export function ReportDetailView({
         </main>
 
         {/* Right Metadata & Provenance Rail */}
-        <aside className="report-metadata-rail" aria-label="Report Metadata and Actions Rail">
+        <aside
+          className="report-metadata-rail"
+          aria-label="Report Metadata and Actions Rail"
+          data-trace-motion="item"
+          style={{ '--motion-index': 2 } as React.CSSProperties}
+        >
           {/* 1. Record Provenance Card */}
           <div className="rail-module">
             <span className="rail-module__title">Record Provenance</span>

@@ -6,7 +6,11 @@ export default async function ChangesPage() {
   const { summary } = await getAuthenticatedDashboardSummary();
   return (
     <div className="dashboard-page redesign-page" id="changes-dashboard-page">
-      <header className="redesign-header">
+      <header
+        className="redesign-header"
+        data-trace-motion="item"
+        style={{ '--motion-index': 0 } as React.CSSProperties}
+      >
         <div>
           <span className="eyebrow">Active changes</span>
           <h1>Tracked Changes &amp; Pull Requests</h1>
@@ -24,7 +28,11 @@ export default async function ChangesPage() {
           attention={summary.attention}
         />
       ) : (
-        <div className="empty-panel empty-panel--large">
+        <div
+          className="empty-panel empty-panel--large"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <span aria-hidden="true">↗</span>
           <h2>No active changes stored</h2>
           <p>

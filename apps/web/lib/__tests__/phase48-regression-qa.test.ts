@@ -92,7 +92,7 @@ describe('Phase 48: Final Bug Report 01 Regression QA & System Invariants', () =
         expect(pr.number).toBeGreaterThan(0);
         expect(pr.title).toBeTruthy();
         expect(pr.authorLogin).toBeTruthy();
-        expect(pr.affectedAreas.length).toBeGreaterThan(0);
+        expect((pr.affectedAreas ?? []).length).toBeGreaterThan(0);
       }
     });
   });

@@ -320,7 +320,11 @@ export function ActivityView({
     <div className="activity-surface" id="activity-root">
       {/* 1. Header & Workspace Ledger Summary Bar */}
       <header className="activity-header">
-        <div className="activity-header__copy">
+        <div
+          className="activity-header__copy"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <div className="activity-header__eyebrow">
             <span className="activity-eyebrow-tag">WORKSPACE AUDIT TIMELINE</span>
             <span className="activity-eyebrow-count">{activities.length} Recorded Events</span>
@@ -333,7 +337,13 @@ export function ActivityView({
         </div>
 
         {/* Intelligence Overview Metrics Bar */}
-        <div className="activity-metrics-bar" role="region" aria-label="Workspace activity metrics">
+        <div
+          className="activity-metrics-bar"
+          role="region"
+          aria-label="Workspace activity metrics"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <div className="activity-metric-item">
             <span className="activity-metric-label">TOTAL LEDGER EVENTS</span>
             <span className="activity-metric-value">{activities.length}</span>
@@ -367,7 +377,12 @@ export function ActivityView({
       </header>
 
       {/* 2. Filter & Controls Toolbar (Structured Two-Row Grid) */}
-      <section className="activity-toolbar" aria-label="Filter and search workspace activity">
+      <section
+        className="activity-toolbar"
+        aria-label="Filter and search workspace activity"
+        data-trace-motion="item"
+        style={{ '--motion-index': 2 } as React.CSSProperties}
+      >
         {/* Row 1: Primary Search Input */}
         <div className="activity-toolbar__row-search">
           <label htmlFor={searchInputId} className="sr-only">
@@ -563,9 +578,20 @@ export function ActivityView({
 
       {/* 3. Grouped Timeline Feed */}
       {groupedActivities.length > 0 ? (
-        <main className="activity-timeline-feed" aria-label="Workspace activity timeline">
-          {groupedActivities.map((group) => (
-            <section key={group.dateKey} className="timeline-date-group" aria-labelledby={`group-${group.dateKey}`}>
+        <main
+          className="activity-timeline-feed"
+          aria-label="Workspace activity timeline"
+          data-trace-motion="section"
+          data-motion-section="activity-feed"
+        >
+          {groupedActivities.map((group, gIdx) => (
+            <section
+              key={group.dateKey}
+              className="timeline-date-group"
+              aria-labelledby={`group-${group.dateKey}`}
+              data-trace-motion="item"
+              style={{ '--motion-index': gIdx } as React.CSSProperties}
+            >
               {/* Sticky Date Group Header */}
               <div className="timeline-date-header">
                 <div className="date-header-badge">
@@ -712,7 +738,13 @@ export function ActivityView({
         </main>
       ) : (
         /* Empty State */
-        <div className="activity-empty-surface" role="region" aria-label="No activity events found">
+        <div
+          className="activity-empty-surface"
+          role="region"
+          aria-label="No activity events found"
+          data-trace-motion="item"
+          style={{ '--motion-index': 3 } as React.CSSProperties}
+        >
           <div className="empty-surface-inner">
             <div className="empty-glyph-box">
               <svg
@@ -750,7 +782,11 @@ export function ActivityView({
       )}
 
       {/* 4. Privacy & Provenance Truth Footer */}
-      <footer className="activity-privacy-footer">
+      <footer
+        className="activity-privacy-footer"
+        data-trace-motion="item"
+        style={{ '--motion-index': 4 } as React.CSSProperties}
+      >
         <div className="privacy-footer-inner">
           <span className="privacy-dot" aria-hidden="true">
             <svg

@@ -45,7 +45,11 @@ export default async function DashboardOverviewPage({
   return (
     <div className="dashboard-page redesign-page overview-page">
       {/* 1. Page Header */}
-      <header className="redesign-header overview-header">
+      <header
+        className="redesign-header overview-header"
+        data-trace-motion="item"
+        style={{ '--motion-index': 0 } as React.CSSProperties}
+      >
         <div className="overview-header__main">
           <span className="eyebrow">Project overview</span>
           <h1>{repository?.fullName ?? 'Choose a repository'}</h1>
@@ -59,8 +63,17 @@ export default async function DashboardOverviewPage({
       </header>
 
       {/* 2. Compact Project State / Command Surface */}
-      <section className="project-command-surface" aria-labelledby="overview-state-title">
-        <div className="project-command-surface__topline">
+      <section
+        className="project-command-surface"
+        aria-labelledby="overview-state-title"
+        data-trace-motion="section"
+        data-motion-section="overview-state"
+      >
+        <div
+          className="project-command-surface__topline"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <div className="project-command-surface__info">
             <div className="project-command-surface__header-row">
               <span className="eyebrow">Project state</span>
@@ -117,9 +130,15 @@ export default async function DashboardOverviewPage({
           </div>
         </div>
 
-        <TraceRail state={state.key} />
+        <div data-trace-motion="item" style={{ '--motion-index': 1 } as React.CSSProperties}>
+          <TraceRail state={state.key} />
+        </div>
 
-        <div className="project-command-surface__footer">
+        <div
+          className="project-command-surface__footer"
+          data-trace-motion="item"
+          style={{ '--motion-index': 2 } as React.CSSProperties}
+        >
           <span className="project-command-surface__flow-hint">
             Connect → analyze locally → sync approved records → understand the change
           </span>
@@ -132,8 +151,17 @@ export default async function DashboardOverviewPage({
       </section>
 
       {/* 3. Attention Section (Unified) */}
-      <section className="overview-attention" aria-labelledby="overview-attention-title">
-        <div className="section-heading-row redesign-section-heading">
+      <section
+        className="overview-attention"
+        aria-labelledby="overview-attention-title"
+        data-trace-motion="section"
+        data-motion-section="overview-attention"
+      >
+        <div
+          className="section-heading-row redesign-section-heading"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <div>
             <span className="eyebrow">Attention</span>
             <h2 id="overview-attention-title">What needs your attention</h2>
@@ -149,6 +177,8 @@ export default async function DashboardOverviewPage({
                 ? ' attention-operational-bar--alert'
                 : ' attention-operational-bar--healthy'
             }`}
+            data-trace-motion="item"
+            style={{ '--motion-index': 1 } as React.CSSProperties}
           >
             <div className="attention-operational-bar__status">
               <span className="attention-operational-bar__icon" aria-hidden="true">
@@ -186,8 +216,13 @@ export default async function DashboardOverviewPage({
           {/* Operational issues list (if any) */}
           {operations.length > 0 ? (
             <div className="attention-operational-list">
-              {operations.map((item) => (
-                <article className="attention-row attention-row--operation" key={item.id}>
+              {operations.map((item, idx) => (
+                <article
+                  className="attention-row attention-row--operation"
+                  key={item.id}
+                  data-trace-motion="item"
+                  style={{ '--motion-index': 2 + idx } as React.CSSProperties}
+                >
                   <div className="attention-row__main">
                     <div className="attention-row__badges">
                       <span className="severity-badge" data-severity={item.severity}>
@@ -216,8 +251,13 @@ export default async function DashboardOverviewPage({
           {/* Engineering attention findings */}
           <div className="attention-engineering-list">
             {engineering.length ? (
-              engineering.slice(0, 5).map((item) => (
-                <article className="attention-row" key={item.id}>
+              engineering.slice(0, 5).map((item, idx) => (
+                <article
+                  className="attention-row"
+                  key={item.id}
+                  data-trace-motion="item"
+                  style={{ '--motion-index': 2 + operations.length + idx } as React.CSSProperties}
+                >
                   <div className="attention-row__main">
                     <div className="attention-row__badges">
                       <span className="severity-badge" data-severity={item.severity}>
@@ -245,7 +285,11 @@ export default async function DashboardOverviewPage({
                 </article>
               ))
             ) : (
-              <div className="attention-empty-note">
+              <div
+                className="attention-empty-note"
+                data-trace-motion="item"
+                style={{ '--motion-index': 2 + operations.length } as React.CSSProperties}
+              >
                 <p className="inline-note">
                   {repository?.analysis?.status === 'completed'
                     ? 'No unresolved engineering findings for this project.'
@@ -258,13 +302,26 @@ export default async function DashboardOverviewPage({
       </section>
 
       {/* 4. Intelligence Metrics Strip */}
-      <section className="intelligence-strip" aria-label="Project intelligence summary">
-        <div className="intelligence-card">
+      <section
+        className="intelligence-strip"
+        aria-label="Project intelligence summary"
+        data-trace-motion="section"
+        data-motion-section="overview-intelligence"
+      >
+        <div
+          className="intelligence-card"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <span className="eyebrow">Findings</span>
           <strong>{engineering.filter((item) => item.kind === 'finding').length}</strong>
           <small>Persisted review signals</small>
         </div>
-        <div className="intelligence-card">
+        <div
+          className="intelligence-card"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <span className="eyebrow">Reports</span>
           <strong>
             {
@@ -275,7 +332,11 @@ export default async function DashboardOverviewPage({
           </strong>
           <small>Approved local records</small>
         </div>
-        <div className="intelligence-card">
+        <div
+          className="intelligence-card"
+          data-trace-motion="item"
+          style={{ '--motion-index': 2 } as React.CSSProperties}
+        >
           <span className="eyebrow">Branch</span>
           <strong className="intelligence-card__branch">
             {repository?.latestSync?.branch ?? repository?.defaultBranch ?? 'Not available'}
@@ -290,7 +351,11 @@ export default async function DashboardOverviewPage({
             )}
           </small>
         </div>
-        <div className="intelligence-card">
+        <div
+          className="intelligence-card"
+          data-trace-motion="item"
+          style={{ '--motion-index': 3 } as React.CSSProperties}
+        >
           <span className="eyebrow">Freshness</span>
           <div className="intelligence-card__freshness">
             <ProjectStatusGlyph stateKey={state.key} />
@@ -302,8 +367,17 @@ export default async function DashboardOverviewPage({
 
       {/* 5. Project Memory / Recent Work Grid */}
       <div className="overview-recent-grid">
-        <section className="overview-recent-card" aria-labelledby="overview-changes-title">
-          <div className="section-heading-row redesign-section-heading">
+        <section
+          className="overview-recent-card"
+          aria-labelledby="overview-changes-title"
+          data-trace-motion="section"
+          data-motion-section="overview-changes"
+        >
+          <div
+            className="section-heading-row redesign-section-heading"
+            data-trace-motion="item"
+            style={{ '--motion-index': 0 } as React.CSSProperties}
+          >
             <div>
               <span className="eyebrow">Project memory</span>
               <h2 id="overview-changes-title">What changed</h2>
@@ -316,8 +390,13 @@ export default async function DashboardOverviewPage({
           </div>
           <div className="overview-recent-list">
             {repositoryChanges.length ? (
-              repositoryChanges.slice(0, 5).map((change) => (
-                <div className="overview-recent-row" key={change.id}>
+              repositoryChanges.slice(0, 5).map((change, idx) => (
+                <div
+                  className="overview-recent-row"
+                  key={change.id}
+                  data-trace-motion="item"
+                  style={{ '--motion-index': 1 + idx } as React.CSSProperties}
+                >
                   <div className="overview-recent-row__info">
                     <strong className="overview-recent-row__title">{change.title}</strong>
                     <div className="overview-recent-row__meta">
@@ -333,7 +412,11 @@ export default async function DashboardOverviewPage({
                 </div>
               ))
             ) : (
-              <div className="inline-empty redesign-empty">
+              <div
+                className="inline-empty redesign-empty"
+                data-trace-motion="item"
+                style={{ '--motion-index': 1 } as React.CSSProperties}
+              >
                 <strong>No recent change summary has been synchronized.</strong>
                 <p>
                   TRACE will show GitHub change context after signed repository activity is
@@ -344,8 +427,17 @@ export default async function DashboardOverviewPage({
           </div>
         </section>
 
-        <section className="overview-recent-card" aria-labelledby="overview-record-title">
-          <div className="section-heading-row redesign-section-heading">
+        <section
+          className="overview-recent-card"
+          aria-labelledby="overview-record-title"
+          data-trace-motion="section"
+          data-motion-section="overview-activity"
+        >
+          <div
+            className="section-heading-row redesign-section-heading"
+            data-trace-motion="item"
+            style={{ '--motion-index': 0 } as React.CSSProperties}
+          >
             <div>
               <span className="eyebrow">Workspace record</span>
               <h2 id="overview-record-title">Workspace activity</h2>
@@ -358,8 +450,13 @@ export default async function DashboardOverviewPage({
           </div>
           <div className="overview-recent-list">
             {summary.activity.length ? (
-              summary.activity.slice(0, 5).map((item) => (
-                <div className="overview-recent-row" key={item.id}>
+              summary.activity.slice(0, 5).map((item, idx) => (
+                <div
+                  className="overview-recent-row"
+                  key={item.id}
+                  data-trace-motion="item"
+                  style={{ '--motion-index': 1 + idx } as React.CSSProperties}
+                >
                   <div className="overview-recent-row__info">
                     <strong className="overview-recent-row__title">{item.title}</strong>
                     <div className="overview-recent-row__meta">
@@ -374,7 +471,11 @@ export default async function DashboardOverviewPage({
                 </div>
               ))
             ) : (
-              <div className="inline-empty redesign-empty">
+              <div
+                className="inline-empty redesign-empty"
+                data-trace-motion="item"
+                style={{ '--motion-index': 1 } as React.CSSProperties}
+              >
                 <strong>No project events yet.</strong>
                 <p>Connecting a repository creates the first durable workspace event.</p>
               </div>

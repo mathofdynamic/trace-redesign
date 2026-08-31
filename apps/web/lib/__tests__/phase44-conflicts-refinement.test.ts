@@ -38,7 +38,7 @@ describe('Phase 44 — Conflicts Progressive Disclosure, Contrast & Information 
 
       // Side B high-signal summary attributes
       expect(model.sideB.badge).toBe('PR #89');
-      expect(model.sideB.title).toContain('Align worker payload parsers');
+      expect(model.sideB.title).toContain('worker schema assumptions');
       expect(model.sideB.author).toBe('lmeyer');
       expect(model.sideB.branch).toBe('fix/worker-schema-alignment');
 

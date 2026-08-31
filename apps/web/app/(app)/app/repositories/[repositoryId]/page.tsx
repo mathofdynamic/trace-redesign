@@ -40,7 +40,11 @@ export default async function RepositoryPage({
   return (
     <div className="dashboard-page redesign-page repository-page" id="repository-command-center">
       {/* 1. Compact Repository Identity Header */}
-      <header className="redesign-header repository-command-header">
+      <header
+        className="redesign-header repository-command-header"
+        data-trace-motion="item"
+        style={{ '--motion-index': 0 } as React.CSSProperties}
+      >
         <div className="repository-identity-block">
           <div className="repository-identity-block__topline">
             <span className="eyebrow">{repository.owner}</span>
@@ -104,18 +108,29 @@ export default async function RepositoryPage({
       </header>
 
       {/* 2. Restrained Tab Rail */}
-      <RepositoryTabs
-        repositoryId={repositoryId}
-        counts={{
-          changes: changes.length,
-          findings: findings.length,
-          reports: reports.length,
-        }}
-      />
+      <div data-trace-motion="item" style={{ '--motion-index': 1 } as React.CSSProperties}>
+        <RepositoryTabs
+          repositoryId={repositoryId}
+          counts={{
+            changes: changes.length,
+            findings: findings.length,
+            reports: reports.length,
+          }}
+        />
+      </div>
 
       {/* 3. Single Compact Lifecycle Surface (Trace Rail) */}
-      <section className="project-state-surface repository-state-surface" aria-label="Repository lifecycle">
-        <div className="project-state-surface__summary">
+      <section
+        className="project-state-surface repository-state-surface"
+        aria-label="Repository lifecycle"
+        data-trace-motion="section"
+        data-motion-section="repository-lifecycle"
+      >
+        <div
+          className="project-state-surface__summary"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <div className="repository-lifecycle-info">
             <span className="eyebrow">Project lifecycle</span>
             <strong className="repository-lifecycle-headline">
@@ -141,24 +156,45 @@ export default async function RepositoryPage({
             </div>
           </div>
         </div>
-        <div className="repository-state-surface__rail">
+        <div
+          className="repository-state-surface__rail"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <TraceRail state={state.key} />
         </div>
       </section>
 
       {/* 4. Compact Metrics Strip */}
-      <section className="intelligence-strip repository-metrics" aria-label="Repository metrics">
-        <div className="intelligence-card">
+      <section
+        className="intelligence-strip repository-metrics"
+        aria-label="Repository metrics"
+        data-trace-motion="section"
+        data-motion-section="repository-metrics"
+      >
+        <div
+          className="intelligence-card"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <span className="eyebrow">Findings</span>
           <strong>{findings.length}</strong>
           <small>Unresolved persisted findings</small>
         </div>
-        <div className="intelligence-card">
+        <div
+          className="intelligence-card"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <span className="eyebrow">Reports</span>
           <strong>{reports.length}</strong>
           <small>Approved local records</small>
         </div>
-        <div className="intelligence-card">
+        <div
+          className="intelligence-card"
+          data-trace-motion="item"
+          style={{ '--motion-index': 2 } as React.CSSProperties}
+        >
           <span className="eyebrow">Last sync</span>
           <strong>{formatRelativeDate(repository.lastSynchronizedAt)}</strong>
           <small>
@@ -168,7 +204,11 @@ export default async function RepositoryPage({
             ) : null}
           </small>
         </div>
-        <div className="intelligence-card">
+        <div
+          className="intelligence-card"
+          data-trace-motion="item"
+          style={{ '--motion-index': 3 } as React.CSSProperties}
+        >
           <span className="eyebrow">Origin</span>
           <strong>{originLabel ?? 'Local analysis'}</strong>
           <small>Source code is not uploaded</small>
@@ -176,8 +216,17 @@ export default async function RepositoryPage({
       </section>
 
       {/* 5. "What TRACE knows" — Primary Engineering Intelligence */}
-      <section className="redesign-section repository-intelligence-section" aria-labelledby="repository-intelligence-title">
-        <div className="section-heading-row redesign-section-heading">
+      <section
+        className="redesign-section repository-intelligence-section"
+        aria-labelledby="repository-intelligence-title"
+        data-trace-motion="section"
+        data-motion-section="repository-findings"
+      >
+        <div
+          className="section-heading-row redesign-section-heading"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <div>
             <span className="eyebrow">Engineering intelligence</span>
             <h2 id="repository-intelligence-title">What TRACE knows</h2>
@@ -193,8 +242,13 @@ export default async function RepositoryPage({
         </div>
         {findings.length ? (
           <div className="redesign-list finding-list-redesign">
-            {findings.slice(0, 8).map((finding) => (
-              <div className="finding-row-redesign" key={finding.id}>
+            {findings.slice(0, 8).map((finding, idx) => (
+              <div
+                className="finding-row-redesign"
+                key={finding.id}
+                data-trace-motion="item"
+                style={{ '--motion-index': 1 + idx } as React.CSSProperties}
+              >
                 <div className="finding-row-redesign__severity">
                   <span className="severity-badge" data-severity={finding.severity}>
                     {finding.severity}
@@ -246,7 +300,11 @@ export default async function RepositoryPage({
             ))}
           </div>
         ) : (
-          <div className="inline-empty redesign-empty">
+          <div
+            className="inline-empty redesign-empty"
+            data-trace-motion="item"
+            style={{ '--motion-index': 1 } as React.CSSProperties}
+          >
             <strong>
               {repository.analysis?.status === 'completed'
                 ? 'No unresolved findings'
@@ -262,8 +320,17 @@ export default async function RepositoryPage({
       </section>
 
       {/* 6. Reports & Changes Modules */}
-      <div className="redesign-two-column repository-two-column">
-        <section className="redesign-section repository-intelligence-card" aria-labelledby="repository-reports-title">
+      <div
+        className="redesign-two-column repository-two-column"
+        data-trace-motion="section"
+        data-motion-section="repository-recent"
+      >
+        <section
+          className="redesign-section repository-intelligence-card"
+          aria-labelledby="repository-reports-title"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <div className="section-heading-row redesign-section-heading">
             <div>
               <span className="eyebrow">Project memory</span>
@@ -320,7 +387,12 @@ export default async function RepositoryPage({
           )}
         </section>
 
-        <section className="redesign-section repository-intelligence-card" aria-labelledby="repository-changes-title">
+        <section
+          className="redesign-section repository-intelligence-card"
+          aria-labelledby="repository-changes-title"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <div className="section-heading-row redesign-section-heading">
             <div>
               <span className="eyebrow">GitHub context</span>
@@ -385,7 +457,12 @@ export default async function RepositoryPage({
       </div>
 
       {/* 7. Progressive Technical Details Accordion */}
-      <details className="technical-details redesign-technical" id="repository-technical-details">
+      <details
+        className="technical-details redesign-technical"
+        id="repository-technical-details"
+        data-trace-motion="item"
+        style={{ '--motion-index': 2 } as React.CSSProperties}
+      >
         <summary>Technical details & provenance</summary>
         <dl className="technical-grid">
           <div>

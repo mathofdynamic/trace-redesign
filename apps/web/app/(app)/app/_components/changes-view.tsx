@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { TraceSelect } from './trace-select';
 import { OverlayPortal, ModalBackdrop, CenteredDialog } from './overlay-portal';
+import { usePresence, getMotionItemProps } from '../../../../lib/entrance-motion';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -31,6 +32,13 @@ export function ChangesView({
   const [affectedAreaFilter, setAffectedAreaFilter] = useState<string>('all');
   const [groupingMode, setGroupingMode] = useState<'by-repository' | 'flat'>('by-repository');
   const [selectedChange, setSelectedChange] = useState<DashboardChange | null>(null);
+  const [cachedChange, setCachedChange] = useState<DashboardChange | null>(null);
+
+  useEffect(() => {
+    if (selectedChange) {
+      setCachedChange(selectedChange);
+    }
+  }, [selectedChange]);
 
   // Map conflicts to changes
   const conflictByChangeId = useMemo(() => {
@@ -213,7 +221,12 @@ export function ChangesView({
   return (
     <div className="changes-surface" id="active-changes-surface">
       {/* Top Intelligence Summary Strip */}
-      <section className="changes-summary-bar" aria-label="Changes intelligence metrics">
+      <section
+        className="changes-summary-container changes-summary-bar"
+        aria-label="Changes intelligence metrics"
+        data-trace-motion="item"
+        style={{ '--motion-index': 1 } as React.CSSProperties}
+      >
         <div className="changes-summary-metric">
           <span className="changes-summary-metric__value">{totalChangesCount}</span>
           <span className="changes-summary-metric__label">Active changes</span>
@@ -239,13 +252,19 @@ export function ChangesView({
           <span className="changes-summary-metric__value">{changesWithFindingsCount}</span>
           <span className="changes-summary-metric__label">With findings</span>
         </div>
-        <div className="changes-summary-note">
+        <div className="changes-summary-note changes-summary-subline">
           <span>Local deterministic snapshots · Zero personal scoring</span>
         </div>
       </section>
 
       {/* Changes Toolbar */}
-      <div className="changes-toolbar" role="search" aria-label="Filter and sort active changes">
+      <div
+        className="changes-toolbar"
+        role="search"
+        aria-label="Filter and sort active changes"
+        data-trace-motion="item"
+        style={{ '--motion-index': 2 } as React.CSSProperties}
+      >
         {/* Row 1: Search and View Mode Controls */}
         <div className="changes-toolbar__row changes-toolbar__row--primary">
           <div className="changes-toolbar__search">
@@ -285,7 +304,7 @@ export function ChangesView({
             </div>
           </div>
 
-          <div className="changes-toolbar__count">
+          <div className="changes-toolbar__count changes-toolbar__status">
             <span>
               Showing <strong>{filteredChanges.length}</strong> of {totalChangesCount} change{totalChangesCount === 1 ? '' : 's'}
             </span>
@@ -409,7 +428,12 @@ export function ChangesView({
 
       {/* Main Content Area */}
       {filteredChanges.length === 0 ? (
-        <div className="changes-empty-panel" role="status">
+        <div
+          className="changes-empty-panel"
+          role="status"
+          data-trace-motion="item"
+          style={{ '--motion-index': 3 } as React.CSSProperties}
+        >
           <div className="changes-empty-icon" aria-hidden="true">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8" />
@@ -430,14 +454,20 @@ export function ChangesView({
         </div>
       ) : groupingMode === 'by-repository' ? (
         /* Grouped View */
-        <div className="changes-grouped-container">
-          {groupedByRepository.map((group) => {
+        <div
+          className="changes-grouped-container"
+          data-trace-motion="section"
+          data-motion-section="changes-grouped-list"
+        >
+          {groupedByRepository.map((group, groupIdx) => {
             const repo = repositories.find((r) => r.id === group.repositoryId);
             return (
               <section
                 key={group.repositoryId}
                 className="changes-repo-section"
                 aria-labelledby={`repo-heading-${group.repositoryId}`}
+                data-trace-motion="item"
+                style={{ '--motion-index': groupIdx } as React.CSSProperties}
               >
                 <div className="changes-repo-section__header">
                   <div className="changes-repo-section__title-group">
@@ -464,7 +494,7 @@ export function ChangesView({
                 </div>
 
                 <div className="changes-list">
-                  {group.changes.map((change) => {
+                  {group.changes.map((change, changeIdx) => {
                     const conflictInfo = conflictByChangeId.get(change.id);
                     return (
                       <ChangeRow
@@ -473,6 +503,7 @@ export function ChangesView({
                         conflictInfo={conflictInfo}
                         showRepo={false}
                         onInspect={() => setSelectedChange(change)}
+                        motionIndex={changeIdx}
                       />
                     );
                   })}
@@ -483,8 +514,12 @@ export function ChangesView({
         </div>
       ) : (
         /* Flat List View */
-        <div className="changes-list changes-list--flat">
-          {filteredChanges.map((change) => {
+        <div
+          className="changes-list changes-list--flat"
+          data-trace-motion="section"
+          data-motion-section="changes-flat-list"
+        >
+          {filteredChanges.map((change, idx) => {
             const conflictInfo = conflictByChangeId.get(change.id);
             return (
               <ChangeRow
@@ -493,6 +528,7 @@ export function ChangesView({
                 conflictInfo={conflictInfo}
                 showRepo={true}
                 onInspect={() => setSelectedChange(change)}
+                motionIndex={idx}
               />
             );
           })}
@@ -500,11 +536,12 @@ export function ChangesView({
       )}
 
       {/* Change Inspection Drawer */}
-      {selectedChange ? (
+      {cachedChange ? (
         <ChangeDetailDrawer
-          change={selectedChange}
-          conflictInfo={conflictByChangeId.get(selectedChange.id)}
+          change={cachedChange}
+          conflictInfo={conflictByChangeId.get(cachedChange.id)}
           attention={attention}
+          isOpen={Boolean(selectedChange)}
           onClose={() => setSelectedChange(null)}
         />
       ) : null}
@@ -520,13 +557,19 @@ interface ChangeRowProps {
   };
   showRepo?: boolean;
   onInspect: () => void;
+  motionIndex?: number;
 }
 
-function ChangeRow({ change, conflictInfo, showRepo = false, onInspect }: ChangeRowProps) {
+function ChangeRow({ change, conflictInfo, showRepo = false, onInspect, motionIndex }: ChangeRowProps) {
   const relatedFindingsCount = change.relatedFindingIds?.length ?? 0;
 
   return (
-    <article className="change-row-card" id={`change-card-${change.id}`}>
+    <article
+      className="change-row-card"
+      id={`change-card-${change.id}`}
+      data-trace-motion="item"
+      style={motionIndex !== undefined ? ({ '--motion-index': motionIndex } as React.CSSProperties) : undefined}
+    >
       {/* Topline: PR Number, State, Repo, and Updated time */}
       <div className="change-row-card__topline">
         <div className="change-row-card__identity">
@@ -668,6 +711,7 @@ interface ChangeDetailDrawerProps {
     collidingChanges: DashboardChange[];
   };
   attention: DashboardAttention[];
+  isOpen: boolean;
   onClose: () => void;
 }
 
@@ -675,8 +719,10 @@ function ChangeDetailDrawer({
   change,
   conflictInfo,
   attention,
+  isOpen,
   onClose,
 }: ChangeDetailDrawerProps) {
+  const presence = usePresence(isOpen);
   const closeRef = useRef<HTMLButtonElement>(null);
   const [copied, setCopied] = useState(false);
   const relatedFindings = attention.filter(
@@ -687,15 +733,17 @@ function ChangeDetailDrawer({
   );
 
   useEffect(() => {
-    closeRef.current?.focus();
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+    if (isOpen) {
+      closeRef.current?.focus();
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, onClose]);
 
   const copyCliCommand = () => {
     const cmd = `trace pr inspect ${change.number}`;
@@ -705,6 +753,8 @@ function ChangeDetailDrawer({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (!presence.isMounted) return null;
 
   return (
     <OverlayPortal>
@@ -717,7 +767,7 @@ function ChangeDetailDrawer({
           className="change-drawer"
         >
           {/* Header */}
-          <div className="change-drawer__header">
+          <div className="change-drawer__header" {...getMotionItemProps(0)}>
             <div className="change-drawer__eyebrow">
               <span className="change-pr-badge">PR #{change.number}</span>
               <span className="change-state-badge" data-state={change.state}>
@@ -737,12 +787,12 @@ function ChangeDetailDrawer({
           </div>
 
           {/* Title and Intro */}
-          <div className="change-drawer__intro">
+          <div className="change-drawer__intro" {...getMotionItemProps(1)}>
             <h2 id={`change-drawer-title-${change.id}`}>{change.title}</h2>
           </div>
 
           {/* Main Two-Column Content Layout */}
-          <div className="change-drawer__columns">
+          <div className="change-drawer__columns" {...getMotionItemProps(2)}>
             {/* Left Column: Intent, Technical Context, Affected Files */}
             <div className="change-drawer__column change-drawer__column--left">
               {change.intent ? (
@@ -927,7 +977,7 @@ function ChangeDetailDrawer({
           </div>
 
           {/* Drawer Actions */}
-          <div className="change-drawer__footer">
+          <div className="change-drawer__footer" {...getMotionItemProps(3)}>
             <button
               type="button"
               className="trace-button trace-button--secondary"

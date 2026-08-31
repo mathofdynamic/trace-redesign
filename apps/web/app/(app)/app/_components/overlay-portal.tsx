@@ -2,10 +2,16 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  EXIT_DURATION_MS,
+  usePrefersReducedMotion,
+} from '../../../../lib/entrance-motion';
 
 export interface OverlayPortalProps {
   children: React.ReactNode;
 }
+
+let activeOverlayCount = 0;
 
 /**
  * OverlayPortal renders children into document.body to break out of
@@ -17,12 +23,14 @@ export function OverlayPortal({ children }: OverlayPortalProps) {
 
   useEffect(() => {
     setMounted(true);
+    activeOverlayCount += 1;
     if (typeof document !== 'undefined') {
       document.body.setAttribute('data-overlay-active', 'true');
     }
     return () => {
       setMounted(false);
-      if (typeof document !== 'undefined') {
+      activeOverlayCount = Math.max(0, activeOverlayCount - 1);
+      if (typeof document !== 'undefined' && activeOverlayCount === 0) {
         document.body.removeAttribute('data-overlay-active');
       }
     };
@@ -50,6 +58,7 @@ export interface ModalBackdropProps {
 /**
  * ModalBackdrop provides a full-viewport fixed layer with systemic background blur
  * covering the entire page beneath the modal.
+ * Coordinates 200ms entrance and 66ms exit before unmounting.
  */
 export function ModalBackdrop({
   children,
@@ -57,10 +66,52 @@ export function ModalBackdrop({
   className = '',
   ariaLabel = 'Close dialog',
 }: ModalBackdropProps) {
+  const prefersReduced = usePrefersReducedMotion();
+  const [presenceState, setPresenceState] = useState<'opening' | 'open' | 'closing'>('opening');
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (prefersReduced) {
+      setPresenceState('open');
+      return;
+    }
+    let raf2: number | null = null;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        setPresenceState('open');
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      if (raf2 !== null) cancelAnimationFrame(raf2);
+    };
+  }, [prefersReduced]);
+
+  const handleAnimatedClose = useCallback(() => {
+    if (!onClose) return;
+    if (prefersReduced) {
+      onClose();
+      return;
+    }
+    setPresenceState('closing');
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(() => {
+      onClose();
+    }, EXIT_DURATION_MS);
+  }, [onClose, prefersReduced]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Only close if clicking directly on the backdrop container, not on its contents
     if (e.target === e.currentTarget && onClose) {
-      onClose();
+      handleAnimatedClose();
     }
   };
 
@@ -68,12 +119,17 @@ export function ModalBackdrop({
     <div
       className={`trace-modal-backdrop-layer ${className}`.trim()}
       role="presentation"
+      data-trace-motion="surface"
+      data-motion-variant="backdrop"
+      data-presence-state={presenceState}
+      data-trace-presence={presenceState}
       onClick={handleBackdropClick}
     >
       <div
         className="trace-modal-backdrop"
         aria-hidden="true"
-        onClick={onClose}
+        aria-label={ariaLabel}
+        onClick={handleAnimatedClose}
       />
       {children}
     </div>
@@ -101,6 +157,7 @@ const FOCUSABLE_SELECTOR =
  * - Trap focus within dialog on Tab
  * - Escape key to close
  * - Focus restoration to previous active element on unmount
+ * - Physical motion contract (200ms open, 66ms close)
  */
 export function CenteredDialog({
   children,
@@ -223,6 +280,8 @@ export function CenteredDialog({
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
       tabIndex={-1}
+      data-trace-motion="surface"
+      data-motion-variant="dialog"
       onKeyDown={handleKeyDown}
       onClick={(e) => e.stopPropagation()}
     >

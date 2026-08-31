@@ -269,6 +269,13 @@
   --trace-radius-pill: 9999px;
   --trace-motion-control: 150ms;
 
+  /* TRACE Entrance Motion Tokens (200ms opening duration, ~66.667ms stagger lead, 66ms compact exit) */
+  --trace-motion-duration: 200ms;
+  --trace-motion-stagger: 66.667ms;
+  --trace-motion-exit: 66ms;
+  --trace-motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --trace-motion-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+
   /* Phase 39: Authenticated-App Typography Tokens */
   --trace-font-sans: 'Kunst Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --trace-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
@@ -5490,7 +5497,6 @@ button.trace-button--danger:focus-visible {
 }
 .dashboard-route {
   min-width: 0;
-  animation: route-enter 180ms ease-out both;
 }
 .dashboard-page {
   display: grid;
@@ -8022,6 +8028,20 @@ button.trace-button--danger:focus-visible {
   border-top: 0;
 }
 
+.trace-overlay-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--trace-z-modal-scrim, 1000);
+  pointer-events: auto;
+}
+
+body[data-overlay-active="true"] > :not(.trace-overlay-root) {
+  filter: blur(10px) brightness(0.85);
+  transition: filter 200ms cubic-bezier(0.16, 1, 0.3, 1), brightness 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  user-select: none;
+}
+
 .trace-modal-backdrop-layer,
 .trace-dialog-layer,
 .drawer-overlay {
@@ -8043,8 +8063,8 @@ button.trace-button--danger:focus-visible {
   height: 100%;
   border: 0;
   background: var(--trace-overlay-scrim, rgba(0, 0, 0, 0.45));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   cursor: default;
 }
 .finding-drawer {
@@ -8071,12 +8091,12 @@ button.trace-button--danger:focus-visible {
   z-index: var(--trace-z-modal, 1001);
   width: min(1140px, calc(100vw - 64px));
   max-width: 1140px;
-  max-height: min(88dvh, 920px);
+  max-height: min(86dvh, 880px);
   overflow-y: auto;
   overflow-x: hidden;
   padding: 32px 36px;
   border: 1px solid var(--trace-floating-border-strong);
-  border-radius: 16px;
+  border-radius: 14px;
   background-color: #0c0d10;
   background: var(--trace-floating-bg);
   backdrop-filter: blur(var(--trace-backdrop-blur-lg));
@@ -10008,7 +10028,7 @@ button.trace-button--danger:focus-visible {
 }
 
 .reports-summary-metric__label {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -13047,8 +13067,8 @@ button.trace-button--danger:focus-visible {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #3fb950;
-  box-shadow: 0 0 6px rgba(63, 185, 80, 0.6);
+  background: var(--trace-blue-bright);
+  box-shadow: 0 0 6px rgba(22, 136, 255, 0.6);
 }
 
 .prompt-preview-label {
@@ -15261,7 +15281,7 @@ pre {
     opacity: 0;
   }
   to {
-    transform: scale(1);
+    transform: none;
     opacity: 1;
   }
 }
@@ -15597,7 +15617,8 @@ pre {
 }
 
 /* Access Management Modal Window Popup */
-.repositories-access-dialog {
+.repositories-access-dialog,
+.repositories-access-drawer {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -16986,8 +17007,8 @@ pre {
 /* Inspection Centered Modal */
 .change-drawer {
   position: relative;
-  width: min(1140px, calc(100vw - 64px));
-  max-width: 1140px;
+  width: min(860px, calc(100vw - 32px));
+  max-width: 860px;
   max-height: min(88dvh, 920px);
   background-color: #0c0d10;
   background: var(--trace-floating-bg);
@@ -19661,9 +19682,9 @@ a:not([class*="trace-button"]):not([class*="btn"]):not([class*="button"]):not([c
   gap: 6px;
   font-size: 12px;
   font-weight: 600;
-  color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--trace-blue-bright);
+  background: rgba(22, 136, 255, 0.1);
+  border: 1px solid rgba(22, 136, 255, 0.25);
   padding: 4px 10px;
   border-radius: 6px;
 }
@@ -19922,7 +19943,7 @@ a:not([class*="trace-button"]):not([class*="btn"]):not([class*="button"]):not([c
 }
 
 .docs-metric-val--guarantee {
-  color: #10b981;
+  color: var(--trace-blue-bright);
 }
 
 .dashboard-docs-layout {
@@ -20278,6 +20299,217 @@ a:not([class*="trace-button"]):not([class*="btn"]):not([class*="button"]):not([c
   line-height: 1.5;
   color: var(--trace-text-secondary);
 }
+
+/* ==========================================================================
+   TRACE Unified Entrance Motion System (Phase 49 Specification)
+   - Opening duration: 200ms
+   - Opening lead / stagger: 66.6667ms (200ms / 3)
+   - Opening distance: 20px (translate3d)
+   - Opening easing: cubic-bezier(0.16, 1, 0.3, 1)
+   - Close duration: 66ms
+   - Close distance: 8px (translate3d)
+   - Close easing: cubic-bezier(0.4, 0, 1, 1)
+   - Progressive enhancement: 100% visible by default when JS is absent
+   ========================================================================== */
+
+:root {
+  --trace-motion-duration: 200ms;
+  --trace-motion-lead: 66.6667ms;
+  --trace-motion-stagger: var(--trace-motion-lead);
+  --trace-motion-distance: 20px;
+  --trace-motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --trace-motion-exit-duration: 66ms;
+  --trace-motion-exit-distance: 8px;
+  --trace-motion-exit-ease: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* 1. Progressive Baseline (No-JS / Default SSR: fully visible) */
+[data-trace-motion="item"],
+[data-motion-item],
+.trace-motion-item {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* 2. Positively Activated Entrance Motion (Gated by JS Runtime) */
+html[data-trace-motion-ready="true"] [data-trace-motion="item"],
+html[data-trace-motion-ready="true"] [data-motion-item],
+html[data-trace-motion-ready="true"] .trace-motion-item {
+  opacity: 0;
+  animation: traceItemEntrance var(--trace-motion-duration, 200ms) var(--trace-motion-ease, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+  animation-delay: calc(var(--motion-index, 0) * var(--trace-motion-lead, 66.6667ms) + var(--motion-delay, 0ms));
+  will-change: opacity, transform;
+}
+
+/* Clear will-change after entrance animation completes to avoid memory overhead */
+@keyframes clearWillChange {
+  to { will-change: auto; }
+}
+
+/* 3. Section Boundary & IntersectionObserver Coordination */
+html[data-trace-motion-ready="true"] [data-trace-motion="section"]:not([data-motion-state="revealed"]) [data-trace-motion="item"],
+html[data-trace-motion-ready="true"] [data-trace-motion="section"]:not([data-motion-state="revealed"]) [data-motion-item],
+html[data-trace-motion-ready="true"] [data-trace-motion="section"]:not([data-motion-state="revealed"]) .trace-motion-item,
+html[data-trace-motion-ready="true"] [data-motion-section]:not([data-motion-state="revealed"]) [data-trace-motion="item"],
+html[data-trace-motion-ready="true"] [data-motion-section]:not([data-motion-state="revealed"]) [data-motion-item],
+html[data-trace-motion-ready="true"] [data-motion-section]:not([data-motion-state="revealed"]) .trace-motion-item {
+  opacity: 0;
+  animation: none !important;
+}
+
+html[data-trace-motion-ready="true"] [data-trace-motion="section"][data-motion-state="revealed"] [data-trace-motion="item"],
+html[data-trace-motion-ready="true"] [data-trace-motion="section"][data-motion-state="revealed"] [data-motion-item],
+html[data-trace-motion-ready="true"] [data-trace-motion="section"][data-motion-state="revealed"] .trace-motion-item,
+html[data-trace-motion-ready="true"] [data-motion-section][data-motion-state="revealed"] [data-trace-motion="item"],
+html[data-trace-motion-ready="true"] [data-motion-section][data-motion-state="revealed"] [data-motion-item],
+html[data-trace-motion-ready="true"] [data-motion-section][data-motion-state="revealed"] .trace-motion-item {
+  animation: traceItemEntrance var(--trace-motion-duration, 200ms) var(--trace-motion-ease, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+  animation-delay: calc(var(--motion-index, 0) * var(--trace-motion-lead, 66.6667ms) + var(--motion-delay, 0ms));
+}
+
+/* Ignore marker */
+[data-motion-ignore],
+[data-motion-ignore] [data-trace-motion="item"],
+[data-motion-ignore] [data-motion-item] {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+/* 4. Transient Surfaces (Dialogs, Popovers, Drawers, Backdrops) */
+html[data-trace-motion-ready="true"] [data-trace-motion="surface"][data-motion-variant="backdrop"],
+html[data-trace-motion-ready="true"] .trace-modal-backdrop-layer .trace-modal-backdrop {
+  opacity: 0;
+  animation: traceSurfaceBackdropEnter var(--trace-motion-duration, 200ms) var(--trace-motion-ease, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+html[data-trace-motion-ready="true"] [data-trace-motion="surface"][data-motion-variant="dialog"],
+html[data-trace-motion-ready="true"] .trace-centered-dialog {
+  opacity: 0;
+  animation: traceSurfaceDialogEnter var(--trace-motion-duration, 200ms) var(--trace-motion-ease, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+html[data-trace-motion-ready="true"] [data-trace-motion="surface"][data-motion-variant="popover"] {
+  opacity: 0;
+  animation: traceSurfacePopoverEnter var(--trace-motion-duration, 200ms) var(--trace-motion-ease, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+html[data-trace-motion-ready="true"] [data-trace-motion="surface"][data-motion-variant="drawer"] {
+  opacity: 0;
+  animation: traceSurfaceDrawerEnter var(--trace-motion-duration, 200ms) var(--trace-motion-ease, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+/* 4b. Disclosures */
+html[data-trace-motion-ready="true"] [data-trace-motion="disclosure"][data-presence-state="opening"],
+html[data-trace-motion-ready="true"] [data-trace-motion="disclosure"][data-presence-state="open"] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition: opacity var(--trace-motion-duration, 200ms) var(--trace-motion-ease, cubic-bezier(0.16, 1, 0.3, 1)),
+              transform var(--trace-motion-duration, 200ms) var(--trace-motion-ease, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+html[data-trace-motion-ready="true"] [data-trace-motion="disclosure"][data-presence-state="opening"] {
+  opacity: 0;
+  transform: translate3d(0, var(--trace-motion-distance, 20px), 0);
+}
+
+html[data-trace-motion-ready="true"] [data-trace-motion="disclosure"][data-presence-state="closing"] {
+  opacity: 0;
+  transform: translate3d(0, var(--trace-motion-exit-distance, 8px), 0);
+  transition: opacity var(--trace-motion-exit-duration, 66ms) var(--trace-motion-exit-ease, cubic-bezier(0.4, 0, 1, 1)),
+              transform var(--trace-motion-exit-duration, 66ms) var(--trace-motion-exit-ease, cubic-bezier(0.4, 0, 1, 1));
+}
+
+/* 5. Physical Keyframes (Transform + Opacity ONLY) */
+@keyframes traceItemEntrance {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, var(--trace-motion-distance, 20px), 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes traceItemExit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, var(--trace-motion-exit-distance, 8px), 0);
+  }
+}
+
+@keyframes traceSurfaceDialogEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, var(--trace-motion-distance, 20px), 0) scale3d(0.98, 0.98, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes traceSurfacePopoverEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale3d(0.98, 0.98, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes traceSurfaceDrawerEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes traceSurfaceBackdropEnter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* 6. Accessibility: Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  [data-trace-motion="item"],
+  [data-motion-item],
+  [data-trace-motion="section"],
+  [data-motion-section],
+  [data-trace-motion="surface"],
+  .trace-motion-item,
+  .trace-motion-section,
+  .trace-motion-surface {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+    opacity: 1 !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+}
+
+
 
 
 

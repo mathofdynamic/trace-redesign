@@ -48,7 +48,11 @@ export default async function RepositoryViewPage({
 
   return (
     <div className="dashboard-page redesign-page repository-page" id={`repository-${view}-view`}>
-      <header className="redesign-header repository-command-header">
+      <header
+        className="redesign-header repository-command-header"
+        data-trace-motion="item"
+        style={{ '--motion-index': 0 } as React.CSSProperties}
+      >
         <div className="repository-identity-block">
           <div className="repository-identity-block__topline">
             <Link className="repository-identity-block__parent-link" href={`/app/repositories/${repository.id}`}>
@@ -79,20 +83,31 @@ export default async function RepositoryViewPage({
         </div>
       </header>
 
-      <RepositoryTabs
-        repositoryId={repositoryId}
-        counts={{
-          changes: changes.length,
-          findings: findings.length,
-          reports: reports.length,
-        }}
-      />
+      <div data-trace-motion="item" style={{ '--motion-index': 1 } as React.CSSProperties}>
+        <RepositoryTabs
+          repositoryId={repositoryId}
+          counts={{
+            changes: changes.length,
+            findings: findings.length,
+            reports: reports.length,
+          }}
+        />
+      </div>
 
       {view === 'pull-requests' ? (
         changes.length ? (
-          <div className="redesign-list record-list-redesign">
-            {changes.map((change) => (
-              <article className="repository-recent-row" key={change.id}>
+          <div
+            className="redesign-list record-list-redesign"
+            data-trace-motion="section"
+            data-motion-section="repository-changes-list"
+          >
+            {changes.map((change, idx) => (
+              <article
+                className="repository-recent-row"
+                key={change.id}
+                data-trace-motion="item"
+                style={{ '--motion-index': idx } as React.CSSProperties}
+              >
                 <div className="repository-recent-row__info">
                   <div className="repository-recent-row__header">
                     <span className="change-pr-number">PR #{change.number}</span>
@@ -132,7 +147,11 @@ export default async function RepositoryViewPage({
             ))}
           </div>
         ) : (
-          <div className="inline-empty redesign-empty redesign-empty--large">
+          <div
+            className="inline-empty redesign-empty redesign-empty--large"
+            data-trace-motion="item"
+            style={{ '--motion-index': 2 } as React.CSSProperties}
+          >
             <strong>No pull request snapshots yet</strong>
             <p>Signed GitHub activity will appear here when it is processed for this repository.</p>
           </div>
@@ -140,9 +159,18 @@ export default async function RepositoryViewPage({
       ) : view === 'findings' ? (
         <RepositoryFindingsView findings={findings} repository={repository} />
       ) : reports.length ? (
-        <div className="redesign-list record-list-redesign">
-          {reports.map((report) => (
-            <article className="repository-recent-row" key={report.id}>
+        <div
+          className="redesign-list record-list-redesign"
+          data-trace-motion="section"
+          data-motion-section="repository-reports-list"
+        >
+          {reports.map((report, idx) => (
+            <article
+              className="repository-recent-row"
+              key={report.id}
+              data-trace-motion="item"
+              style={{ '--motion-index': idx } as React.CSSProperties}
+            >
               <div className="repository-recent-row__info">
                 <div className="repository-recent-row__header">
                   <span className="report-type-badge">{report.artifactType.replaceAll('_', ' ')}</span>
@@ -173,7 +201,11 @@ export default async function RepositoryViewPage({
           ))}
         </div>
       ) : (
-        <div className="inline-empty redesign-empty redesign-empty--large">
+        <div
+          className="inline-empty redesign-empty redesign-empty--large"
+          data-trace-motion="item"
+          style={{ '--motion-index': 2 } as React.CSSProperties}
+        >
           <strong>No reports synchronized for this repository</strong>
           <p>
             {repository.analysis?.status === 'completed'

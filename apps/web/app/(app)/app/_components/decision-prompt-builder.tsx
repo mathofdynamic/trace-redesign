@@ -10,6 +10,10 @@ import {
   generateDecisionPrompt,
   isDecisionDraftValid,
 } from '../../../../lib/decision-prompt';
+import {
+  usePresence,
+  getMotionItemProps,
+} from '../../../../lib/entrance-motion';
 
 export interface DecisionPromptBuilderProps {
   isOpen: boolean;
@@ -24,6 +28,7 @@ export function DecisionPromptBuilder({
   repositories,
   defaultRepoId,
 }: DecisionPromptBuilderProps) {
+  const presence = usePresence(isOpen);
   const initialRepoId = defaultRepoId || (repositories[0]?.id ?? '');
   const initialRepoName =
     repositories.find((r) => r.id === initialRepoId)?.fullName ||
@@ -89,7 +94,7 @@ export function DecisionPromptBuilder({
     }
   };
 
-  if (!isOpen) return null;
+  if (!presence.isMounted) return null;
 
   return (
     <OverlayPortal>
@@ -104,7 +109,7 @@ export function DecisionPromptBuilder({
         >
           <div className="prompt-builder-surface">
             {/* Modal Header */}
-            <header className="prompt-builder-header">
+            <header className="prompt-builder-header" {...getMotionItemProps(0)}>
               <div className="prompt-builder-header__copy">
                 <div className="prompt-builder-badge-row">
                   <span className="prompt-builder-tag">ADR SPECIFICATION</span>
@@ -159,7 +164,7 @@ export function DecisionPromptBuilder({
               {/* Form Column */}
               <div className="prompt-builder-form">
                 {/* Section 1: Target Repository & Decision Title */}
-                <div className="prompt-section">
+                <div className="prompt-section" {...getMotionItemProps(1)}>
                   <div className="prompt-section-header">
                     <span className="prompt-section-num">01</span>
                     <span className="prompt-section-title">Context &amp; Identification</span>
@@ -201,7 +206,7 @@ export function DecisionPromptBuilder({
                 </div>
 
                 {/* Section 2: Core Invariants & Decision Choice */}
-                <div className="prompt-section prompt-section--featured">
+                <div className="prompt-section prompt-section--featured" {...getMotionItemProps(2)}>
                   <div className="prompt-section-header">
                     <span className="prompt-section-num">02</span>
                     <span className="prompt-section-title">Architectural Boundary &amp; Choice</span>
@@ -237,7 +242,7 @@ export function DecisionPromptBuilder({
                 </div>
 
                 {/* Section 3: Rationale, Tradeoffs & Metadata */}
-                <div className="prompt-section">
+                <div className="prompt-section" {...getMotionItemProps(3)}>
                   <div className="prompt-section-header">
                     <span className="prompt-section-num">03</span>
                     <span className="prompt-section-title">Rationale &amp; Supporting Metadata <span className="prompt-section-opt">(Recommended)</span></span>
@@ -306,7 +311,7 @@ export function DecisionPromptBuilder({
               </div>
 
               {/* Generated Prompt Preview Column */}
-              <div className="prompt-builder-preview-col">
+              <div className="prompt-builder-preview-col" {...getMotionItemProps(4)}>
                 <div className="prompt-preview-card">
                   <div className="prompt-preview-card__header">
                     <div className="prompt-preview-status">
@@ -370,7 +375,7 @@ export function DecisionPromptBuilder({
             </div>
 
             {/* Modal Footer Actions */}
-            <footer className="prompt-builder-footer">
+            <footer className="prompt-builder-footer" {...getMotionItemProps(5)}>
               <div className="prompt-builder-footer__left">
                 <button
                   type="button"

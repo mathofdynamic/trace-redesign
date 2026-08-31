@@ -4,6 +4,7 @@ import { useId, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TraceSelect } from './trace-select';
 import { DecisionPromptBuilder } from './decision-prompt-builder';
+import { usePresence, getMotionItemProps } from '../../../../lib/entrance-motion';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -242,7 +243,11 @@ export function DecisionsView({
     <div className="decisions-surface" id="decisions-root">
       {/* 1. Header & Action Row */}
       <header className="decisions-header">
-        <div className="decisions-header__top">
+        <div
+          className="decisions-header__top"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <div className="decisions-header__copy">
             <div className="decisions-header__eyebrow">
               <span className="decisions-eyebrow-tag">DURABLE ENGINEERING MEMORY</span>
@@ -280,7 +285,13 @@ export function DecisionsView({
         </div>
 
         {/* Intelligence Metrics Bar */}
-        <div className="decisions-metrics-bar" role="region" aria-label="Decisions overview metrics">
+        <div
+          className="decisions-metrics-bar"
+          role="region"
+          aria-label="Decisions overview metrics"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <div className="decision-metric-item">
             <span className="decision-metric-label">TOTAL DECISIONS</span>
             <span className="decision-metric-value">{decisions.length}</span>
@@ -310,7 +321,12 @@ export function DecisionsView({
       </header>
 
       {/* 2. Structured Two-Row Filter & Search Toolbar */}
-      <section className="decisions-toolbar" aria-label="Filter and search decisions">
+      <section
+        className="decisions-toolbar"
+        aria-label="Filter and search decisions"
+        data-trace-motion="item"
+        style={{ '--motion-index': 2 } as React.CSSProperties}
+      >
         {/* Row 1: Search flexible/full width */}
         <div className="decisions-toolbar__row decisions-toolbar__row--search">
           <label htmlFor={searchInputId} className="sr-only">
@@ -453,8 +469,13 @@ export function DecisionsView({
 
       {/* 3. Decision List Surface */}
       {sortedDecisions.length > 0 ? (
-        <main className="decisions-list" aria-label="Decisions records list">
-          {sortedDecisions.map((decision) => {
+        <main
+          className="decisions-list"
+          aria-label="Decisions records list"
+          data-trace-motion="section"
+          data-motion-section="decisions-list"
+        >
+          {sortedDecisions.map((decision, idx) => {
             const isExpanded = expandedIds.has(decision.id);
             const parsed = parseDecisionSections(decision.content);
             const repo = repositories.find((r) => r.id === decision.repositoryId);
@@ -483,6 +504,8 @@ export function DecisionsView({
                 key={decision.id}
                 id={`decision-${decision.id}`}
                 className={`decision-record ${isExpanded ? 'decision-record--expanded' : ''}`}
+                data-trace-motion="item"
+                style={{ '--motion-index': idx } as React.CSSProperties}
               >
                 {/* Clickable Header Row */}
                 <header
@@ -562,171 +585,28 @@ export function DecisionsView({
                 </header>
 
                 {/* Expanded Architectural Document Body */}
-                {isExpanded && (
-                  <div id={`decision-content-${decision.id}`} className="decision-record__body">
-                    {/* Top Architectural Invariant Details */}
-                    <div className="decision-body-grid">
-                      {/* Left: Context & Rationale */}
-                      <div className="decision-body-column">
-                        {/* Context Section */}
-                        {parsed.context.length > 0 && (
-                          <div className="decision-content-section">
-                            <h3 className="section-title">Context &amp; Motivation</h3>
-                            <div className="section-text-stack">
-                              {parsed.context.map((line, idx) => (
-                                <p key={idx} className="section-paragraph">
-                                  {line}
-                                </p>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Decision Mandate Rules */}
-                        {parsed.decisionRules.length > 0 && (
-                          <div className="decision-content-section">
-                            <h3 className="section-title">Decision &amp; Architectural Mandates</h3>
-                            <ul className="decision-rules-list">
-                              {parsed.decisionRules.map((rule, idx) => (
-                                <li key={idx} className="rule-item">
-                                  <span className="rule-bullet" aria-hidden="true">▸</span>
-                                  <span className="rule-text">{cleanMarkdownLine(rule)}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Consequences & Invariants */}
-                        {parsed.consequences.length > 0 && (
-                          <div className="decision-content-section">
-                            <h3 className="section-title">Consequences &amp; Invariants</h3>
-                            <ul className="consequences-list">
-                              {parsed.consequences.map((cons, idx) => (
-                                <li key={idx} className="consequence-item">
-                                  <span className="cons-bullet" aria-hidden="true">✓</span>
-                                  <span className="cons-text">{cleanMarkdownLine(cons)}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right: AST Evidence & Provenance Rail */}
-                      <aside className="decision-aside-column" aria-label="Evidence and provenance">
-                        {/* AST Evidence Box */}
-                        <div className="aside-box">
-                          <h4 className="aside-box__title">Deterministic AST Evidence</h4>
-                          <div className="evidence-items-list">
-                            {decision.items.map((item) => (
-                              <div key={item.id} className="evidence-item-card">
-                                <div className="item-card-header">
-                                  <strong className="item-card-title">{item.title}</strong>
-                                  <span className="item-classification-pill">
-                                    {item.classification ?? 'deterministic'}
-                                  </span>
-                                </div>
-                                <p className="item-card-detail">{item.detail}</p>
-                                {item.evidence.length > 0 && (
-                                  <div className="item-evidence-loci">
-                                    <span className="loci-label">VERIFIED FILE LOCI:</span>
-                                    <div className="loci-token-list">
-                                      {item.evidence.map((path, pIdx) => (
-                                        <code key={pIdx} className="loci-code-pill">
-                                          {path}
-                                        </code>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Linked Findings */}
-                        {linkedFindings.length > 0 && (
-                          <div className="aside-box">
-                            <h4 className="aside-box__title">Linked Attention Findings</h4>
-                            <div className="linked-findings-list">
-                              {linkedFindings.map((finding) => (
-                                <div key={finding.id} className="linked-finding-card">
-                                  <div className="linked-finding-top">
-                                    <span className="finding-kind-tag">{finding.kind}</span>
-                                    <span className="finding-class-tag">{finding.classification}</span>
-                                  </div>
-                                  <h5 className="linked-finding-title">{finding.title}</h5>
-                                  <p className="linked-finding-detail">
-                                    {presentFindingDetail(finding.detail)}
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Linked Pull Requests */}
-                        {linkedChanges.length > 0 && (
-                          <div className="aside-box">
-                            <h4 className="aside-box__title">Related Pull Requests</h4>
-                            <div className="linked-pr-list">
-                              {linkedChanges.map((change) => (
-                                <div key={change.id} className="linked-pr-item">
-                                  <span className="pr-number-pill">PR #{change.number}</span>
-                                  <span className="pr-title-text">{change.title}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Provenance & CLI Box */}
-                        <div className="aside-box aside-box--cli">
-                          <h4 className="aside-box__title">Local CLI Inspection</h4>
-                          <p className="cli-desc">
-                            View this decision and cryptographic invariant proofs in your terminal:
-                          </p>
-                          <div className="cli-code-block">
-                            <code>trace inspect .trace/decisions/{decision.id}.json</code>
-                            <button
-                              type="button"
-                              className="cli-copy-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                copyCliCommand(decision);
-                              }}
-                              title="Copy CLI command to clipboard"
-                            >
-                              {copiedId === decision.id ? 'Copied' : 'Copy'}
-                            </button>
-                          </div>
-                          <div className="provenance-facts">
-                            <div className="fact-row">
-                              <span className="fact-key">Artifact ID:</span>
-                              <code className="fact-val">{decision.artifactId}</code>
-                            </div>
-                            <div className="fact-row">
-                              <span className="fact-key">Repository:</span>
-                              <span className="fact-val">{decision.repositoryName}</span>
-                            </div>
-                            <div className="fact-row">
-                              <span className="fact-key">Synced:</span>
-                              <span className="fact-val">{formatRelativeDate(decision.syncedAt)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </aside>
-                    </div>
-                  </div>
-                )}
+                <DecisionDisclosureBody
+                  isExpanded={isExpanded}
+                  decision={decision}
+                  parsed={parsed}
+                  linkedFindings={linkedFindings}
+                  linkedChanges={linkedChanges}
+                  copiedId={copiedId}
+                  copyCliCommand={copyCliCommand}
+                />
               </article>
             );
           })}
         </main>
       ) : (
         /* Empty / Zero-Records State */
-        <div className="decisions-empty-surface" role="region" aria-label="No decisions found">
+        <div
+          className="decisions-empty-surface"
+          role="region"
+          aria-label="No decisions found"
+          data-trace-motion="item"
+          style={{ '--motion-index': 3 } as React.CSSProperties}
+        >
           <div className="empty-surface-inner">
             <div className="empty-glyph-box">
               <svg
@@ -781,7 +661,11 @@ export function DecisionsView({
       )}
 
       {/* 4. Footer Note: Zero-Surveillance Privacy Guarantee */}
-      <footer className="decisions-privacy-footer">
+      <footer
+        className="decisions-privacy-footer"
+        data-trace-motion="item"
+        style={{ '--motion-index': 4 } as React.CSSProperties}
+      >
         <div className="privacy-footer-inner">
           <span className="privacy-dot" aria-hidden="true">
             <svg
@@ -815,6 +699,196 @@ export function DecisionsView({
         repositories={repositories}
         defaultRepoId={selectedRepoId !== 'all' ? selectedRepoId : undefined}
       />
+    </div>
+  );
+}
+
+interface DecisionDisclosureBodyProps {
+  isExpanded: boolean;
+  decision: DashboardSyncedRecord;
+  parsed: ReturnType<typeof parseDecisionSections>;
+  linkedFindings: DashboardAttention[];
+  linkedChanges: DashboardChange[];
+  copiedId: string | null;
+  copyCliCommand: (decision: DashboardSyncedRecord) => void;
+}
+
+function DecisionDisclosureBody({
+  isExpanded,
+  decision,
+  parsed,
+  linkedFindings,
+  linkedChanges,
+  copiedId,
+  copyCliCommand,
+}: DecisionDisclosureBodyProps) {
+  const presence = usePresence(isExpanded);
+
+  if (!presence.isMounted) {
+    return null;
+  }
+
+  return (
+    <div
+      id={`decision-content-${decision.id}`}
+      className="decision-record__body"
+      data-trace-motion="disclosure"
+      {...presence.presenceProps}
+    >
+      {/* Top Architectural Invariant Details */}
+      <div className="decision-body-grid">
+        {/* Left: Context & Rationale */}
+        <div className="decision-body-column">
+          {/* Context Section */}
+          {parsed.context.length > 0 && (
+            <div className="decision-content-section" {...getMotionItemProps(0)}>
+              <h3 className="section-title">Context &amp; Motivation</h3>
+              <div className="section-text-stack">
+                {parsed.context.map((line, idx) => (
+                  <p key={idx} className="section-paragraph">
+                    {line}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Decision Mandate Rules */}
+          {parsed.decisionRules.length > 0 && (
+            <div className="decision-content-section" {...getMotionItemProps(1)}>
+              <h3 className="section-title">Decision &amp; Architectural Mandates</h3>
+              <ul className="decision-rules-list">
+                {parsed.decisionRules.map((rule, idx) => (
+                  <li key={idx} className="rule-item">
+                    <span className="rule-bullet" aria-hidden="true">▸</span>
+                    <span className="rule-text">{cleanMarkdownLine(rule)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Consequences & Invariants */}
+          {parsed.consequences.length > 0 && (
+            <div className="decision-content-section" {...getMotionItemProps(2)}>
+              <h3 className="section-title">Consequences &amp; Invariants</h3>
+              <ul className="consequences-list">
+                {parsed.consequences.map((cons, idx) => (
+                  <li key={idx} className="consequence-item">
+                    <span className="cons-bullet" aria-hidden="true">✓</span>
+                    <span className="cons-text">{cleanMarkdownLine(cons)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* Right: AST Evidence & Provenance Rail */}
+        <aside className="decision-aside-column" aria-label="Evidence and provenance" {...getMotionItemProps(1)}>
+          {/* AST Evidence Box */}
+          <div className="aside-box">
+            <h4 className="aside-box__title">Deterministic AST Evidence</h4>
+            <div className="evidence-items-list">
+              {decision.items.map((item) => (
+                <div key={item.id} className="evidence-item-card">
+                  <div className="item-card-header">
+                    <strong className="item-card-title">{item.title}</strong>
+                    <span className="item-classification-pill">
+                      {item.classification ?? 'deterministic'}
+                    </span>
+                  </div>
+                  <p className="item-card-detail">{item.detail}</p>
+                  {item.evidence.length > 0 && (
+                    <div className="item-evidence-loci">
+                      <span className="loci-label">VERIFIED FILE LOCI:</span>
+                      <div className="loci-token-list">
+                        {item.evidence.map((path, pIdx) => (
+                          <code key={pIdx} className="loci-code-pill">
+                            {path}
+                          </code>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Linked Findings */}
+          {linkedFindings.length > 0 && (
+            <div className="aside-box">
+              <h4 className="aside-box__title">Linked Attention Findings</h4>
+              <div className="linked-findings-list">
+                {linkedFindings.map((finding) => (
+                  <div key={finding.id} className="linked-finding-card">
+                    <div className="linked-finding-top">
+                      <span className="finding-kind-tag">{finding.kind}</span>
+                      <span className="finding-class-tag">{finding.classification}</span>
+                    </div>
+                    <h5 className="linked-finding-title">{finding.title}</h5>
+                    <p className="linked-finding-detail">
+                      {presentFindingDetail(finding.detail)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Linked Pull Requests */}
+          {linkedChanges.length > 0 && (
+            <div className="aside-box">
+              <h4 className="aside-box__title">Related Pull Requests</h4>
+              <div className="linked-pr-list">
+                {linkedChanges.map((change) => (
+                  <div key={change.id} className="linked-pr-item">
+                    <span className="pr-number-pill">PR #{change.number}</span>
+                    <span className="pr-title-text">{change.title}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Provenance & CLI Box */}
+          <div className="aside-box aside-box--cli">
+            <h4 className="aside-box__title">Local CLI Inspection</h4>
+            <p className="cli-desc">
+              View this decision and cryptographic invariant proofs in your terminal:
+            </p>
+            <div className="cli-code-block">
+              <code>trace inspect .trace/decisions/{decision.id}.json</code>
+              <button
+                type="button"
+                className="cli-copy-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyCliCommand(decision);
+                }}
+                title="Copy CLI command to clipboard"
+              >
+                {copiedId === decision.id ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+            <div className="provenance-facts">
+              <div className="fact-row">
+                <span className="fact-key">Artifact ID:</span>
+                <code className="fact-val">{decision.artifactId}</code>
+              </div>
+              <div className="fact-row">
+                <span className="fact-key">Repository:</span>
+                <span className="fact-val">{decision.repositoryName}</span>
+              </div>
+              <div className="fact-row">
+                <span className="fact-key">Synced:</span>
+                <span className="fact-val">{formatRelativeDate(decision.syncedAt)}</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

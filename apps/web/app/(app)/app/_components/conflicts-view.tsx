@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { TraceSelect } from './trace-select';
 import { OverlayPortal, ModalBackdrop, CenteredDialog } from './overlay-portal';
+import { usePresence, getMotionItemProps } from '../../../../lib/entrance-motion';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -37,6 +38,13 @@ export function ConflictsView({
   const [repositoryFilter, setRepositoryFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [selectedConflict, setSelectedConflict] = useState<PairedConflictModel | null>(null);
+  const [cachedConflict, setCachedConflict] = useState<PairedConflictModel | null>(null);
+
+  useEffect(() => {
+    if (selectedConflict) {
+      setCachedConflict(selectedConflict);
+    }
+  }, [selectedConflict]);
 
   // Resolved paired conflict models
   const pairedConflicts = useMemo(() => {
@@ -132,7 +140,12 @@ export function ConflictsView({
   return (
     <div className="conflicts-surface" id="conflicts-surface">
       {/* Top Intelligence Summary Strip */}
-      <section className="conflicts-summary-bar" aria-label="Conflicts summary metrics">
+      <section
+        className="conflicts-summary-bar"
+        aria-label="Conflicts summary metrics"
+        data-trace-motion="item"
+        style={{ '--motion-index': 1 } as React.CSSProperties}
+      >
         <div className="conflicts-summary-metric">
           <span className="conflicts-summary-metric__value">{totalConflictsCount}</span>
           <span className="conflicts-summary-metric__label">Active conflicts</span>
@@ -162,7 +175,13 @@ export function ConflictsView({
       </section>
 
       {/* Toolbar & Filters */}
-      <div className="conflicts-toolbar" role="search" aria-label="Filter and search conflicts">
+      <div
+        className="conflicts-toolbar"
+        role="search"
+        aria-label="Filter and search conflicts"
+        data-trace-motion="item"
+        style={{ '--motion-index': 2 } as React.CSSProperties}
+      >
         <div className="conflicts-toolbar__row conflicts-toolbar__row--primary">
           <div className="conflicts-toolbar__search">
             <div className="search-input-wrapper">
@@ -273,7 +292,12 @@ export function ConflictsView({
         (selectedRepoObject.syncState === 'not_analyzed' ||
           !selectedRepoObject.lastSynchronizedAt ||
           selectedRepoObject.analysis?.status === 'not-started') ? (
-          <div className="conflicts-empty-panel conflicts-empty-panel--nova" role="status">
+          <div
+            className="conflicts-empty-panel conflicts-empty-panel--nova"
+            role="status"
+            data-trace-motion="item"
+            style={{ '--motion-index': 3 } as React.CSSProperties}
+          >
             <div className="conflicts-empty-glyph" aria-hidden="true">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" />
@@ -305,7 +329,12 @@ export function ConflictsView({
             </div>
           </div>
         ) : selectedRepoObject && selectedRepoObject.lastSynchronizedAt ? (
-          <div className="conflicts-empty-panel conflicts-empty-panel--radar" role="status">
+          <div
+            className="conflicts-empty-panel conflicts-empty-panel--radar"
+            role="status"
+            data-trace-motion="item"
+            style={{ '--motion-index': 3 } as React.CSSProperties}
+          >
             <div className="conflicts-empty-glyph" aria-hidden="true">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -335,9 +364,14 @@ export function ConflictsView({
             </div>
           </div>
         ) : (
-          <div className="conflicts-empty-panel" role="status">
+          <div
+            className="conflicts-empty-panel"
+            role="status"
+            data-trace-motion="item"
+            style={{ '--motion-index': 3 } as React.CSSProperties}
+          >
             <div className="conflicts-empty-glyph" aria-hidden="true">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
@@ -357,22 +391,28 @@ export function ConflictsView({
         )
       ) : (
         /* Paired Conflict Cards (High-Signal Progressive Disclosure) */
-        <div className="conflicts-card-list">
-          {filteredConflicts.map((model) => (
+        <div
+          className="conflicts-card-list"
+          data-trace-motion="section"
+          data-motion-section="conflicts-card-list"
+        >
+          {filteredConflicts.map((model, idx) => (
             <PairedConflictCard
               key={model.conflict.id}
               model={model}
               onInspect={() => setSelectedConflict(model)}
+              motionIndex={idx}
             />
           ))}
         </div>
       )}
 
       {/* Centered Conflict Inspection Modal */}
-      {selectedConflict ? (
+      {cachedConflict ? (
         <ConflictDetailModal
-          model={selectedConflict}
+          model={cachedConflict}
           attention={attention}
+          isOpen={Boolean(selectedConflict)}
           onClose={() => setSelectedConflict(null)}
         />
       ) : null}
@@ -383,13 +423,19 @@ export function ConflictsView({
 interface PairedConflictCardProps {
   model: PairedConflictModel;
   onInspect: () => void;
+  motionIndex?: number;
 }
 
-function PairedConflictCard({ model, onInspect }: PairedConflictCardProps) {
+function PairedConflictCard({ model, onInspect, motionIndex }: PairedConflictCardProps) {
   const { conflict, sideA, sideB, sharedBoundary, severity, classification, items } = model;
 
   return (
-    <article className="conflict-card" id={`conflict-card-${conflict.id}`}>
+    <article
+      className="conflict-card"
+      id={`conflict-card-${conflict.id}`}
+      data-trace-motion="item"
+      style={motionIndex !== undefined ? ({ '--motion-index': motionIndex } as React.CSSProperties) : undefined}
+    >
       {/* Topline: Repository, Provenance, Classification, Severity */}
       <div className="conflict-card__topline">
         <div className="conflict-card__provenance">
@@ -498,37 +544,46 @@ function PairedConflictCard({ model, onInspect }: PairedConflictCardProps) {
 interface ConflictDetailModalProps {
   model: PairedConflictModel;
   attention: DashboardAttention[];
+  isOpen: boolean;
   onClose: () => void;
 }
 
 function ConflictDetailModal({
   model,
   attention,
+  isOpen,
   onClose,
 }: ConflictDetailModalProps) {
+  const presence = usePresence(isOpen);
   const closeRef = useRef<HTMLButtonElement>(null);
   const [copied, setCopied] = useState(false);
   const { conflict, sideA, sideB, sharedBoundary, severity, classification, items } = model;
 
-  useEffect(() => {
-    closeRef.current?.focus();
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  const copyCliCommand = () => {
-    const cmd = `trace analyze`;
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(cmd).catch(() => {});
+  const copyCliCommand = async () => {
+    const cmd = `trace analyze --conflict ${conflict.id}`;
+    try {
+      await navigator.clipboard.writeText(cmd);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
     }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      closeRef.current?.focus();
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, onClose]);
+
+  if (!presence.isMounted) return null;
 
   return (
     <OverlayPortal>
@@ -541,7 +596,7 @@ function ConflictDetailModal({
           className="conflict-drawer"
         >
           {/* Modal Header */}
-          <div className="conflict-drawer__header">
+          <div className="conflict-drawer__header" {...getMotionItemProps(0)}>
             <div className="conflict-drawer__eyebrow">
               <span className="conflict-repo-tag">{conflict.repositoryName}</span>
               <span className="conflict-classification-badge">
@@ -563,7 +618,7 @@ function ConflictDetailModal({
           </div>
 
           {/* Title and Summary Intro */}
-          <div className="conflict-drawer__intro">
+          <div className="conflict-drawer__intro" {...getMotionItemProps(1)}>
             <h2 id={`conflict-modal-title-${conflict.id}`}>{conflict.title}</h2>
             <p className="conflict-drawer__lead">{conflict.summary}</p>
             <div className="conflict-drawer__provenance-row">
@@ -575,7 +630,7 @@ function ConflictDetailModal({
           </div>
 
           {/* Shared Invariant Callout */}
-          <section className="conflict-drawer__section conflict-drawer__section--boundary">
+          <section className="conflict-drawer__section conflict-drawer__section--boundary" {...getMotionItemProps(2)}>
             <span className="eyebrow">Shared Boundary Invariant</span>
             <div className="drawer-boundary-box">
               <strong className="drawer-boundary-box__target">{sharedBoundary.target}</strong>
@@ -588,7 +643,7 @@ function ConflictDetailModal({
           </section>
 
           {/* Paired Changes Details */}
-          <section className="conflict-drawer__section">
+          <section className="conflict-drawer__section" {...getMotionItemProps(3)}>
             <span className="eyebrow">Involved Branches & Changes</span>
             <div className="drawer-sides-grid">
               {/* Side A Full Card */}
@@ -676,7 +731,7 @@ function ConflictDetailModal({
           </section>
 
           {/* Deterministic Evidence */}
-          <section className="conflict-drawer__section">
+          <section className="conflict-drawer__section" {...getMotionItemProps(4)}>
             <span className="eyebrow">Deterministic AST Evidence Items ({items.length})</span>
             <div className="drawer-evidence-list">
               {items.map((item) => (
@@ -702,7 +757,7 @@ function ConflictDetailModal({
           </section>
 
           {/* Local Verification Command */}
-          <section className="conflict-drawer__section">
+          <section className="conflict-drawer__section" {...getMotionItemProps(5)}>
             <span className="eyebrow">Local reproduction guidance</span>
             <div className="conflict-drawer__cli-box">
               <code>trace analyze</code>
@@ -720,7 +775,7 @@ function ConflictDetailModal({
           </section>
 
           {/* Modal Actions Footer */}
-          <div className="conflict-drawer__footer">
+          <div className="conflict-drawer__footer" {...getMotionItemProps(6)}>
             <button
               type="button"
               className="trace-button trace-button--secondary"
@@ -733,4 +788,8 @@ function ConflictDetailModal({
       </ModalBackdrop>
     </OverlayPortal>
   );
+}
+
+export function ConflictDetailDrawer(props: ConflictDetailModalProps) {
+  return <ConflictDetailModal {...props} />;
 }

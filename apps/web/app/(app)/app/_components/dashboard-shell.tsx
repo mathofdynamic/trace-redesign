@@ -14,6 +14,7 @@ import {
 import type { NavigationItem } from './navigation';
 import type { NavigationCapabilities } from './navigation';
 import { RepositorySwitcher } from './trace-redesign';
+import { usePresence, getMotionItemProps } from '../../../../lib/entrance-motion';
 import type { DashboardAttention, DashboardRepository } from '../../../../lib/dashboard';
 
 function NavigationIcon({ name }: { name: NavigationItem['icon'] }) {
@@ -166,6 +167,7 @@ export function DashboardShell({
   const pathname = usePathname();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const presence = usePresence(mobileOpen);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const routeLabel = getRouteLabel(pathname);
@@ -198,7 +200,13 @@ export function DashboardShell({
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
-      <aside className="dashboard-sidebar" aria-label="Workspace" aria-hidden={mobileOpen}>
+      <aside
+        className="dashboard-sidebar"
+        aria-label="Workspace"
+        aria-hidden={mobileOpen}
+        data-trace-motion="item"
+        style={{ '--motion-index': 0 } as React.CSSProperties}
+      >
         <Link className="dashboard-brand" href="/app" aria-label="TRACE overview">
           <TraceMark />
           <span>TRACE</span>
@@ -232,20 +240,26 @@ export function DashboardShell({
         </div>
       </aside>
 
-      {mobileOpen ? (
+      {presence.isMounted ? (
         <>
           <button
             className="dashboard-scrim"
             type="button"
             aria-label="Close navigation"
             onClick={() => setMobileOpen(false)}
+            data-trace-motion="surface"
+            data-motion-variant="backdrop"
+            data-presence-state={presence.presenceState}
           />
           <aside
             className="dashboard-mobile-drawer"
             data-open="true"
+            data-trace-motion="surface"
+            data-motion-variant="drawer"
+            data-presence-state={presence.presenceState}
             aria-label="Mobile workspace navigation"
           >
-            <div className="dashboard-mobile-drawer__header">
+            <div className="dashboard-mobile-drawer__header" {...getMotionItemProps(0)}>
               <div className="dashboard-mobile-drawer__workspace">
                 <span className="workspace-switcher__dot" aria-hidden="true" />
                 <span>{workspaceName}</span>
@@ -259,13 +273,13 @@ export function DashboardShell({
                 ×
               </button>
             </div>
-            <nav className="dashboard-nav" aria-label="Mobile application navigation">
+            <nav className="dashboard-nav" aria-label="Mobile application navigation" {...getMotionItemProps(1)}>
               <p className="dashboard-nav__section-label">Workspace</p>
               <NavigationLinks items={primaryNavigation} {...navigationProps} />
               <p className="dashboard-nav__section-label">Manage</p>
               <NavigationLinks items={secondaryNavigation} {...navigationProps} />
             </nav>
-            <div className="dashboard-account dashboard-account--mobile">
+            <div className="dashboard-account dashboard-account--mobile" {...getMotionItemProps(2)}>
               <span className="avatar" aria-hidden="true">
                 {userName.charAt(0).toUpperCase()}
               </span>
@@ -279,7 +293,11 @@ export function DashboardShell({
       ) : null}
 
       <div className="dashboard-main">
-        <header className="dashboard-topbar">
+        <header
+          className="dashboard-topbar"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <div className="dashboard-topbar__start">
             <button
               ref={menuButtonRef}
@@ -322,7 +340,12 @@ export function DashboardShell({
           />
         ) : null}
         <main id="main-content" className="dashboard-content">
-          <div className="dashboard-route" key={pathname}>
+          <div
+            className="dashboard-route"
+            key={pathname}
+            data-trace-motion="section"
+            data-motion-section="dashboard-route"
+          >
             {children}
           </div>
         </main>

@@ -13,6 +13,10 @@ import {
   type RuleSeverity,
   type RuleMode,
 } from '../../../../lib/rule-prompt';
+import {
+  usePresence,
+  getMotionItemProps,
+} from '../../../../lib/entrance-motion';
 
 export interface RulePromptBuilderProps {
   isOpen: boolean;
@@ -47,6 +51,7 @@ export function RulePromptBuilder({
   repositories,
   defaultRepoId,
 }: RulePromptBuilderProps) {
+  const presence = usePresence(isOpen);
   const initialRepoId = defaultRepoId || (repositories[0]?.id ?? '');
   const initialRepoName =
     repositories.find((r) => r.id === initialRepoId)?.fullName ||
@@ -117,7 +122,7 @@ export function RulePromptBuilder({
     }
   };
 
-  if (!isOpen) return null;
+  if (!presence.isMounted) return null;
 
   return (
     <OverlayPortal>
@@ -132,7 +137,7 @@ export function RulePromptBuilder({
         >
           <div className="prompt-builder-surface">
             {/* Modal Header */}
-            <header className="prompt-builder-header">
+            <header className="prompt-builder-header" {...getMotionItemProps(0)}>
               <div className="prompt-builder-header__copy">
                 <div className="prompt-builder-badge-row">
                   <span className="prompt-builder-tag">GOVERNANCE POLICY</span>
@@ -184,7 +189,7 @@ export function RulePromptBuilder({
               {/* Form Column */}
               <div className="prompt-builder-form">
                 {/* Section 1: Target Repository & Identifier */}
-                <div className="prompt-section">
+                <div className="prompt-section" {...getMotionItemProps(1)}>
                   <div className="prompt-section-header">
                     <span className="prompt-section-num">01</span>
                     <span className="prompt-section-title">Target Context &amp; Identification</span>
@@ -242,7 +247,7 @@ export function RulePromptBuilder({
                 </div>
 
                 {/* Section 2: Purpose & Boundary Invariant */}
-                <div className="prompt-section prompt-section--featured">
+                <div className="prompt-section prompt-section--featured" {...getMotionItemProps(2)}>
                   <div className="prompt-section-header">
                     <span className="prompt-section-num">02</span>
                     <span className="prompt-section-title">Purpose &amp; Boundary Invariant</span>
@@ -264,7 +269,7 @@ export function RulePromptBuilder({
                 </div>
 
                 {/* Section 3: Enforcement & Policy Matrix */}
-                <div className="prompt-section">
+                <div className="prompt-section" {...getMotionItemProps(3)}>
                   <div className="prompt-section-header">
                     <span className="prompt-section-num">03</span>
                     <span className="prompt-section-title">Policy &amp; Enforcement Configuration</span>
@@ -360,7 +365,7 @@ export function RulePromptBuilder({
               </div>
 
               {/* Generated Prompt Preview Column */}
-              <div className="prompt-builder-preview-col">
+              <div className="prompt-builder-preview-col" {...getMotionItemProps(4)}>
                 <div className="prompt-preview-card">
                   <div className="prompt-preview-card__header">
                     <div className="prompt-preview-status">
@@ -424,7 +429,7 @@ export function RulePromptBuilder({
             </div>
 
             {/* Modal Footer Actions */}
-            <footer className="prompt-builder-footer">
+            <footer className="prompt-builder-footer" {...getMotionItemProps(5)}>
               <div className="prompt-builder-footer__left">
                 <button
                   type="button"

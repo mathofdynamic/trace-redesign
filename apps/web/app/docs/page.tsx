@@ -27,7 +27,12 @@ export default function DocsPage() {
           {/* =================================================================
               Sticky Mini Section Index / TOC for Desktop
               ================================================================= */}
-          <aside className="docs-toc" aria-label="Documentation Table of Contents">
+          <aside
+            className="docs-toc"
+            aria-label="Documentation Table of Contents"
+            data-trace-motion="item"
+            style={{ '--motion-index': 1 } as React.CSSProperties}
+          >
             <div className="docs-toc__inner">
               <span className="docs-toc__title">On this page</span>
               <nav>
@@ -79,8 +84,10 @@ export default function DocsPage() {
               className="docs-section"
               id="source-documents"
               aria-labelledby="source-docs-heading"
+              data-trace-motion="section"
+              data-motion-section="source-docs"
             >
-              <div className="section-header-compact">
+              <div className="section-header-compact" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
                 <SectionLabel>In-Tree Records</SectionLabel>
                 <h2 id="source-docs-heading">Authoritative repository documents.</h2>
                 <p>
@@ -97,8 +104,14 @@ export default function DocsPage() {
                 </div>
 
                 <div className="doc-index-table__body" role="rowgroup">
-                  {sourceDocuments.map((doc) => (
-                    <article className="doc-index-row" key={doc.id} role="row">
+                  {sourceDocuments.map((doc, idx) => (
+                    <article
+                      className="doc-index-row"
+                      key={doc.id}
+                      role="row"
+                      data-trace-motion="item"
+                      style={{ '--motion-index': idx + 1 } as React.CSSProperties}
+                    >
                       <div className="doc-col-name" role="cell">
                         <span className="doc-category-badge">{doc.category}</span>
                         <strong className="doc-title">{doc.name}</strong>
@@ -133,8 +146,10 @@ export default function DocsPage() {
               className="docs-section"
               id="local-to-dashboard"
               aria-labelledby="workflow-flow-heading"
+              data-trace-motion="section"
+              data-motion-section="workflow"
             >
-              <div className="section-header-compact">
+              <div className="section-header-compact" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
                 <SectionLabel>Execution Pipeline</SectionLabel>
                 <h2 id="workflow-flow-heading">Local to dashboard workflow.</h2>
                 <p>
@@ -143,8 +158,14 @@ export default function DocsPage() {
               </div>
 
               <div className="workflow-flow-grid" role="list">
-                {localToDashboardStages.map((stage) => (
-                  <div key={stage.step} className="workflow-step-card" role="listitem">
+                {localToDashboardStages.map((stage, idx) => (
+                  <div
+                    key={stage.step}
+                    className="workflow-step-card"
+                    role="listitem"
+                    data-trace-motion="item"
+                    style={{ '--motion-index': idx + 1 } as React.CSSProperties}
+                  >
                     <div className="workflow-step-card__top">
                       <span className="step-num">{stage.step}</span>
                       <code className="step-cmd">{stage.command}</code>
@@ -168,8 +189,10 @@ export default function DocsPage() {
               className="docs-section"
               id="local-analysis"
               aria-labelledby="local-cli-heading"
+              data-trace-motion="section"
+              data-motion-section="cli"
             >
-              <div className="section-header-compact">
+              <div className="section-header-compact" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
                 <SectionLabel>Local CLI Manual</SectionLabel>
                 <h2 id="local-cli-heading">Build the project record without uploading source.</h2>
                 <p>
@@ -178,8 +201,13 @@ export default function DocsPage() {
               </div>
 
               <div className="cli-reference-list">
-                {localAnalysisCommands.map((item) => (
-                  <div className="cli-ref-card" key={item.id}>
+                {localAnalysisCommands.map((item, idx) => (
+                  <div
+                    className="cli-ref-card"
+                    key={item.id}
+                    data-trace-motion="item"
+                    style={{ '--motion-index': idx + 1 } as React.CSSProperties}
+                  >
                     <div className="cli-ref-card__header">
                       <CommandBlock command={item.command} id={item.id} />
                     </div>
@@ -202,7 +230,7 @@ export default function DocsPage() {
                 ))}
               </div>
 
-              <div className="docs-note-box">
+              <div className="docs-note-box" data-trace-motion="item" style={{ '--motion-index': localAnalysisCommands.length + 1 } as React.CSSProperties}>
                 <TraceMark size={14} />
                 <p>
                   <strong>Core Guarantee:</strong> Generated files in <code>.trace/</code> remain durable repository records versioned with Git. Local analysis never contacts an external network.
@@ -217,8 +245,10 @@ export default function DocsPage() {
               className="docs-section"
               id="cloud-sync"
               aria-labelledby="cloud-sync-heading"
+              data-trace-motion="section"
+              data-motion-section="sync"
             >
-              <div className="section-header-compact">
+              <div className="section-header-compact" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
                 <SectionLabel>Sync & Verification</SectionLabel>
                 <h2 id="cloud-sync-heading">Analyze locally. Sync only the record you approve.</h2>
                 <p>
@@ -227,8 +257,13 @@ export default function DocsPage() {
               </div>
 
               <div className="cli-reference-list">
-                {syncWorkflowCommands.map((item) => (
-                  <div className="cli-ref-card" key={item.id}>
+                {syncWorkflowCommands.map((item, idx) => (
+                  <div
+                    className="cli-ref-card"
+                    key={item.id}
+                    data-trace-motion="item"
+                    style={{ '--motion-index': idx + 1 } as React.CSSProperties}
+                  >
                     <div className="cli-ref-card__header">
                       <CommandBlock command={item.command} id={item.id} />
                     </div>
@@ -246,7 +281,7 @@ export default function DocsPage() {
                 ))}
               </div>
 
-              <div className="docs-note-box">
+              <div className="docs-note-box" data-trace-motion="item" style={{ '--motion-index': syncWorkflowCommands.length + 1 } as React.CSSProperties}>
                 <span className="note-icon" aria-hidden="true">✓</span>
                 <p>
                   <strong>Boundary Rule:</strong> Source files, raw code snippets, API secrets, confidential comments, and browser credentials are automatically excluded by transport schema validators.
@@ -257,8 +292,13 @@ export default function DocsPage() {
             {/* =============================================================
                 Section 5: Next Steps & Repository References
                 ============================================================= */}
-            <section className="docs-footer-action" aria-label="Documentation Links">
-              <div className="docs-footer-action__inner">
+            <section
+              className="docs-footer-action"
+              aria-label="Documentation Links"
+              data-trace-motion="section"
+              data-motion-section="footer-action"
+            >
+              <div className="docs-footer-action__inner" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
                 <div className="docs-footer-action__copy">
                   <h3>Continue exploring TRACE</h3>
                   <p>

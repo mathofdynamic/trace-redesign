@@ -4,6 +4,7 @@ import { useId, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TraceSelect } from './trace-select';
 import { OverlayPortal, ModalBackdrop, CenteredDialog } from './overlay-portal';
+import { usePresence, getMotionItemProps } from '../../../../lib/entrance-motion';
 import type {
   DashboardAttention,
   DashboardChange,
@@ -86,7 +87,14 @@ export function ReportsView({
   const [selectedFreshness, setSelectedFreshness] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeDrawerReport, setActiveDrawerReport] = useState<DashboardSyncedRecord | null>(null);
+  const [cachedDrawerReport, setCachedDrawerReport] = useState<DashboardSyncedRecord | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeDrawerReport) {
+      setCachedDrawerReport(activeDrawerReport);
+    }
+  }, [activeDrawerReport]);
 
   const searchInputId = useId();
   const repoSelectId = useId();
@@ -213,7 +221,12 @@ export function ReportsView({
   return (
     <div className="reports-library-surface">
       {/* 1. Summary Intelligence Strip */}
-      <div className="reports-summary-bar" aria-label="Reports Library Overview">
+      <div
+        className="reports-summary-bar"
+        aria-label="Reports Library Overview"
+        data-trace-motion="item"
+        style={{ '--motion-index': 1 } as React.CSSProperties}
+      >
         <div className="reports-summary-metric">
           <span className="reports-summary-metric__value">{summaryMetrics.totalReportsCount}</span>
           <span className="reports-summary-metric__label">Archived Records</span>
@@ -252,7 +265,12 @@ export function ReportsView({
       </div>
 
       {/* 2. Compact Multi-Dimensional Toolbar */}
-      <div className="reports-toolbar" aria-label="Reports Filter and Search Bar">
+      <div
+        className="reports-toolbar"
+        aria-label="Reports Filter and Search Bar"
+        data-trace-motion="item"
+        style={{ '--motion-index': 2 } as React.CSSProperties}
+      >
         <div className="reports-toolbar__search">
           <div className="search-input-wrapper">
             <svg
@@ -395,7 +413,13 @@ export function ReportsView({
       {/* 3. Reports Library Main Content Area */}
       {isSelectedRepoUnsynced ? (
         /* Truthful Unsynced Repository Empty State */
-        <div className="reports-empty-panel reports-empty-panel--nova" role="region" aria-label="Repository Analysis Pending Status">
+        <div
+          className="reports-empty-panel reports-empty-panel--nova"
+          role="region"
+          aria-label="Repository Analysis Pending Status"
+          data-trace-motion="item"
+          style={{ '--motion-index': 3 } as React.CSSProperties}
+        >
           <div className="reports-empty-glyph">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
@@ -426,7 +450,13 @@ export function ReportsView({
         </div>
       ) : filteredReports.length === 0 ? (
         /* Search / Filter Empty State */
-        <div className="reports-empty-panel" role="region" aria-label="No reports found">
+        <div
+          className="reports-empty-panel"
+          role="region"
+          aria-label="No reports found"
+          data-trace-motion="item"
+          style={{ '--motion-index': 3 } as React.CSSProperties}
+        >
           <div className="reports-empty-glyph">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8" />
@@ -443,9 +473,21 @@ export function ReportsView({
         </div>
       ) : (
         /* Structured Chronological Report Collection */
-        <div className="reports-collection" role="feed" aria-label="Project Memory Reports Library">
-          {groupedReports.map(({ label, reports: groupItems }) => (
-            <section key={label} className="reports-date-group" aria-label={label}>
+        <div
+          className="reports-collection"
+          role="feed"
+          aria-label="Project Memory Reports Library"
+          data-trace-motion="section"
+          data-motion-section="reports-collection"
+        >
+          {groupedReports.map(({ label, reports: groupItems }, groupIdx) => (
+            <section
+              key={label}
+              className="reports-date-group"
+              aria-label={label}
+              data-trace-motion="item"
+              style={{ '--motion-index': groupIdx } as React.CSSProperties}
+            >
               <div className="reports-date-group__header">
                 <span className="reports-date-group__label">{label}</span>
                 <span className="reports-date-group__count">
@@ -454,7 +496,7 @@ export function ReportsView({
               </div>
 
               <div className="reports-cards-list">
-                {groupItems.map((report) => {
+                {groupItems.map((report, cardIdx) => {
                   const relatedChangesCount =
                     report.relatedChangeIds?.length ??
                     changes.filter(
@@ -467,7 +509,13 @@ export function ReportsView({
                   const highFindingsCount = report.items.filter((i) => i.severity === 'high').length;
 
                   return (
-                    <article className="report-item-card report-row" key={report.id} data-report-id={report.id}>
+                    <article
+                      className="report-item-card report-row"
+                      key={report.id}
+                      data-report-id={report.id}
+                      data-trace-motion="item"
+                      style={{ '--motion-index': cardIdx } as React.CSSProperties}
+                    >
                       {/* Top metadata line */}
                       <div className="report-item-card__top">
                         <div className="report-item-card__identity">
@@ -572,12 +620,13 @@ export function ReportsView({
       )}
 
       {/* 4. Quick Inspect Slide-Over Drawer */}
-      {activeDrawerReport ? (
+      {cachedDrawerReport ? (
         <ReportQuickDrawer
-          report={activeDrawerReport}
+          report={cachedDrawerReport}
           repositories={repositories}
           changes={changes}
           attention={attention}
+          isOpen={Boolean(activeDrawerReport)}
           onClose={() => setActiveDrawerReport(null)}
           onCopyCli={copyCliCommand}
           copiedId={copiedId}
@@ -592,6 +641,7 @@ function ReportQuickDrawer({
   repositories,
   changes,
   attention,
+  isOpen,
   onClose,
   onCopyCli,
   copiedId,
@@ -600,10 +650,12 @@ function ReportQuickDrawer({
   repositories: DashboardRepository[];
   changes: DashboardChange[];
   attention: DashboardAttention[];
+  isOpen: boolean;
   onClose: () => void;
   onCopyCli: (report: DashboardSyncedRecord) => void;
   copiedId: string | null;
 }) {
+  const presence = usePresence(isOpen);
   const repository = repositories.find((r) => r.id === report.repositoryId);
   const relatedChanges = changes.filter(
     (c) =>
@@ -620,6 +672,8 @@ function ReportQuickDrawer({
   const topChanges = relatedChanges.slice(0, 2);
   const remainingChangesCount = Math.max(0, relatedChanges.length - topChanges.length);
 
+  if (!presence.isMounted) return null;
+
   return (
     <OverlayPortal>
       <ModalBackdrop onClose={onClose} ariaLabel="Close report quick inspect">
@@ -630,7 +684,7 @@ function ReportQuickDrawer({
           className="report-drawer report-quick-inspect"
         >
           {/* 1. Header: Type, Repo, Title, Date & Close */}
-          <div className="report-drawer__header">
+          <div className="report-drawer__header" {...getMotionItemProps(0)}>
             <div>
               <div className="report-drawer__eyebrow">
                 <span className="report-type-badge">
@@ -660,26 +714,26 @@ function ReportQuickDrawer({
 
         {/* 2. Freshness Status */}
         {report.freshness === 'needs-refresh' ? (
-          <div className="drawer-freshness-banner drawer-freshness-banner--warning">
+          <div className="drawer-freshness-banner drawer-freshness-banner--warning" {...getMotionItemProps(1)}>
             <strong>Needs refresh</strong>
             <p>
               Analyzed commit <code>{report.analyzedCommit?.slice(0, 12)}</code> is behind GitHub remote HEAD (<code>{report.remoteHeadCommit?.slice(0, 12)}</code>).
             </p>
           </div>
         ) : report.freshness === 'attention' ? (
-          <div className="drawer-freshness-banner drawer-freshness-banner--attention">
+          <div className="drawer-freshness-banner drawer-freshness-banner--attention" {...getMotionItemProps(1)}>
             <strong>Sync attention</strong>
             <p>CLI manifest schema alignment required for automated bridge sync.</p>
           </div>
         ) : (
-          <div className="drawer-freshness-banner drawer-freshness-banner--current">
+          <div className="drawer-freshness-banner drawer-freshness-banner--current" {...getMotionItemProps(1)}>
             <strong>Current with GitHub</strong>
             <p>Analyzed commit matches remote default branch HEAD.</p>
           </div>
         )}
 
         {/* 3. Summary: One Concise Paragraph */}
-        <div className="report-drawer__section">
+        <div className="report-drawer__section" {...getMotionItemProps(2)}>
           <span className="drawer-section-label">Summary</span>
           <p className="report-drawer__summary-text">
             {report.summary || 'Approved TRACE project-memory record.'}
@@ -688,7 +742,7 @@ function ReportQuickDrawer({
 
         {/* 4. High-Signal Intelligence: Top Findings & AST Evidence */}
         {topFindings.length > 0 ? (
-          <div className="report-drawer__section">
+          <div className="report-drawer__section" {...getMotionItemProps(3)}>
             <div className="drawer-section-header-row">
               <span className="drawer-section-label">
                 Top Findings ({report.items.length})
@@ -727,7 +781,7 @@ function ReportQuickDrawer({
 
         {/* 5. High-Signal Intelligence: Linked Changes */}
         {topChanges.length > 0 ? (
-          <div className="report-drawer__section">
+          <div className="report-drawer__section" {...getMotionItemProps(4)}>
             <div className="drawer-section-header-row">
               <span className="drawer-section-label">
                 Linked Pull Requests ({relatedChanges.length})
@@ -755,7 +809,7 @@ function ReportQuickDrawer({
         ) : null}
 
         {/* 6. High-Signal Intelligence: Provenance Summary */}
-        <div className="report-drawer__section">
+        <div className="report-drawer__section" {...getMotionItemProps(5)}>
           <span className="drawer-section-label">Provenance Summary</span>
           <dl className="drawer-facts-grid drawer-facts-grid--compact">
             <div>
@@ -780,7 +834,7 @@ function ReportQuickDrawer({
         </div>
 
         {/* 7. Footer: Read Full Report & Copy CLI */}
-        <div className="report-drawer__footer">
+        <div className="report-drawer__footer" {...getMotionItemProps(6)}>
           <button
             type="button"
             className="trace-button trace-button--secondary trace-button--sm"

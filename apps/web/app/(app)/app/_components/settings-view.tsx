@@ -4,6 +4,7 @@ import { useId, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { OverlayPortal, ModalBackdrop, CenteredDialog } from './overlay-portal';
+import { usePresence, getMotionItemProps } from '../../../../lib/entrance-motion';
 import type { DashboardSummary } from '../../../../lib/dashboard';
 import type { TraceSession } from '@trace/auth';
 import { formatDate, formatRelativeDate } from '../../../../lib/dashboard-state';
@@ -42,14 +43,28 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
 
   // Rename modal state
   const [renameTarget, setRenameTarget] = useState<DeviceItem | null>(null);
+  const [cachedRenameTarget, setCachedRenameTarget] = useState<DeviceItem | null>(null);
   const [renameInput, setRenameInput] = useState('');
   const [renamePending, setRenamePending] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (renameTarget) {
+      setCachedRenameTarget(renameTarget);
+    }
+  }, [renameTarget]);
+
   // Revoke modal state
   const [revokeTarget, setRevokeTarget] = useState<DeviceItem | null>(null);
+  const [cachedRevokeTarget, setCachedRevokeTarget] = useState<DeviceItem | null>(null);
   const [revokePending, setRevokePending] = useState(false);
   const [revokeError, setRevokeError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (revokeTarget) {
+      setCachedRevokeTarget(revokeTarget);
+    }
+  }, [revokeTarget]);
 
   // Filter revoked vs active
   const activeDevices = deviceList.filter((d) => !d.revokedAt);
@@ -179,7 +194,11 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
     <div className="settings-surface" id="settings-surface">
       {/* 1. Header & Context Bar */}
       <header className="settings-header">
-        <div className="settings-header__main">
+        <div
+          className="settings-header__main"
+          data-trace-motion="item"
+          style={{ '--motion-index': 0 } as React.CSSProperties}
+        >
           <div className="settings-header__title-group">
             <div className="settings-header__eyebrow-row">
               <span className="eyebrow">Workspace Settings</span>
@@ -219,7 +238,13 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
         </div>
 
         {/* Tab Navigation */}
-        <div className="settings-tabs-wrapper" role="region" aria-label="Settings categories">
+        <div
+          className="settings-tabs-wrapper"
+          role="region"
+          aria-label="Settings categories"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <nav className="settings-tablist" role="tablist" aria-label="Settings categories">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
@@ -253,8 +278,14 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
           role="tabpanel"
           aria-labelledby="tab-workspace"
           className="settings-section"
+          data-trace-motion="section"
+          data-motion-section="settings-workspace"
         >
-          <div className="settings-section__header">
+          <div
+            className="settings-section__header"
+            data-trace-motion="item"
+            style={{ '--motion-index': 0 } as React.CSSProperties}
+          >
             <div>
               <span className="settings-section__eyebrow">Identity & Integration</span>
               <h2 className="settings-section__title">
@@ -268,7 +299,11 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
 
           <div className="settings-facts-grid">
             {/* Workspace Panel */}
-            <div className="settings-panel">
+            <div
+              className="settings-panel"
+              data-trace-motion="item"
+              style={{ '--motion-index': 1 } as React.CSSProperties}
+            >
               <div className="settings-panel__header">
                 <div className="settings-panel__identity">
                   <div className="settings-panel__avatar">
@@ -318,7 +353,11 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
             </div>
 
             {/* GitHub Connection Panel */}
-            <div className="settings-panel">
+            <div
+              className="settings-panel"
+              data-trace-motion="item"
+              style={{ '--motion-index': 2 } as React.CSSProperties}
+            >
               <div className="settings-panel__header">
                 <div className="settings-panel__identity">
                   <div className="settings-panel__avatar settings-panel__avatar--github">
@@ -381,8 +420,14 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
           role="tabpanel"
           aria-labelledby="tab-computers"
           className="settings-section"
+          data-trace-motion="section"
+          data-motion-section="settings-computers"
         >
-          <div className="settings-section__header">
+          <div
+            className="settings-section__header"
+            data-trace-motion="item"
+            style={{ '--motion-index': 0 } as React.CSSProperties}
+          >
             <div>
               <span className="settings-section__eyebrow">Local CLI Authorization</span>
               <h2 className="settings-section__title">
@@ -394,13 +439,21 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
             </span>
           </div>
 
-          <p className="settings-section__lead">
+          <p
+            className="settings-section__lead"
+            data-trace-motion="item"
+            style={{ '--motion-index': 1 } as React.CSSProperties}
+          >
             These computers are authorized to compile local AST changes and send approved TRACE projection records to this workspace. Token digests are stored as one-way hashes on the server and never include your browser session credentials.
           </p>
 
           {/* Active Devices List */}
           {activeDevices.length > 0 ? (
-            <div className="settings-device-list">
+            <div
+              className="settings-device-list"
+              data-trace-motion="item"
+              style={{ '--motion-index': 2 } as React.CSSProperties}
+            >
               {activeDevices.map((device, idx) => {
                 const isMacBook = device.label.toLowerCase().includes('macbook');
                 const isCurrentDevice = idx === 0;
@@ -563,8 +616,14 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
           role="tabpanel"
           aria-labelledby="tab-privacy"
           className="settings-section"
+          data-trace-motion="section"
+          data-motion-section="settings-privacy"
         >
-          <div className="settings-section__header">
+          <div
+            className="settings-section__header"
+            data-trace-motion="item"
+            style={{ '--motion-index': 0 } as React.CSSProperties}
+          >
             <div>
               <span className="settings-section__eyebrow">Trust & Data Architecture</span>
               <h2 className="settings-section__title">
@@ -572,14 +631,22 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
               </h2>
             </div>
           </div>
-          <p className="settings-section__lead">
+          <p
+            className="settings-section__lead"
+            data-trace-motion="item"
+            style={{ '--motion-index': 1 } as React.CSSProperties}
+          >
             TRACE enforces a source-isolated local analysis architecture. Full source code, inline snippets, and developer credentials never leave your workstation.
           </p>
 
           {/* Two-Column Comparison Matrix: Sent vs Never Sent */}
           <div className="settings-privacy-grid">
             {/* Column 1: Synchronized Records */}
-            <div className="settings-privacy-panel">
+            <div
+              className="settings-privacy-panel"
+              data-trace-motion="item"
+              style={{ '--motion-index': 2 } as React.CSSProperties}
+            >
               <div className="settings-privacy-panel__header">
                 <div className="settings-privacy-panel__title-group">
                   <div className="settings-privacy-panel__icon settings-privacy-panel__icon--sync">
@@ -629,7 +696,11 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
             </div>
 
             {/* Column 2: Strictly Excluded */}
-            <div className="settings-privacy-panel">
+            <div
+              className="settings-privacy-panel"
+              data-trace-motion="item"
+              style={{ '--motion-index': 3 } as React.CSSProperties}
+            >
               <div className="settings-privacy-panel__header">
                 <div className="settings-privacy-panel__title-group">
                   <div className="settings-privacy-panel__icon settings-privacy-panel__icon--excluded">
@@ -681,7 +752,11 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
           </div>
 
           {/* Security & Verification Guarantee Bar */}
-          <div className="settings-guarantee-bar">
+          <div
+            className="settings-guarantee-bar"
+            data-trace-motion="item"
+            style={{ '--motion-index': 4 } as React.CSSProperties}
+          >
             <div className="settings-guarantee-bar__info">
               <div className="settings-guarantee-bar__icon">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -713,8 +788,14 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
           role="tabpanel"
           aria-labelledby="tab-cli"
           className="settings-section"
+          data-trace-motion="section"
+          data-motion-section="settings-cli"
         >
-          <div className="settings-section__header">
+          <div
+            className="settings-section__header"
+            data-trace-motion="item"
+            style={{ '--motion-index': 0 } as React.CSSProperties}
+          >
             <div>
               <span className="settings-section__eyebrow">Developer Operations</span>
               <h2 className="settings-section__title">
@@ -722,13 +803,21 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
               </h2>
             </div>
           </div>
-          <p className="settings-section__lead">
+          <p
+            className="settings-section__lead"
+            data-trace-motion="item"
+            style={{ '--motion-index': 1 } as React.CSSProperties}
+          >
             Browser sessions do not execute repository analysis or touch local file systems. Run the TRACE CLI in your local terminal to parse AST boundaries and synchronize approved records.
           </p>
 
           <div className="settings-cli-grid">
             {/* Step 1: Analyze */}
-            <div className="settings-cli-card">
+            <div
+              className="settings-cli-card"
+              data-trace-motion="item"
+              style={{ '--motion-index': 2 } as React.CSSProperties}
+            >
               <div className="settings-cli-card__body">
                 <div className="settings-cli-card__head">
                   <span className="settings-cli-card__step-num">1</span>
@@ -763,7 +852,11 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
             </div>
 
             {/* Step 2: Dry Run */}
-            <div className="settings-cli-card">
+            <div
+              className="settings-cli-card"
+              data-trace-motion="item"
+              style={{ '--motion-index': 3 } as React.CSSProperties}
+            >
               <div className="settings-cli-card__body">
                 <div className="settings-cli-card__head">
                   <span className="settings-cli-card__step-num">2</span>
@@ -798,7 +891,11 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
             </div>
 
             {/* Step 3: Synchronize */}
-            <div className="settings-cli-card">
+            <div
+              className="settings-cli-card"
+              data-trace-motion="item"
+              style={{ '--motion-index': 4 } as React.CSSProperties}
+            >
               <div className="settings-cli-card__body">
                 <div className="settings-cli-card__head">
                   <span className="settings-cli-card__step-num">3</span>
@@ -842,8 +939,14 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
           role="tabpanel"
           aria-labelledby="tab-account"
           className="settings-section"
+          data-trace-motion="section"
+          data-motion-section="settings-account"
         >
-          <div className="settings-section__header">
+          <div
+            className="settings-section__header"
+            data-trace-motion="item"
+            style={{ '--motion-index': 0 } as React.CSSProperties}
+          >
             <div>
               <span className="settings-section__eyebrow">Identity & Session</span>
               <h2 className="settings-section__title">
@@ -852,7 +955,11 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
             </div>
           </div>
 
-          <div className="settings-account-card">
+          <div
+            className="settings-account-card"
+            data-trace-motion="item"
+            style={{ '--motion-index': 1 } as React.CSSProperties}
+          >
             <div className="settings-account-card__info">
               <div className="settings-account-card__avatar">
                 MM
@@ -881,148 +988,216 @@ export function SettingsView({ summary, session, devices: initialDevices }: Sett
       )}
 
       {/* Rename Modal */}
-      {renameTarget ? (
-        <OverlayPortal>
-          <ModalBackdrop onClose={closeRenameModal} ariaLabel="Close dialog">
-            <CenteredDialog
-              size="md"
-              titleId="rename-dialog-title"
-              onClose={closeRenameModal}
-            >
-              <div className="trace-dialog__header">
-                <h3 id="rename-dialog-title" className="trace-dialog__title">
-                  Rename Authorized Computer
-                </h3>
-                <button
-                  type="button"
-                  onClick={closeRenameModal}
-                  disabled={renamePending}
-                  className="trace-dialog__close"
-                  aria-label="Close dialog"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <form onSubmit={handleRenameSubmit} className="settings-modal-form">
-                <div className="settings-form-group">
-                  <label htmlFor="device-label-input" className="settings-form-label">
-                    Computer Label
-                  </label>
-                  <input
-                    id="device-label-input"
-                    type="text"
-                    value={renameInput}
-                    onChange={(e) => setRenameInput(e.target.value)}
-                    disabled={renamePending}
-                    maxLength={80}
-                    className="trace-input"
-                    autoFocus
-                  />
-                  <p className="settings-form-hint">
-                    Device ID: {renameTarget.id}
-                  </p>
-                </div>
-
-                {renameError ? (
-                  <p className="settings-form-error" role="alert">
-                    {renameError}
-                  </p>
-                ) : null}
-
-                <div className="trace-dialog__actions">
-                  <button
-                    type="button"
-                    onClick={closeRenameModal}
-                    disabled={renamePending}
-                    className="trace-button trace-button--secondary"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={renamePending || !renameInput.trim()}
-                    className="trace-button trace-button--primary"
-                  >
-                    {renamePending ? 'Saving...' : 'Save Label'}
-                  </button>
-                </div>
-              </form>
-            </CenteredDialog>
-          </ModalBackdrop>
-        </OverlayPortal>
+      {cachedRenameTarget ? (
+        <DeviceRenameModal
+          device={cachedRenameTarget}
+          isOpen={Boolean(renameTarget)}
+          onClose={closeRenameModal}
+          onSubmit={handleRenameSubmit}
+          renameInput={renameInput}
+          setRenameInput={setRenameInput}
+          renamePending={renamePending}
+          renameError={renameError}
+        />
       ) : null}
 
       {/* Revoke Modal */}
-      {revokeTarget ? (
-        <OverlayPortal>
-          <ModalBackdrop onClose={closeRevokeModal} ariaLabel="Close dialog">
-            <CenteredDialog
-              size="md"
-              titleId="revoke-dialog-title"
-              onClose={closeRevokeModal}
-            >
-              <div className="trace-dialog__header">
-                <div className="settings-modal-title-with-icon">
-                  <div className="settings-modal-warning-icon">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                    </svg>
-                  </div>
-                  <h3 id="revoke-dialog-title" className="trace-dialog__title">
-                    Revoke Computer Authorization
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={closeRevokeModal}
-                  disabled={revokePending}
-                  className="trace-dialog__close"
-                  aria-label="Close dialog"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="settings-modal-body">
-                <p className="settings-modal-lead">
-                  Are you sure you want to revoke authorization for <strong>“{revokeTarget.label}”</strong>?
-                </p>
-                <div className="settings-modal-note">
-                  <p>• Future local synchronization from this computer will stop immediately.</p>
-                  <p>• Historical project records, AST metrics, and architectural decisions will remain preserved in workspace memory.</p>
-                </div>
-              </div>
-
-              {revokeError ? (
-                <p className="settings-form-error" role="alert">
-                  {revokeError}
-                </p>
-              ) : null}
-
-              <div className="trace-dialog__actions">
-                <button
-                  type="button"
-                  onClick={closeRevokeModal}
-                  disabled={revokePending}
-                  className="trace-button trace-button--secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRevokeConfirm}
-                  disabled={revokePending}
-                  className="trace-button trace-button--secondary trace-button--danger"
-                >
-                  {revokePending ? 'Revoking...' : 'Revoke Authorization'}
-                </button>
-              </div>
-            </CenteredDialog>
-          </ModalBackdrop>
-        </OverlayPortal>
+      {cachedRevokeTarget ? (
+        <DeviceRevokeModal
+          device={cachedRevokeTarget}
+          isOpen={Boolean(revokeTarget)}
+          onClose={closeRevokeModal}
+          onConfirm={handleRevokeConfirm}
+          revokePending={revokePending}
+          revokeError={revokeError}
+        />
       ) : null}
     </div>
+  );
+}
+
+function DeviceRenameModal({
+  device,
+  isOpen,
+  onClose,
+  onSubmit,
+  renameInput,
+  setRenameInput,
+  renamePending,
+  renameError,
+}: {
+  device: DeviceItem;
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (e: React.FormEvent) => void;
+  renameInput: string;
+  setRenameInput: (val: string) => void;
+  renamePending: boolean;
+  renameError: string | null;
+}) {
+  const presence = usePresence(isOpen);
+
+  if (!presence.isMounted) return null;
+
+  return (
+    <OverlayPortal>
+      <ModalBackdrop onClose={onClose} ariaLabel="Close dialog">
+        <CenteredDialog
+          size="md"
+          titleId="rename-dialog-title"
+          onClose={onClose}
+        >
+          <div className="trace-dialog__header" {...getMotionItemProps(0)}>
+            <h3 id="rename-dialog-title" className="trace-dialog__title">
+              Rename Authorized Computer
+            </h3>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={renamePending}
+              className="trace-dialog__close"
+              aria-label="Close dialog"
+            >
+              ✕
+            </button>
+          </div>
+
+          <form onSubmit={onSubmit} className="settings-modal-form">
+            <div className="settings-form-group" {...getMotionItemProps(1)}>
+              <label htmlFor="device-label-input" className="settings-form-label">
+                Computer Label
+              </label>
+              <input
+                id="device-label-input"
+                type="text"
+                value={renameInput}
+                onChange={(e) => setRenameInput(e.target.value)}
+                disabled={renamePending}
+                maxLength={80}
+                className="trace-input"
+                autoFocus
+              />
+              <p className="settings-form-hint">
+                Device ID: {device.id}
+              </p>
+            </div>
+
+            {renameError ? (
+              <p className="settings-form-error" role="alert">
+                {renameError}
+              </p>
+            ) : null}
+
+            <div className="trace-dialog__actions" {...getMotionItemProps(2)}>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={renamePending}
+                className="trace-button trace-button--secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={renamePending || !renameInput.trim()}
+                className="trace-button trace-button--primary"
+              >
+                {renamePending ? 'Saving...' : 'Save Label'}
+              </button>
+            </div>
+          </form>
+        </CenteredDialog>
+      </ModalBackdrop>
+    </OverlayPortal>
+  );
+}
+
+function DeviceRevokeModal({
+  device,
+  isOpen,
+  onClose,
+  onConfirm,
+  revokePending,
+  revokeError,
+}: {
+  device: DeviceItem;
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  revokePending: boolean;
+  revokeError: string | null;
+}) {
+  const presence = usePresence(isOpen);
+
+  if (!presence.isMounted) return null;
+
+  return (
+    <OverlayPortal>
+      <ModalBackdrop onClose={onClose} ariaLabel="Close dialog">
+        <CenteredDialog
+          size="md"
+          titleId="revoke-dialog-title"
+          onClose={onClose}
+        >
+          <div className="trace-dialog__header" {...getMotionItemProps(0)}>
+            <div className="settings-modal-title-with-icon">
+              <div className="settings-modal-warning-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                </svg>
+              </div>
+              <h3 id="revoke-dialog-title" className="trace-dialog__title">
+                Revoke Computer Authorization
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={revokePending}
+              className="trace-dialog__close"
+              aria-label="Close dialog"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="settings-modal-body" {...getMotionItemProps(1)}>
+            <p className="settings-modal-lead">
+              Are you sure you want to revoke authorization for <strong>“{device.label}”</strong>?
+            </p>
+            <div className="settings-modal-note">
+              <p>• Future local synchronization from this computer will stop immediately.</p>
+              <p>• Historical project records, AST metrics, and architectural decisions will remain preserved in workspace memory.</p>
+            </div>
+          </div>
+
+          {revokeError ? (
+            <p className="settings-form-error" role="alert">
+              {revokeError}
+            </p>
+          ) : null}
+
+          <div className="trace-dialog__actions" {...getMotionItemProps(2)}>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={revokePending}
+              className="trace-button trace-button--secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={revokePending}
+              className="trace-button trace-button--secondary trace-button--danger"
+            >
+              {revokePending ? 'Revoking...' : 'Revoke Authorization'}
+            </button>
+          </div>
+        </CenteredDialog>
+      </ModalBackdrop>
+    </OverlayPortal>
   );
 }

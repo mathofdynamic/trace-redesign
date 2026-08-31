@@ -41,15 +41,25 @@ export default async function OnboardingPage() {
 
   return (
     <main className="onboarding-shell">
-      <div className="auth-shell__top">
+      <div
+        className="auth-shell__top"
+        data-trace-motion="item"
+        style={{ '--motion-index': 0 } as React.CSSProperties}
+      >
         <span className="wordmark">
           <TraceMark size={20} />
           <span>TRACE</span>
         </span>
         <span className="onboarding-step">Setup</span>
       </div>
-      <SetupProgress current={1} />
-      <section className="onboarding-card">
+      <div data-trace-motion="item" style={{ '--motion-index': 1 } as React.CSSProperties}>
+        <SetupProgress current={1} />
+      </div>
+      <section
+        className="onboarding-card"
+        data-trace-motion="item"
+        style={{ '--motion-index': 2 } as React.CSSProperties}
+      >
         <p className="section-label">Your workspace</p>
         <h1>Who will use this TRACE workspace?</h1>
         <p>

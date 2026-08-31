@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useId, useCallback } from 'react';
+import {
+  usePresence,
+  getMotionStyle,
+} from '../../../../lib/entrance-motion';
 
 export interface TraceSelectOption {
   value: string;
@@ -44,6 +48,8 @@ export function TraceSelect({
   const listboxId = `${id}-listbox`;
 
   const [isOpen, setIsOpen] = useState(false);
+  const presence = usePresence(isOpen);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
@@ -223,7 +229,7 @@ export function TraceSelect({
         </span>
       </button>
 
-      {isOpen && (
+      {presence.isMounted && (
         <ul
           ref={listboxRef}
           id={listboxId}
@@ -231,6 +237,10 @@ export function TraceSelect({
           tabIndex={-1}
           aria-label={effectiveAriaLabel}
           className="trace-select-listbox"
+          data-trace-motion="surface"
+          data-motion-variant="popover"
+          data-presence-state={presence.presenceState}
+          data-trace-presence={presence.presenceState}
         >
           {options.map((opt, idx) => {
             const isSelected = opt.value === value;
@@ -245,6 +255,9 @@ export function TraceSelect({
                 aria-disabled={opt.disabled}
                 data-selected={isSelected}
                 data-highlighted={isHighlighted}
+                data-trace-motion="item"
+                data-motion-item="true"
+                style={getMotionStyle(idx, { delayMs: Math.min(idx * 25, 120) })}
                 className={`trace-select-option ${isSelected ? 'trace-select-option--selected' : ''} ${isHighlighted ? 'trace-select-option--highlighted' : ''} ${opt.disabled ? 'trace-select-option--disabled' : ''}`}
                 onClick={() => selectOption(idx)}
                 onMouseEnter={() => !opt.disabled && setHighlightedIndex(idx)}

@@ -18,7 +18,12 @@ export default function ProductPage() {
         {/* =================================================================
             System Architecture Diagram Flow (Reasoning Pipeline)
             ================================================================= */}
-        <section className="product-architecture-flow" aria-label="TRACE System Architecture Flow">
+        <section
+          className="product-architecture-flow"
+          aria-label="TRACE System Architecture Flow"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <div className="architecture-flow__title">
             <div className="architecture-flow__title-left">
               <TraceMark size={14} />
@@ -28,11 +33,13 @@ export default function ProductPage() {
           </div>
 
           <div className="architecture-flow__nodes" role="list">
-            {pipelineNodes.map((node) => (
+            {pipelineNodes.map((node, idx) => (
               <div
                 key={node.step}
                 className={`arch-node ${node.active ? 'arch-node--active' : ''}`}
                 role="listitem"
+                data-trace-motion="item"
+                style={{ '--motion-index': idx + 2 } as React.CSSProperties}
               >
                 <div className="arch-node__header">
                   <span className="arch-node__step">{node.step}</span>
@@ -48,15 +55,29 @@ export default function ProductPage() {
         {/* =================================================================
             Layered Core Capabilities (Mapped to Pipeline Stages)
             ================================================================= */}
-        <section className="product-capability-stack" aria-label="Core Product Capabilities">
-          <div className="section-header-compact" style={{ marginBottom: '16px' }}>
+        <section
+          className="product-capability-stack"
+          aria-label="Core Product Capabilities"
+          data-trace-motion="section"
+          data-motion-section="capabilities"
+        >
+          <div
+            className="section-header-compact"
+            data-trace-motion="item"
+            style={{ marginBottom: '16px', '--motion-index': 0 } as React.CSSProperties}
+          >
             <SectionLabel>Core Capabilities</SectionLabel>
             <h2>Layered intelligence across the change lifecycle.</h2>
             <p>Each capability maps directly to a verified stage of the reasoning pipeline.</p>
           </div>
 
-          {capabilities.map((cap) => (
-            <article className="capability-layer" key={cap.index}>
+          {capabilities.map((cap, idx) => (
+            <article
+              className="capability-layer"
+              key={cap.index}
+              data-trace-motion="item"
+              style={{ '--motion-index': idx + 1 } as React.CSSProperties}
+            >
               <div className="capability-layer__content">
                 <div className="capability-layer__stage-badge">
                   <span className="capability-layer__index">{cap.index}</span>
@@ -89,16 +110,26 @@ export default function ProductPage() {
         {/* =================================================================
             Local-First Boundary & Privacy Guarantees
             ================================================================= */}
-        <section className="product-boundary-section" aria-labelledby="boundary-heading">
-          <div className="section-header-compact">
+        <section
+          className="product-boundary-section"
+          data-trace-motion="section"
+          data-motion-section="boundary"
+          aria-labelledby="boundary-heading"
+        >
+          <div className="section-header-compact" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <SectionLabel>Privacy & architectural boundary</SectionLabel>
             <h2 id="boundary-heading">Strict local-first boundaries by design.</h2>
             <p>Verification occurs where your code lives. Raw source code never leaves your perimeter.</p>
           </div>
 
           <div className="product-boundary-grid">
-            {boundaryItems.map((item) => (
-              <div className="boundary-card" key={item.title}>
+            {boundaryItems.map((item, idx) => (
+              <div
+                className="boundary-card"
+                key={item.title}
+                data-trace-motion="item"
+                style={{ '--motion-index': idx + 1 } as React.CSSProperties}
+              >
                 <div className="boundary-card__header">
                   <span className="boundary-card__tag">{item.tag}</span>
                 </div>
@@ -112,8 +143,13 @@ export default function ProductPage() {
         {/* =================================================================
             Current Implementation Truth Disclosure
             ================================================================= */}
-        <section className="product-status-band" aria-labelledby="status-heading">
-          <div className="product-status-band__header">
+        <section
+          className="product-status-band"
+          data-trace-motion="section"
+          data-motion-section="status"
+          aria-labelledby="status-heading"
+        >
+          <div className="product-status-band__header" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <div className="product-status-band__header-title">
               <TraceMark size={14} />
               <h3 id="status-heading">Current implementation truth</h3>
@@ -122,7 +158,7 @@ export default function ProductPage() {
           </div>
 
           <div className="product-status-band__grid">
-            <div className="status-column">
+            <div className="status-column" data-trace-motion="item" style={{ '--motion-index': 1 } as React.CSSProperties}>
               <h4>What exists and works now</h4>
               <ul>
                 {productStatus.exists.map((point) => (
@@ -131,7 +167,7 @@ export default function ProductPage() {
               </ul>
             </div>
 
-            <div className="status-column status-column--planned">
+            <div className="status-column status-column--planned" data-trace-motion="item" style={{ '--motion-index': 2 } as React.CSSProperties}>
               <h4>What is planned for future phases</h4>
               <ul>
                 {productStatus.planned.map((point) => (
@@ -141,7 +177,7 @@ export default function ProductPage() {
             </div>
           </div>
 
-          <div className="product-status-band__footer">
+          <div className="product-status-band__footer" data-trace-motion="item" style={{ '--motion-index': 3 } as React.CSSProperties}>
             <Link className="inline-link" href="/specification">
               Read the .trace artifact specification →
             </Link>

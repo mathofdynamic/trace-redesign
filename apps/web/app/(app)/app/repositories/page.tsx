@@ -91,8 +91,14 @@ export default async function RepositoriesPage({ searchParams }: RepositoriesPag
   if (!installations.length) {
     return (
       <div className="dashboard-page redesign-page repositories-page">
-        <SetupProgress current={2} />
-        <div className="dashboard-page-header">
+        <div data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
+          <SetupProgress current={2} />
+        </div>
+        <div
+          className="dashboard-page-header"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <div>
             <span className="eyebrow">WORKSPACE SETUP</span>
             <h1>Connect your repositories.</h1>
@@ -105,12 +111,21 @@ export default async function RepositoriesPage({ searchParams }: RepositoriesPag
         </div>
 
         {message ? (
-          <p className="auth-error-block" role="status">
+          <p
+            className="auth-error-block"
+            role="status"
+            data-trace-motion="item"
+            style={{ '--motion-index': 2 } as React.CSSProperties}
+          >
             {message}
           </p>
         ) : null}
 
-        <section className="empty-panel empty-panel--large repository-connect-panel">
+        <section
+          className="empty-panel empty-panel--large repository-connect-panel"
+          data-trace-motion="item"
+          style={{ '--motion-index': message ? 3 : 2 } as React.CSSProperties}
+        >
           <span className="empty-glyph" aria-hidden="true">
             ↗
           </span>
@@ -141,8 +156,14 @@ export default async function RepositoriesPage({ searchParams }: RepositoriesPag
   if (!repositories.length) {
     return (
       <div className="dashboard-page redesign-page repositories-page">
-        <SetupProgress current={3} />
-        <div className="dashboard-page-header">
+        <div data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
+          <SetupProgress current={3} />
+        </div>
+        <div
+          className="dashboard-page-header"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <div>
             <span className="eyebrow">REPOSITORY ACCESS</span>
             <h1>No repositories granted</h1>
@@ -155,12 +176,21 @@ export default async function RepositoriesPage({ searchParams }: RepositoriesPag
         </div>
 
         {message ? (
-          <p className="auth-error-block" role="status">
+          <p
+            className="auth-error-block"
+            role="status"
+            data-trace-motion="item"
+            style={{ '--motion-index': 2 } as React.CSSProperties}
+          >
             {message}
           </p>
         ) : null}
 
-        <section className="empty-panel empty-panel--large">
+        <section
+          className="empty-panel empty-panel--large"
+          data-trace-motion="item"
+          style={{ '--motion-index': message ? 3 : 2 } as React.CSSProperties}
+        >
           <span className="empty-glyph" aria-hidden="true">
             ◌
           </span>

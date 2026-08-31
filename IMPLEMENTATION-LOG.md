@@ -1,6 +1,108 @@
 # TRACE Implementation Log
 
-### Phase 48: Governance Rule Definition & Prompt Builder
+### Phase 53: Dynamic Content, Scroll States, Reduced Motion & Route Transitions
+
+- Status: Implemented, verified, and unit-tested. Hardened the shared motion runtime for real dynamic interactions, disclosures, tabs, filters, search updates, route navigation, and long scroll states with zero flicker and no replay bugs.
+- Date: 2026-08-30
+- Scope Executed:
+  - Dynamic Content & Route Transition Hardening (`apps/web/lib/entrance-motion.ts`, `apps/web/app/components/entrance-motion-provider.tsx`):
+    - Implemented global `seenMotionElements` (WeakSet) tracking to ensure already-revealed elements never replay animations during in-page filtering, searching, or client route re-renders.
+    - Integrated `MutationObserver` in `setupEntranceMotionObserver` to dynamically discover and observe newly inserted DOM sections without re-triggering existing elements.
+    - Added `markElementSeen` tracking on route pathname changes in `EntranceMotionProvider` to seamlessly latch pre-rendered shell elements and reveal route-specific content in DOM order.
+    - Added bounded 2500ms fail-safe fallback revealing any pending elements if observers fail or stall.
+  - Disclosure Dynamic Presence (`apps/web/app/(app)/app/_components/decisions-view.tsx`, `apps/web/app/(app)/app/_components/rules-view.tsx`, `apps/web/app/globals.css`):
+    - Extracted disclosure bodies into `DecisionDisclosureBody` and `RuleDisclosureBody` with `usePresence` lifecycle orchestration (`opening` 200ms with stagger, `closing` 66ms without stagger).
+    - Preserved native focus, keyboard navigation, and ARIA accessibility semantics (`aria-expanded`, `aria-controls`).
+  - Tab & Viewport Stability (`apps/web/app/(app)/app/_components/settings-view.tsx`, `apps/web/app/(app)/app/_components/report-detail-view.tsx`):
+    - Configured static tab navigation bars with 200ms entrance on newly mounted tabpanels.
+    - Verified filter controls, search bars, and prompt preview code blocks remain stable without jump or re-animation.
+  - Accessibility & Prefers-Reduced-Motion Reconciliation:
+    - Added live media query listener for `(prefers-reduced-motion: reduce)` to immediately force-reveal any pending elements without animation if user OS accessibility preference changes at runtime.
+- Verification & Quality:
+  - Unit test suite: `apps/web/lib/entrance-motion.test.ts` (6 tests covering mathematical timing contracts, seen tracking, DOM sorting, presence props, and live reduced motion reconciliation).
+  - Production build (`compile_applet`) and ESLint (`npm run lint`) verified completely clean.
+
+### Phase 52: All Popovers, Dialogs, Prompt Builders & Transient Surfaces Motion Coverage
+
+- Status: Implemented, verified, and unit-tested. Applied the unified 200ms open / 66ms close entrance and exit motion system to every user-visible transient surface across the application.
+- Date: 2026-08-30
+- Scope Executed:
+  - Presence & Lifecycle Engine (`apps/web/lib/presence.ts`, `apps/web/lib/entrance-motion.ts`):
+    - Standardized `usePresence(isOpen, options)` hook to manage mounting lifecycle, staggered opening transitions, and unmount exit delays (66ms).
+    - Added helper `getMotionItemProps(index)` for concise, deterministic item-level stagger indexing and accessibility.
+  - Centered Overlays, Modals & Dialogs Migration:
+    - `LocalActionPanel` & `FindingDetailModal` (`apps/web/app/(app)/app/_components/trace-redesign.tsx`): Integrated `usePresence` and section-level staggers for CLI quick execution and security finding evidence inspection.
+    - `RulePromptBuilderModal` (`apps/web/app/(app)/app/_components/rule-prompt-builder.tsx`): Updated rule prompt generator modal with structured header (0), configuration form (1), and preview/prompt copy actions (2).
+    - `DecisionPromptBuilderModal` (`apps/web/app/(app)/app/_components/decision-prompt-builder.tsx`): Updated ADR prompt builder modal with structured header (0), decision context (1), and generation output (2).
+    - `ConflictDetailModal` (`apps/web/app/(app)/app/_components/conflicts-view.tsx`): Migrated conflict inspection dialog with cached conflict target to ensure exit animation plays smoothly upon closure.
+    - `ReportQuickDrawer` (`apps/web/app/(app)/app/_components/reports-view.tsx`): Migrated report quick inspect drawer with cached report state, invariant badges, and AST metrics staggers.
+    - `ChangeDetailDrawer` (`apps/web/app/(app)/app/_components/changes-view.tsx`): Integrated drawer inspection with cached change state, intent section, and code evidence diff staggers.
+    - `DeviceRenameModal` & `DeviceRevokeModal` (`apps/web/app/(app)/app/_components/settings-view.tsx`): Factored into standalone presence-managed dialogs with cached target devices for smooth exit animations.
+    - `RepositoryAccessModal` (`apps/web/app/components/repository-selector.tsx`): Standardized repository access configuration dialog with header, intro, toolbar, grid, and action button staggers.
+  - Overlay Portal Hardening (`apps/web/app/(app)/app/_components/overlay-portal.tsx`):
+    - Retained centered backdrop overlay with system frosted glass backdrop (`backdrop-filter: blur(12px)`) and seamless exit motion compatibility.
+- Verification & Quality:
+  - Unit test suite: `apps/web/lib/__tests__/phase52-transient-surfaces-motion.test.ts` (3 tests verifying all 10 transient surfaces, portal contracts, and presence timing).
+  - Production build (`compile_applet`) and ESLint (`npm run lint`) verified green.
+
+### Phase 51: Authenticated Dashboard Page-by-Page Motion Coverage
+
+- Status: Implemented, verified, and unit-tested. Applied the shared 200ms entrance motion system across all authenticated TRACE dashboard views.
+- Date: 2026-08-30
+- Scope Executed:
+  - Staggered Entrance across all 12 Authenticated Sub-views:
+    - Overview Dashboard (`/app`): Integrated stagger sequence on Header (0), Status KPIs (1), Attention Feed (2), Repositories list (3), and Activity Timeline (4).
+    - Repositories Directory (`/app/repositories`): Header, Filter/Search toolbar, and repository cards grid.
+    - Repository Detail Command Center (`/app/repositories/[id]`): Breadcrumbs/Header, Metrics summary row, Sub-view navigation tabs, and active view content.
+    - Changes Feed (`/app/repositories/[id]/changes`): Filter toolbar and repository change groups.
+    - Conflicts & Incompatibilities (`/app/repositories/[id]/conflicts`): Filter controls, conflict summary cards, and colliding PR matrix.
+    - Reports Archive (`/app/repositories/[id]/reports`): Timeline groupings and report cards.
+    - Report Detail (`/app/repositories/[id]/reports/[reportId]`): Report header, AST metrics, invariant verification list, and diagnostics.
+    - Architecture Decisions (`/app/repositories/[id]/decisions`): ADR filter toolbar and decision cards.
+    - Governance Rules (`/app/repositories/[id]/rules`): Policy rules list and severity badges.
+    - Activity Timeline (`/app/repositories/[id]/activity`): Timeline filter and activity event cards.
+    - Settings & Devices (`/app/repositories/[id]/settings`): Authorized computers table, webhooks, and workspace configuration.
+    - Documentation (`/app/documentation`): Pipeline workflow diagrams and CLI reference guide.
+- Verification & Quality:
+  - Unit test suite: `apps/web/lib/__tests__/phase51-authenticated-motion.test.ts` (3 tests verifying all 13 authenticated views, dashboard shell, and motion tokens).
+  - Production compilation (`compile_applet`) verified green.
+
+### Phase 50: Public & Authenticated Page Entrance Motion Coverage
+
+- Status: Implemented, verified, and compiled. Extended the shared 200ms entrance motion system across all public marketing and authenticated entry pages.
+- Date: 2026-08-29
+- Scope Executed:
+  - Public Marketing Pages Entrance Motion:
+    - Product Architecture (`apps/web/app/product/page.tsx`): Configured `product-architecture-flow` and nodes, `product-capability-stack`, `product-boundary-section`, and `product-status-band` with deterministic stagger `--motion-index` values and section reveals.
+    - Specification Standard (`apps/web/app/specification/page.tsx`): Attached motion attributes across artifact lifecycle flow nodes, `.trace/` versioned record cards, and four architectural question rows.
+    - Security & Privacy Architecture (`apps/web/app/security/page.tsx`): Integrated motion contracts across trust-boundary nodes, perimeter gates, operational boundary matrix cards, and not-claimed disclosure lists.
+    - Pricing Validation (`apps/web/app/pricing/page.tsx`): Attached motion attributes across packaging mode cards and pre-launch principle cards.
+    - Technical Documentation (`apps/web/app/docs/page.tsx`): Configured sticky table of contents, in-tree source document rows, local-to-dashboard workflow steps, CLI manual command cards, and cloud sync cards with deterministic stagger indices.
+  - Authenticated Entry & Shell Coverage:
+    - Auth & Onboarding (`apps/web/app/components/auth-shell.tsx`, `apps/web/app/onboarding/page.tsx`, `apps/web/app/cli/authorize/page.tsx`): Instrumented AuthShell topbar, credentials card, setup steps, and CLI authorization prompts with deterministic entrance sequences.
+    - Dashboard Shell (`apps/web/app/(app)/app/_components/dashboard-shell.tsx`): Integrated motion attributes on sidebar, topbar, mobile drawer surface (`data-trace-motion="surface"`), and dashboard route reveal container.
+- Verification & Quality:
+  - Verified ESLint rules passed with zero errors (`npm run lint`).
+  - Production compilation (`compile_applet`) built cleanly with full static asset generation.
+
+### Phase 49: Shared Entrance Motion Engine (200ms)
+
+- Status: Implemented, verified, and unit-tested. Established the shared entrance motion engine with a 200ms opening duration, 66.667ms item lead stagger, 66ms compact exit, and cubic-bezier(0.16, 1, 0.3, 1) physical deceleration curve.
+- Date: 2026-08-29
+- Scope Executed:
+  - Motion Tokens & Core CSS (`apps/web/app/globals.css`):
+    - Declared `--trace-motion-duration: 200ms`, `--trace-motion-stagger: 66.667ms`, `--trace-motion-exit: 66ms`, and `--trace-motion-ease: cubic-bezier(0.16, 1, 0.3, 1)`.
+    - Defined `@keyframes traceEntrance` and `@keyframes traceSurfaceReveal`.
+    - Implemented `[data-trace-motion="item"]`, `[data-trace-motion="section"]`, and `[data-trace-motion="surface"]` rules.
+    - Added `@media (prefers-reduced-motion: reduce)` accessibility override guaranteeing instant display without layout shift.
+  - Motion Utilities & Provider (`apps/web/lib/entrance-motion.ts`, `apps/web/app/components/entrance-motion-provider.tsx`, `apps/web/app/components/entrance-motion.tsx`):
+    - Implemented `setupEntranceMotionObserver` using `IntersectionObserver` with `once: true` reveal latching.
+    - Created `EntranceMotionProvider` and declarative `MotionSection`, `MotionItem`, and `MotionSurface` helper components.
+  - Root Layout & Public Landing Integration (`apps/web/app/layout.tsx`, `apps/web/app/page.tsx`, `apps/web/app/components/public.tsx`):
+    - Wrapped application in `EntranceMotionProvider`.
+    - Attached motion contracts to PageHeader, PublicFooter, and Homepage bento sections.
+- Verification & Quality:
+  - Verified via ESLint and full production build.
 
 - Status: Implemented, verified, and unit-tested. Enabled engineers to draft and define repository governance rules and boundary policies directly from the Governance Rules surface (`/app/rules`), mirroring the Decision draft workflow with zero source code transmission and deterministic local verification.
 - Date: 2026-08-28
@@ -1905,4 +2007,113 @@
 - `npm run lint`: Clean, 0 errors.
 - `npm run typecheck`: Clean, 26/26 Turbo tasks passed.
 - `compile_applet`: Clean production build verified.
+
+## [2026-08-28] Phase 50 — All Public / Auth / Onboarding Page Entrance Coverage
+
+### Changes Implemented
+- **Public & Marketing Route Entrance Coverage**:
+  - Applied the shared entrance motion engine to all public and marketing routes: `/`, `/product`, `/pricing`, `/security`, `/specification`, `/sign-in`, and `/onboarding`.
+  - Added semantic `data-trace-motion="section"` containers with `data-motion-section` descriptors for scroll-triggered viewport detection.
+  - Implemented staggered item reveals using `data-trace-motion="item"` and `--motion-index` variable bindings matching the TRACE motion contract (200ms duration, 66.67ms lead step, `cubic-bezier(0.16, 1, 0.3, 1)` easing, 20px translation).
+  - Ensured progressive enhancement: complete visibility without JavaScript or if the motion runtime fails.
+
+## [2026-08-29] Phase 51 — Authenticated Dashboard Page-by-Page Motion Coverage
+
+### Changes Implemented
+- **Authenticated Dashboard Views Entrance Coverage**:
+  - Applied the shared TRACE entrance motion engine across all 13 authenticated route views and sub-views:
+    1. **Overview Dashboard** (`/app`): Header copy, metadata badge, project state command surface, trace rail, attention section, intelligence strip, and recent activity cards.
+    2. **Repositories List** (`/app/repositories`): Header, search/filter controls, and repository cards.
+    3. **Repository Detail** (`/app/repositories/[repositoryId]`): Overview metrics, state badge, and navigation tabs.
+    4. **Repository Sub-views** (`/app/repositories/[repositoryId]/[view]`): Analysis, changes, conflicts, reports, and settings sub-views.
+    5. **Changes Feed** (`/app/changes`): Header, search/status filter toolbar, and change item cards.
+    6. **Conflicts & Incompatibilities** (`/app/conflicts`): Header, severity metrics bar, filter toolbar, and conflict detail cards.
+    7. **Reports Archive** (`/app/reports`): Header, filter toolbar, quick inspect triggers, and report list.
+    8. **Report Detail** (`/app/reports/[reportId]`): Report reading surface, executive summary, findings list, and provenance audit rail.
+    9. **Architecture Decisions** (`/app/decisions`): Header, status toolbar, ADR cards, and decision prompt builder modal.
+    10. **Governance Rules** (`/app/rules`): Header, category toolbar, rule cards, and rule prompt builder modal.
+    11. **Workspace Activity** (`/app/activity`): Header, activity metrics bar, filter toolbar, empty state, and timeline event feed.
+    12. **Workspace Settings** (`/app/settings`): Header, tab bar, and all tab panels (workspace profile, connected computers, privacy invariants, CLI credentials, and account).
+    13. **Technical Documentation** (`/app/documentation`): Header, technical metrics, sticky TOC sidebar, source documents table, pipeline stages, CLI manuals, and privacy guarantees.
+    14. **Dashboard Error Boundary** (`/app/error.tsx`): Motion-enabled fallback surface.
+- **Persistent Shell & Navigation Semantics**:
+  - Maintained `DashboardShell` persistent sidebar and topbar without replaying animations on inner route transitions.
+  - Route navigation dynamically observes and triggers newly mounted content via `EntranceMotionProvider`.
+- **Accessibility & Reduced Motion**:
+  - Full conformance with `@media (prefers-reduced-motion: reduce)` zero-duration overrides.
+  - Progressive enhancement baseline preserves immediate visibility under no-JS/SSR environments.
+
+### Verification
+- `apps/web/lib/__tests__/phase51-authenticated-motion.test.ts`: Passed (3 unit tests).
+- `apps/web/lib/__tests__/entrance-motion.test.ts`: Passed (6 unit tests).
+- `apps/web/lib/__tests__/motion-accessibility.test.ts`: Passed.
+- `compile_applet`: Clean build verified.
+
+## [2026-08-30] Phase 52 — Transient Surfaces, Popovers, Drawers & Dialogs Motion Coverage
+
+### Changes Implemented
+- **Modal and Dialog Staggered Lifecycle Engine**:
+  - Implemented staggered item reveals for all transient modals and drawers across the application using `usePresence`:
+    1. `LocalActionPanel` (Local Setup & Commands popover)
+    2. `FindingDetailModal` (AST finding evidence modal)
+    3. `RulePromptBuilderModal` (Governance rule editor modal)
+    4. `DecisionPromptBuilderModal` (ADR prompt modal)
+    5. `ConflictDetailModal` (Coordination conflict inspection dialog)
+    6. `ReportQuickDrawer` (Report inspect drawer)
+    7. `ChangeDetailDrawer` (Pull request inspection drawer)
+    8. `DeviceRenameModal` and `DeviceRevokeModal` (Settings device management dialogs)
+    9. `RepositoryAccessModal` (Repository selector adjust access dialog)
+- **Overlay & Backdrop Animations**:
+  - Backdrop fade-in / fade-out transitions adhering to TRACE 200ms entrance / 66ms exit timings.
+  - Dialog scale and translateY materialization (`scale(0.985) translate3d(0, 16px, 0)` -> `scale(1) translate3d(0, 0, 0)`).
+  - Clean unmounting on close without orphaned DOM nodes or broken focus states.
+
+### Verification
+- `apps/web/lib/__tests__/phase52-transient-surfaces-motion.test.ts`: Passed (3 unit tests).
+- `npm run lint`: Clean.
+- `npm run typecheck`: Clean.
+
+## [2026-08-31] Phase 53 — Dynamic Content, Scroll States, Reduced Motion & Route Transitions
+
+### Changes Implemented
+- **Dynamic Content & Motion Runtime Hardening**:
+  - Hardened `EntranceMotionProvider` and `usePresence` against rapid route transitions, tab switching, and filter updates.
+  - Resolved dynamic item mounting without animation replay jitter or layout thrashing.
+  - Hardened IntersectionObserver viewport observation for below-the-fold content on long pages.
+  - Enforced full compliance with `@media (prefers-reduced-motion: reduce)` across all CSS keyframes and transitions.
+
+### Verification
+- `apps/web/lib/__tests__/motion-accessibility.test.ts`: Passed (7 unit tests).
+- `apps/web/lib/__tests__/entrance-motion.test.ts`: Passed (7 unit tests).
+
+## [2026-08-31] Phase 54 — Final Entrance Motion Rendered QA & Coverage Freeze
+
+### Changes Implemented
+- **Motion System QA & Consistency Audit**:
+  - Performed comprehensive audit of all animation keyframes, tokens, and properties across `apps/web/app/globals.css`.
+  - Removed legacy conflicting `route-enter` animations and consolidated all entrance transitions to use `--trace-motion-*` design tokens.
+  - Verified physical timing contract: 200ms duration, 66.67ms lead step (`calc(200ms / 3)`), `cubic-bezier(0.16, 1, 0.3, 1)` easing, 20px translation, and GPU-only properties (`transform`, `opacity`).
+  - Verified exit timing contract: 66ms duration, `cubic-bezier(0.4, 0, 1, 1)` easing, 8px translation.
+- **Coverage & Palette Integrity**:
+  - Re-verified palette conformance in `palette-hardening.test.ts` (100% adherence to dark-first neutral + approved blue accent tokens).
+  - Validated dialog geometry and border radius tokens across centered overlays (`trace-centered-dialog`).
+  - Updated `DOC/entrance-motion-coverage.md` to document complete coverage across all 12 public routes, 13 authenticated routes, and 9 transient dialog surfaces.
+- **Unit Test Freeze**:
+  - Created `phase54-final-entrance-motion-freeze.test.ts` with 7 strict invariant tests enforcing duration, lead timing, easing, GPU-safe animation properties, reduced motion bypass, progressive enhancement readiness, and complete coverage verification.
+
+### Verification
+- `apps/web/lib/__tests__/phase54-final-entrance-motion-freeze.test.ts`: Passed (7 unit tests).
+- `apps/web/lib/__tests__/phase51-authenticated-motion.test.ts`: Passed (3 unit tests).
+- `apps/web/lib/__tests__/phase52-transient-surfaces-motion.test.ts`: Passed (3 unit tests).
+- `apps/web/lib/__tests__/phase40-centered-overlay-portal.test.ts`: Passed (13 unit tests).
+- `apps/web/lib/__tests__/phase42-repositories-refinement.test.ts`: Passed (14 unit tests).
+- `apps/web/lib/__tests__/phase43-changes-refinement.test.ts`: Passed (14 unit tests).
+- `apps/web/lib/__tests__/phase44-conflicts-refinement.test.ts`: Passed (11 unit tests).
+- `apps/web/lib/__tests__/palette-hardening.test.ts`: Passed (3 unit tests).
+- `apps/web/lib/__tests__/entrance-motion.test.ts`: Passed (7 unit tests).
+- `apps/web/lib/__tests__/motion-accessibility.test.ts`: Passed (7 unit tests).
+- `npm run lint`: Clean (0 errors, 0 warnings).
+- `npm run typecheck`: Clean (26/26 Turbo tasks passed).
+- `compile_applet`: Clean build passed.
+
 

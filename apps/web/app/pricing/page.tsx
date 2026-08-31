@@ -20,8 +20,13 @@ export default function PricingPage() {
         {/* =================================================================
             Packaging Direction: Structured Comparison Matrix
             ================================================================= */}
-        <section className="pricing-matrix-section" aria-labelledby="packaging-heading">
-          <div className="section-header-compact">
+        <section
+          className="pricing-matrix-section"
+          data-trace-motion="section"
+          data-motion-section="packaging"
+          aria-labelledby="packaging-heading"
+        >
+          <div className="section-header-compact" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <SectionLabel>Packaging direction</SectionLabel>
             <h2 id="packaging-heading">Three conceptual operating modes.</h2>
             <p>
@@ -30,11 +35,13 @@ export default function PricingPage() {
           </div>
 
           <div className="pricing-matrix" role="list">
-            {packagingTiers.map((tier) => (
+            {packagingTiers.map((tier, idx) => (
               <article
                 key={tier.id}
                 className={`pricing-mode-card ${tier.active ? 'pricing-mode-card--active' : ''}`}
                 role="listitem"
+                data-trace-motion="item"
+                style={{ '--motion-index': idx + 1 } as React.CSSProperties}
               >
                 <div className="pricing-mode-card__header">
                   <div className="pricing-mode-card__top">
@@ -75,16 +82,26 @@ export default function PricingPage() {
         {/* =================================================================
             Validation Commitments / Pre-launch Principles
             ================================================================= */}
-        <section className="pricing-principles-section" aria-labelledby="principles-heading">
-          <div className="section-header-compact">
+        <section
+          className="pricing-principles-section"
+          data-trace-motion="section"
+          data-motion-section="principles"
+          aria-labelledby="principles-heading"
+        >
+          <div className="section-header-compact" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <SectionLabel>Pre-launch principles</SectionLabel>
             <h2 id="principles-heading">Commercial commitments.</h2>
             <p>Core principles governing software value, artifact freedom, and future pricing.</p>
           </div>
 
           <div className="pricing-principles-grid">
-            {prelaunchPrinciples.map((item) => (
-              <div className="principle-card" key={item.title}>
+            {prelaunchPrinciples.map((item, idx) => (
+              <div
+                className="principle-card"
+                key={item.title}
+                data-trace-motion="item"
+                style={{ '--motion-index': idx + 1 } as React.CSSProperties}
+              >
                 <div className="principle-card__tag">
                   <TraceMark size={12} />
                   <span>{item.tag}</span>
@@ -99,8 +116,13 @@ export default function PricingPage() {
         {/* =================================================================
             Single High-Intent CTA
             ================================================================= */}
-        <section className="pricing-cta-section" aria-label="Join Early Build">
-          <div className="pricing-cta__inner">
+        <section
+          className="pricing-cta-section"
+          data-trace-motion="section"
+          data-motion-section="cta"
+          aria-label="Join Early Build"
+        >
+          <div className="pricing-cta__inner" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <div className="pricing-cta__copy">
               <h3>Start with the early validation build</h3>
               <p>

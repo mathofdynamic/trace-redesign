@@ -24,7 +24,12 @@ export default function SpecificationPage() {
         {/* =================================================================
             Lifecycle Visual Flow (Local Analysis -> Artifact -> Sync -> Projection)
             ================================================================= */}
-        <section className="spec-lifecycle-section" aria-label="TRACE Artifact Lifecycle">
+        <section
+          className="spec-lifecycle-section"
+          aria-label="TRACE Artifact Lifecycle"
+          data-trace-motion="item"
+          style={{ '--motion-index': 1 } as React.CSSProperties}
+        >
           <div className="spec-lifecycle__header">
             <div className="spec-lifecycle__title-group">
               <TraceMark size={14} />
@@ -39,6 +44,8 @@ export default function SpecificationPage() {
                 key={node.stage}
                 className={`spec-life-node ${node.active ? 'spec-life-node--active' : ''}`}
                 role="listitem"
+                data-trace-motion="item"
+                style={{ '--motion-index': index + 2 } as React.CSSProperties}
               >
                 <div className="spec-life-node__header">
                   <span className="spec-life-node__stage">{node.stage}</span>
@@ -67,8 +74,13 @@ export default function SpecificationPage() {
         {/* =================================================================
             Versioned-Record Relationship Architecture (.trace/ tree & linkages)
             ================================================================= */}
-        <section className="spec-relationship-section" aria-labelledby="relationships-heading">
-          <div className="section-header-compact">
+        <section
+          className="spec-relationship-section"
+          data-trace-motion="section"
+          data-motion-section="relationships"
+          aria-labelledby="relationships-heading"
+        >
+          <div className="section-header-compact" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <SectionLabel>Directory contract</SectionLabel>
             <h2 id="relationships-heading">The versioned record layer.</h2>
             <p>
@@ -77,8 +89,13 @@ export default function SpecificationPage() {
           </div>
 
           <div className="artifact-grid">
-            {artifactRelationships.map((item) => (
-              <article className="artifact-card" key={item.path}>
+            {artifactRelationships.map((item, idx) => (
+              <article
+                className="artifact-card"
+                key={item.path}
+                data-trace-motion="item"
+                style={{ '--motion-index': idx + 1 } as React.CSSProperties}
+              >
                 <div className="artifact-card__top">
                   <span className="artifact-type">{item.type}</span>
                   <span className="artifact-format"><code>{item.format}</code></span>
@@ -106,16 +123,27 @@ export default function SpecificationPage() {
         {/* =================================================================
             Four Core Questions: Structured Specification Grid
             ================================================================= */}
-        <section className="spec-questions-section" aria-labelledby="questions-heading">
-          <div className="section-header-compact">
+        <section
+          className="spec-questions-section"
+          data-trace-motion="section"
+          data-motion-section="questions"
+          aria-labelledby="questions-heading"
+        >
+          <div className="section-header-compact" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <SectionLabel>Specification depth</SectionLabel>
             <h2 id="questions-heading">Four architectural questions.</h2>
             <p>Formal definitions of storage, relationships, transport, and implementation readiness.</p>
           </div>
 
           <div className="spec-questions-list">
-            {specQuestions.map((q) => (
-              <article className="spec-question-row" key={q.id} id={q.id}>
+            {specQuestions.map((q, idx) => (
+              <article
+                className="spec-question-row"
+                key={q.id}
+                id={q.id}
+                data-trace-motion="item"
+                style={{ '--motion-index': idx + 1 } as React.CSSProperties}
+              >
                 <div className="spec-question-row__prose">
                   <div className="spec-question-row__header">
                     <span className="question-num">{q.number}</span>
@@ -123,8 +151,8 @@ export default function SpecificationPage() {
                   </div>
                   <p className="question-summary">{q.summary}</p>
                   <ul className="question-details">
-                    {q.details.map((detail, idx) => (
-                      <li key={idx}>
+                    {q.details.map((detail, dIdx) => (
+                      <li key={dIdx}>
                         <span className="detail-bullet" aria-hidden="true">—</span>
                         <span>{detail}</span>
                       </li>
@@ -149,8 +177,13 @@ export default function SpecificationPage() {
         {/* =================================================================
             Specification Action / Repository Reference
             ================================================================= */}
-        <section className="spec-footer-action" aria-label="Specification Documents">
-          <div className="spec-footer-action__inner">
+        <section
+          className="spec-footer-action"
+          data-trace-motion="section"
+          data-motion-section="footer-action"
+          aria-label="Specification Documents"
+        >
+          <div className="spec-footer-action__inner" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <div className="spec-footer-action__copy">
               <h3>Inspect the open specification & RFCs</h3>
               <p>

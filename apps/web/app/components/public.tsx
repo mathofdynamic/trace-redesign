@@ -103,11 +103,11 @@ export function PublicHeader() {
   return (
     <header className={`public-header ${isScrolled ? 'public-header--scrolled' : ''}`}>
       <div className="public-header__inner">
-        <div className="public-header__brand">
+        <div className="public-header__brand" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
           <Wordmark />
         </div>
 
-        <nav className="public-nav" aria-label="Primary navigation">
+        <nav className="public-nav" aria-label="Primary navigation" data-trace-motion="item" style={{ '--motion-index': 1 } as React.CSSProperties}>
           {navItems.map(([label, href]) => {
             const isActive = pathname === href || Boolean(pathname?.startsWith(`${href}/`));
             return (
@@ -124,7 +124,7 @@ export function PublicHeader() {
           })}
         </nav>
 
-        <div className="public-header__actions">
+        <div className="public-header__actions" data-trace-motion="item" style={{ '--motion-index': 2 } as React.CSSProperties}>
           <Link className="header-signin" href="/sign-in">
             Sign in
           </Link>
@@ -158,12 +158,14 @@ export function PublicHeader() {
           id="mobile-navigation-panel"
           ref={mobileNavRef}
           className="mobile-nav-panel"
+          data-trace-motion="surface"
+          data-motion-variant="popover"
           role="dialog"
           aria-label="Mobile navigation"
         >
           <div className="mobile-nav-panel__content">
             <nav className="mobile-nav-panel__links" aria-label="Mobile primary navigation">
-              {navItems.map(([label, href]) => {
+              {navItems.map(([label, href], idx) => {
                 const isActive = pathname === href;
                 return (
                   <Link
@@ -171,6 +173,8 @@ export function PublicHeader() {
                     href={href}
                     className={`mobile-nav-link ${isActive ? 'mobile-nav-link--active' : ''}`}
                     aria-current={isActive ? 'page' : undefined}
+                    data-trace-motion="item"
+                    style={{ '--motion-index': idx } as React.CSSProperties}
                   >
                     <span>{label}</span>
                     {isActive && <span className="mobile-nav-link__bullet" aria-hidden="true" />}
@@ -179,7 +183,11 @@ export function PublicHeader() {
               })}
             </nav>
 
-            <div className="mobile-nav-panel__actions">
+            <div
+              className="mobile-nav-panel__actions"
+              data-trace-motion="item"
+              style={{ '--motion-index': navItems.length } as React.CSSProperties}
+            >
               <Link className="mobile-nav-panel__signin" href="/sign-in">
                 Sign in
               </Link>
@@ -196,11 +204,11 @@ export function PublicHeader() {
 
 export function PublicFooter() {
   return (
-    <footer className="public-footer" aria-label="Site footer">
+    <footer className="public-footer" data-trace-motion="section" data-motion-section="footer" aria-label="Site footer">
       <div className="public-container public-footer__inner">
         <div className="public-footer__grid">
           {/* Brand Thesis Column */}
-          <div className="public-footer__brand-col">
+          <div className="public-footer__brand-col" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
             <Wordmark />
             <p className="public-footer__thesis">
               Git is the history of code.<br />
@@ -212,7 +220,7 @@ export function PublicFooter() {
           </div>
 
           {/* Product Column */}
-          <div className="public-footer__col">
+          <div className="public-footer__col" data-trace-motion="item" style={{ '--motion-index': 1 } as React.CSSProperties}>
             <h3 className="public-footer__heading">Product</h3>
             <ul className="public-footer__list">
               <li>
@@ -231,7 +239,7 @@ export function PublicFooter() {
           </div>
 
           {/* Resources & Specification Column */}
-          <div className="public-footer__col">
+          <div className="public-footer__col" data-trace-motion="item" style={{ '--motion-index': 2 } as React.CSSProperties}>
             <h3 className="public-footer__heading">Resources</h3>
             <ul className="public-footer__list">
               <li>
@@ -254,7 +262,7 @@ export function PublicFooter() {
           </div>
 
           {/* Access Column */}
-          <div className="public-footer__col">
+          <div className="public-footer__col" data-trace-motion="item" style={{ '--motion-index': 3 } as React.CSSProperties}>
             <h3 className="public-footer__heading">Access</h3>
             <ul className="public-footer__list">
               <li>
@@ -271,7 +279,7 @@ export function PublicFooter() {
         </div>
 
         {/* Bottom Integrity and Disclosure Bar */}
-        <div className="public-footer__bottom">
+        <div className="public-footer__bottom" data-trace-motion="item" style={{ '--motion-index': 4 } as React.CSSProperties}>
           <div className="public-footer__disclosure">
             <span>Experimental early implementation. Public claims follow verified functionality.</span>
             <span>Zero raw source code is transmitted or stored.</span>
@@ -309,7 +317,7 @@ export function PageHeader({
   body: string;
 }) {
   return (
-    <div className="page-header">
+    <div className="page-header" data-trace-motion="item" style={{ '--motion-index': 0 } as React.CSSProperties}>
       <SectionLabel>{eyebrow}</SectionLabel>
       <h1>{title}</h1>
       <p>{body}</p>

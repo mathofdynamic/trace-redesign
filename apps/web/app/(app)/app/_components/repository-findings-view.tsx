@@ -84,7 +84,13 @@ export function RepositoryFindingsView({ findings, repository }: RepositoryFindi
   return (
     <div className="repository-findings-view" id="repository-findings-tab-content">
       {/* Findings Filter Bar */}
-      <div className="findings-filter-bar" role="search" aria-label="Filter repository findings">
+      <div
+        className="findings-filter-bar"
+        role="search"
+        aria-label="Filter repository findings"
+        data-trace-motion="item"
+        style={{ '--motion-index': 0 } as React.CSSProperties}
+      >
         <div className="findings-filter-search">
           <input
             className="trace-input findings-search-input"
@@ -177,7 +183,11 @@ export function RepositoryFindingsView({ findings, repository }: RepositoryFindi
       </div>
 
       {/* Summary Stats Strip */}
-      <div className="findings-summary-strip">
+      <div
+        className="findings-summary-strip"
+        data-trace-motion="item"
+        style={{ '--motion-index': 1 } as React.CSSProperties}
+      >
         <div className="findings-summary-stats">
           <span className="findings-stat-item">
             <strong>{filteredFindings.length}</strong> of <strong>{findings.length}</strong> finding
@@ -211,9 +221,18 @@ export function RepositoryFindingsView({ findings, repository }: RepositoryFindi
 
       {/* Findings List */}
       {filteredFindings.length > 0 ? (
-        <div className="redesign-list finding-list-redesign finding-list-redesign--standalone">
-          {filteredFindings.map((finding) => (
-            <article className="finding-row-redesign" key={finding.id}>
+        <div
+          className="redesign-list finding-list-redesign finding-list-redesign--standalone"
+          data-trace-motion="section"
+          data-motion-section="findings-filter-list"
+        >
+          {filteredFindings.map((finding, idx) => (
+            <article
+              className="finding-row-redesign"
+              key={finding.id}
+              data-trace-motion="item"
+              style={{ '--motion-index': idx } as React.CSSProperties}
+            >
               <div className="finding-row-redesign__severity">
                 <span className="severity-badge" data-severity={finding.severity}>
                   {finding.severity}
@@ -272,7 +291,11 @@ export function RepositoryFindingsView({ findings, repository }: RepositoryFindi
           ))}
         </div>
       ) : hasActiveFilters ? (
-        <div className="inline-empty redesign-empty redesign-empty--large">
+        <div
+          className="inline-empty redesign-empty redesign-empty--large"
+          data-trace-motion="item"
+          style={{ '--motion-index': 2 } as React.CSSProperties}
+        >
           <strong>No findings match your filter criteria</strong>
           <p>Try clearing your search query or selecting different severity and classification filters.</p>
           <button
@@ -284,7 +307,11 @@ export function RepositoryFindingsView({ findings, repository }: RepositoryFindi
           </button>
         </div>
       ) : (
-        <div className="inline-empty redesign-empty redesign-empty--large">
+        <div
+          className="inline-empty redesign-empty redesign-empty--large"
+          data-trace-motion="item"
+          style={{ '--motion-index': 2 } as React.CSSProperties}
+        >
           <strong>
             {repository.analysis?.status === 'completed'
               ? 'No unresolved findings'
