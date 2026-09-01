@@ -20383,10 +20383,21 @@ html[data-trace-motion-ready="true"] .trace-modal-backdrop-layer .trace-modal-ba
   animation: traceSurfaceBackdropEnter var(--trace-motion-duration, 200ms) var(--trace-motion-ease, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
 }
 
+html[data-trace-motion-ready="true"] [data-trace-motion="surface"][data-motion-variant="backdrop"][data-presence-state="closing"],
+html[data-trace-motion-ready="true"] .trace-modal-backdrop-layer[data-presence-state="closing"] .trace-modal-backdrop {
+  animation: traceSurfaceBackdropExit var(--trace-motion-exit-duration, 66ms) var(--trace-motion-exit-ease, cubic-bezier(0.4, 0, 1, 1)) forwards;
+}
+
 html[data-trace-motion-ready="true"] [data-trace-motion="surface"][data-motion-variant="dialog"],
 html[data-trace-motion-ready="true"] .trace-centered-dialog {
   opacity: 0;
   animation: traceSurfaceDialogEnter var(--trace-motion-duration, 200ms) var(--trace-motion-ease, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+html[data-trace-motion-ready="true"] [data-trace-motion="surface"][data-motion-variant="dialog"][data-presence-state="closing"],
+html[data-trace-motion-ready="true"] .trace-centered-dialog[data-presence-state="closing"],
+html[data-trace-motion-ready="true"] .trace-modal-backdrop-layer[data-presence-state="closing"] .trace-centered-dialog {
+  animation: traceSurfaceDialogExit var(--trace-motion-exit-duration, 66ms) var(--trace-motion-exit-ease, cubic-bezier(0.4, 0, 1, 1)) forwards;
 }
 
 html[data-trace-motion-ready="true"] [data-trace-motion="surface"][data-motion-variant="popover"] {
@@ -20394,9 +20405,17 @@ html[data-trace-motion-ready="true"] [data-trace-motion="surface"][data-motion-v
   animation: traceSurfacePopoverEnter var(--trace-motion-duration, 200ms) var(--trace-motion-ease, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
 }
 
+html[data-trace-motion-ready="true"] [data-trace-motion="surface"][data-motion-variant="popover"][data-presence-state="closing"] {
+  animation: traceSurfacePopoverExit var(--trace-motion-exit-duration, 66ms) var(--trace-motion-exit-ease, cubic-bezier(0.4, 0, 1, 1)) forwards;
+}
+
 html[data-trace-motion-ready="true"] [data-trace-motion="surface"][data-motion-variant="drawer"] {
   opacity: 0;
   animation: traceSurfaceDrawerEnter var(--trace-motion-duration, 200ms) var(--trace-motion-ease, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+html[data-trace-motion-ready="true"] [data-trace-motion="surface"][data-motion-variant="drawer"][data-presence-state="closing"] {
+  animation: traceSurfaceDrawerExit var(--trace-motion-exit-duration, 66ms) var(--trace-motion-exit-ease, cubic-bezier(0.4, 0, 1, 1)) forwards;
 }
 
 /* 4b. Disclosures */
@@ -20482,6 +20501,48 @@ html[data-trace-motion-ready="true"] [data-trace-motion="disclosure"][data-prese
   }
   100% {
     opacity: 1;
+  }
+}
+
+@keyframes traceSurfaceBackdropExit {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes traceSurfaceDialogExit {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, var(--trace-motion-exit-distance, 8px), 0) scale3d(0.98, 0.98, 1);
+  }
+}
+
+@keyframes traceSurfacePopoverExit {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, var(--trace-motion-exit-distance, 8px), 0) scale3d(0.98, 0.98, 1);
+  }
+}
+
+@keyframes traceSurfaceDrawerExit {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
   }
 }
 

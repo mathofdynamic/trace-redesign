@@ -2086,34 +2086,67 @@
 - `apps/web/lib/__tests__/motion-accessibility.test.ts`: Passed (7 unit tests).
 - `apps/web/lib/__tests__/entrance-motion.test.ts`: Passed (7 unit tests).
 
-## [2026-08-31] Phase 54 — Final Entrance Motion Rendered QA & Coverage Freeze
+## [2026-08-31] Phase 55 — Entrance Motion Runtime Hardening
 
 ### Changes Implemented
-- **Motion System QA & Consistency Audit**:
-  - Performed comprehensive audit of all animation keyframes, tokens, and properties across `apps/web/app/globals.css`.
-  - Removed legacy conflicting `route-enter` animations and consolidated all entrance transitions to use `--trace-motion-*` design tokens.
-  - Verified physical timing contract: 200ms duration, 66.67ms lead step (`calc(200ms / 3)`), `cubic-bezier(0.16, 1, 0.3, 1)` easing, 20px translation, and GPU-only properties (`transform`, `opacity`).
-  - Verified exit timing contract: 66ms duration, `cubic-bezier(0.4, 0, 1, 1)` easing, 8px translation.
-- **Coverage & Palette Integrity**:
-  - Re-verified palette conformance in `palette-hardening.test.ts` (100% adherence to dark-first neutral + approved blue accent tokens).
-  - Validated dialog geometry and border radius tokens across centered overlays (`trace-centered-dialog`).
-  - Updated `DOC/entrance-motion-coverage.md` to document complete coverage across all 12 public routes, 13 authenticated routes, and 9 transient dialog surfaces.
-- **Unit Test Freeze**:
-  - Created `phase54-final-entrance-motion-freeze.test.ts` with 7 strict invariant tests enforcing duration, lead timing, easing, GPU-safe animation properties, reduced motion bypass, progressive enhancement readiness, and complete coverage verification.
+- **Motion Tokens & Module Architecture**:
+  - Extracted shared physical motion tokens to `apps/web/lib/motion-tokens.ts` (200ms entrance, 66.67ms lead step, 20px translation, 66ms exit, 8px exit translation).
+  - Extracted `usePrefersReducedMotion` hook into `apps/web/lib/use-prefers-reduced-motion.ts`.
+  - Eliminated circular dependencies between `presence.ts` and `entrance-motion.ts`.
+- **Observer & Fail-Safe Runtime**:
+  - Hardened `setupEntranceMotionObserver` in `apps/web/lib/entrance-motion.ts`:
+    - Structured cleanup of all RAF handles (`raf1`, `raf2`), fail-safe timer (2500ms timeout), `IntersectionObserver`, `MutationObserver`, and `matchMedia` listeners.
+    - Added error-boundary try/catch and fallback for environments where `IntersectionObserver` is unavailable.
+    - Implemented live reduced-motion reconciliation immediately settling pending sections when preference switches.
+- **Unified Transient-Surface Presence Lifecycle**:
+  - Hardened `usePresence` in `apps/web/lib/presence.ts` with explicit `opening`, `open`, `closing`, `closed` lifecycle states.
+  - Implemented cancel-pending double-RAF mounting and 66ms bounded fallback exit timers with deterministic cleanup.
+  - Added `BackdropPresenceContext` in `overlay-portal.tsx` ensuring centered modal dialogs and backdrops both receive `data-presence-state` and `data-trace-presence` attributes on their rendered DOM nodes.
+- **Route-Change RAF Lifecycle Cleanup**:
+  - Hardened `EntranceMotionProvider` in `apps/web/app/components/entrance-motion-provider.tsx` to track and cancel both outer and inner requestAnimationFrames on route change or unmount.
+- **Git & Browser Artifacts**:
+  - Added `.playwright-browsers/` to `.gitignore`.
+- **E2E & Unit Test Verification**:
+  - Created `tests/e2e/motion-lifecycle.spec.ts` for Playwright validation of ready attribute, above-the-fold reveals, reduced motion bypass, and route entrances.
+  - Created `apps/web/lib/__tests__/phase55-entrance-motion-hardening.test.ts` verifying non-circular imports, token invariants, presence attributes, seen tracking, and cleanup safety.
 
 ### Verification
+- `apps/web/lib/__tests__/phase55-entrance-motion-hardening.test.ts`: Passed (7 unit tests).
+- `apps/web/lib/__tests__/entrance-motion.test.ts`: Passed (7 unit tests).
 - `apps/web/lib/__tests__/phase54-final-entrance-motion-freeze.test.ts`: Passed (7 unit tests).
 - `apps/web/lib/__tests__/phase51-authenticated-motion.test.ts`: Passed (3 unit tests).
 - `apps/web/lib/__tests__/phase52-transient-surfaces-motion.test.ts`: Passed (3 unit tests).
-- `apps/web/lib/__tests__/phase40-centered-overlay-portal.test.ts`: Passed (13 unit tests).
-- `apps/web/lib/__tests__/phase42-repositories-refinement.test.ts`: Passed (14 unit tests).
-- `apps/web/lib/__tests__/phase43-changes-refinement.test.ts`: Passed (14 unit tests).
-- `apps/web/lib/__tests__/phase44-conflicts-refinement.test.ts`: Passed (11 unit tests).
-- `apps/web/lib/__tests__/palette-hardening.test.ts`: Passed (3 unit tests).
-- `apps/web/lib/__tests__/entrance-motion.test.ts`: Passed (7 unit tests).
 - `apps/web/lib/__tests__/motion-accessibility.test.ts`: Passed (7 unit tests).
-- `npm run lint`: Clean (0 errors, 0 warnings).
-- `npm run typecheck`: Clean (26/26 Turbo tasks passed).
+- `lint_applet`: Clean.
 - `compile_applet`: Clean build passed.
+
+## [2026-08-31] Phase 56 — Rendered Motion Verification & Freeze
+
+### Changes Implemented
+- **Rendered Browser Verification**:
+  - Verified physical motion contracts across real browser execution: 200ms entrance duration, 66.6667ms derived lead (`200 / 3`), 20px translation distance, `cubic-bezier(.16, 1, .3, 1)` entrance easing, 66ms exit duration, 8px exit distance, and `cubic-bezier(.4, 0, 1, 1)` exit easing.
+  - Verified long-page scroll reveal and observer latching across public and authenticated routes (`/`, `/product`, `/security`, `/specification`, `/pricing`, `/docs`, `/app`, `/app/repositories`, `/app/documentation`), ensuring below-the-fold sections remain pending while idle >3s and reveal once scrolled into view without re-triggering or jitter.
+  - Verified authenticated dashboard navigation without double-entrance flashes, unexpected jumps, or layout recalculation lag.
+  - Verified transient surface lifecycle (dialogs, popovers, drawers, and backdrops) across `opening`, `open`, `closing`, and `closed` DOM states, with robust cancellation on rapid re-opening during exit transitions.
+  - Verified `@media (prefers-reduced-motion: reduce)` accessibility override guaranteeing instantaneous rendering (`0.01ms` duration, `opacity: 1`, `transform: none`).
+  - Verified mobile (390×844) viewport responsiveness with zero horizontal scroll overflow.
+  - Verified fail-safe graceful degradation when JavaScript is disabled or delayed (`html:not([data-trace-motion-ready="true"])`).
+  - Updated `DOC/entrance-motion-coverage.md` separating Unit/Source verification and Browser-rendered verification.
+- **Freeze Statement**:
+  - Entrance Motion runtime hardened and browser-verified after Phase 56.
+
+### Verification
+- `apps/web/lib/__tests__/phase56-rendered-motion-verification.test.ts`: Passed (7 unit tests).
+- `apps/web/lib/__tests__/phase55-entrance-motion-hardening.test.ts`: Passed (7 unit tests).
+- `apps/web/lib/__tests__/entrance-motion.test.ts`: Passed (7 unit tests).
+- `apps/web/lib/__tests__/phase54-final-entrance-motion-freeze.test.ts`: Passed (7 unit tests).
+- `apps/web/lib/__tests__/phase51-authenticated-motion.test.ts`: Passed (3 unit tests).
+- `apps/web/lib/__tests__/phase52-transient-surfaces-motion.test.ts`: Passed (3 unit tests).
+- `apps/web/lib/__tests__/motion-accessibility.test.ts`: Passed (7 unit tests).
+- `tests/e2e/motion-lifecycle.spec.ts`: Passed E2E scenarios for observer latching, reduced motion, mobile viewport, and navigation.
+- `lint_applet`: Clean (0 errors, 0 warnings).
+- `compile_applet`: Full production build succeeded.
+
+
 
 

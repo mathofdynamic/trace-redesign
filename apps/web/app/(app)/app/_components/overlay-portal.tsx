@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useContext, createContext } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  EXIT_DURATION_MS,
-  usePrefersReducedMotion,
-} from '../../../../lib/entrance-motion';
+import { EXIT_DURATION_MS } from '../../../../lib/motion-tokens';
+import { usePrefersReducedMotion } from '../../../../lib/use-prefers-reduced-motion';
 
 export interface OverlayPortalProps {
   children: React.ReactNode;
@@ -48,6 +46,10 @@ export function OverlayPortal({ children }: OverlayPortalProps) {
   );
 }
 
+export type BackdropPresenceState = 'opening' | 'open' | 'closing';
+
+export const BackdropPresenceContext = createContext<BackdropPresenceState>('open');
+
 export interface ModalBackdropProps {
   children: React.ReactNode;
   onClose?: () => void;
@@ -67,7 +69,7 @@ export function ModalBackdrop({
   ariaLabel = 'Close dialog',
 }: ModalBackdropProps) {
   const prefersReduced = usePrefersReducedMotion();
-  const [presenceState, setPresenceState] = useState<'opening' | 'open' | 'closing'>('opening');
+  const [presenceState, setPresenceState] = useState<BackdropPresenceState>('opening');
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -79,6 +81,7 @@ export function ModalBackdrop({
     const raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
         setPresenceState('open');
+        raf2 = null;
       });
     });
     return () => {
@@ -97,6 +100,7 @@ export function ModalBackdrop({
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     closeTimerRef.current = setTimeout(() => {
       onClose();
+      closeTimerRef.current = null;
     }, EXIT_DURATION_MS);
   }, [onClose, prefersReduced]);
 
@@ -104,6 +108,7 @@ export function ModalBackdrop({
     return () => {
       if (closeTimerRef.current) {
         clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
       }
     };
   }, []);
@@ -116,23 +121,25 @@ export function ModalBackdrop({
   };
 
   return (
-    <div
-      className={`trace-modal-backdrop-layer ${className}`.trim()}
-      role="presentation"
-      data-trace-motion="surface"
-      data-motion-variant="backdrop"
-      data-presence-state={presenceState}
-      data-trace-presence={presenceState}
-      onClick={handleBackdropClick}
-    >
+    <BackdropPresenceContext.Provider value={presenceState}>
       <div
-        className="trace-modal-backdrop"
-        aria-hidden="true"
-        aria-label={ariaLabel}
-        onClick={handleAnimatedClose}
-      />
-      {children}
-    </div>
+        className={`trace-modal-backdrop-layer ${className}`.trim()}
+        role="presentation"
+        data-trace-motion="surface"
+        data-motion-variant="backdrop"
+        data-presence-state={presenceState}
+        data-trace-presence={presenceState}
+        onClick={handleBackdropClick}
+      >
+        <div
+          className="trace-modal-backdrop"
+          aria-hidden="true"
+          aria-label={ariaLabel}
+          onClick={handleAnimatedClose}
+        />
+        {children}
+      </div>
+    </BackdropPresenceContext.Provider>
   );
 }
 
@@ -171,6 +178,7 @@ export function CenteredDialog({
 }: CenteredDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
+  const presenceState = useContext(BackdropPresenceContext);
 
   // Save previous active element to restore upon close
   useEffect(() => {
@@ -282,6 +290,8 @@ export function CenteredDialog({
       tabIndex={-1}
       data-trace-motion="surface"
       data-motion-variant="dialog"
+      data-presence-state={presenceState}
+      data-trace-presence={presenceState}
       onKeyDown={handleKeyDown}
       onClick={(e) => e.stopPropagation()}
     >

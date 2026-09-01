@@ -16,11 +16,8 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  ENTRANCE_DURATION_MS,
-  EXIT_DURATION_MS,
-  usePrefersReducedMotion,
-} from './entrance-motion';
+import { ENTRANCE_DURATION_MS, EXIT_DURATION_MS } from './motion-tokens';
+import { usePrefersReducedMotion } from './use-prefers-reduced-motion';
 
 export type PresenceState = 'closed' | 'opening' | 'open' | 'closing';
 
@@ -109,6 +106,8 @@ export function usePresence(
         rafId1Ref.current = requestAnimationFrame(() => {
           rafId2Ref.current = requestAnimationFrame(() => {
             setPresenceState('open');
+            rafId1Ref.current = null;
+            rafId2Ref.current = null;
           });
         });
       } else {
@@ -131,7 +130,7 @@ export function usePresence(
       // Enter closing state
       setPresenceState('closing');
 
-      // Wait for exit duration before unmounting
+      // Bounded fallback timer for exit animation before unmounting
       closeTimerRef.current = setTimeout(() => {
         setPresenceState('closed');
         closeTimerRef.current = null;

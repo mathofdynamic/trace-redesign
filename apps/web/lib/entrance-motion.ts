@@ -15,25 +15,37 @@
  * - Close stagger: none
  */
 
-import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
+import {
+  ENTRANCE_DURATION_MS,
+  ENTRANCE_LEAD_MS,
+  ENTRANCE_DISTANCE_PX,
+  ENTRANCE_EASING,
+  EXIT_DURATION_MS,
+  EXIT_DISTANCE_PX,
+  EXIT_EASING,
+  STAGGER_DELAY_MS,
+} from './motion-tokens';
+import { usePrefersReducedMotion } from './use-prefers-reduced-motion';
 
-// Core Timing & Motion Constants
-export const ENTRANCE_DURATION_MS = 200;
-export const ENTRANCE_LEAD_MS = ENTRANCE_DURATION_MS / 3;
-export const ENTRANCE_DISTANCE_PX = 20;
-export const ENTRANCE_EASING = 'cubic-bezier(.16, 1, .3, 1)';
+// Re-export design tokens & constants
+export {
+  ENTRANCE_DURATION_MS,
+  ENTRANCE_LEAD_MS,
+  ENTRANCE_DISTANCE_PX,
+  ENTRANCE_EASING,
+  EXIT_DURATION_MS,
+  EXIT_DISTANCE_PX,
+  EXIT_EASING,
+  STAGGER_DELAY_MS,
+};
 
-export const EXIT_DURATION_MS = 66;
-export const EXIT_DISTANCE_PX = 8;
-export const EXIT_EASING = 'cubic-bezier(.4, 0, 1, 1)';
+// Re-export reduced-motion hook
+export { usePrefersReducedMotion };
 
 // Re-export shared presence lifecycle
 export { usePresence, getPresenceProps } from './presence';
 export type { PresenceState, UsePresenceOptions, UsePresenceReturn } from './presence';
-
-// Backward compatibility alias
-export const STAGGER_DELAY_MS = ENTRANCE_LEAD_MS;
 
 /**
  * WeakSet of elements that have already completed entrance motion or have been revealed.
@@ -129,33 +141,6 @@ export function getMotionSurfaceProps(variant: 'dialog' | 'popover' | 'drawer' |
 }
 
 /**
- * Hook to reactively track user reduced-motion preference.
- */
-export function usePrefersReducedMotion(): boolean {
-  const [prefersReduced, setPrefersReduced] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReduced(mediaQuery.matches);
-
-    const handler = (event: MediaQueryListEvent) => {
-      setPrefersReduced(event.matches);
-    };
-
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handler);
-      return () => mediaQuery.removeEventListener('change', handler);
-    } else {
-      mediaQuery.addListener(handler);
-      return () => mediaQuery.removeListener(handler);
-    }
-  }, []);
-
-  return prefersReduced;
-}
-
-/**
  * Global IntersectionObserver manager for coordinate section reveals.
  * 
  * Rules:
@@ -173,6 +158,14 @@ export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () 
     return () => {};
   }
 
+  let raf1: number | null = null;
+  let raf2: number | null = null;
+  let failSafeTimer: ReturnType<typeof setTimeout> | null = null;
+  let observer: IntersectionObserver | null = null;
+  let mutationObserver: MutationObserver | null = null;
+  let mediaQuery: MediaQueryList | null = null;
+  let handleReducedMotionChange: ((e: MediaQueryListEvent | MediaQueryList) => void) | null = null;
+
   try {
     // Positively mark runtime ready
     document.documentElement.setAttribute('data-trace-motion-ready', 'true');
@@ -186,7 +179,7 @@ export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () 
       return () => {};
     }
 
-    const observer = new IntersectionObserver(
+    observer = new IntersectionObserver(
       (entries) => {
         // Sort simultaneous entries in document order and filter out already seen elements
         const intersectingEntries = entries
@@ -202,7 +195,7 @@ export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () 
           const target = entry.target as HTMLElement;
           seenMotionElements.add(target);
           target.setAttribute('data-motion-state', 'revealed');
-          observer.unobserve(target);
+          observer?.unobserve(target);
         });
       },
       {
@@ -230,20 +223,22 @@ export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () 
           seenMotionElements.add(el);
           el.setAttribute('data-motion-state', 'revealed');
         } else {
-          observer.observe(el);
+          observer?.observe(el);
         }
       });
     };
 
     // Synchronize initial reveal with safe paint frame
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
         observeElements();
+        raf1 = null;
+        raf2 = null;
       });
     });
 
     // Observe dynamically added sections (client-side route navigation)
-    const mutationObserver = new MutationObserver(() => {
+    mutationObserver = new MutationObserver(() => {
       observeElements();
     });
 
@@ -256,8 +251,8 @@ export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () 
 
     // Live Reduced-Motion Reconciliation:
     // If the preference switches to reduce at runtime, immediately reveal all pending sections
-    const mediaQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
-    const handleReducedMotionChange = (e: MediaQueryListEvent | MediaQueryList) => {
+    mediaQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+    handleReducedMotionChange = (e: MediaQueryListEvent | MediaQueryList) => {
       if (e.matches) {
         const unrevealed = document.querySelectorAll(
           '[data-trace-motion="section"]:not([data-motion-state="revealed"]), [data-motion-section]:not([data-motion-state="revealed"])',
@@ -278,18 +273,21 @@ export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () 
     }
 
     // Bounded fail-safe: Force-reveal everything after 2500ms in case of unexpected observer stalls
-    const failSafeTimer = setTimeout(() => {
+    failSafeTimer = setTimeout(() => {
       const unrevealed = document.querySelectorAll(
         '[data-trace-motion="section"]:not([data-motion-state="revealed"]), [data-motion-section]:not([data-motion-state="revealed"])',
       );
       unrevealed.forEach((el) => markElementSeen(el));
+      failSafeTimer = null;
     }, 2500);
 
     return () => {
-      clearTimeout(failSafeTimer);
-      observer.disconnect();
-      mutationObserver.disconnect();
-      if (mediaQuery) {
+      if (raf1 !== null) cancelAnimationFrame(raf1);
+      if (raf2 !== null) cancelAnimationFrame(raf2);
+      if (failSafeTimer !== null) clearTimeout(failSafeTimer);
+      observer?.disconnect();
+      mutationObserver?.disconnect();
+      if (mediaQuery && handleReducedMotionChange) {
         if (mediaQuery.removeEventListener) {
           mediaQuery.removeEventListener('change', handleReducedMotionChange);
         } else if (mediaQuery.removeListener) {

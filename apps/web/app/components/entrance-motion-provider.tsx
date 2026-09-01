@@ -12,6 +12,7 @@ import { setupEntranceMotionObserver, markElementSeen } from '../../lib/entrance
  * - Progressive enhancement: Content without JS is 100% visible with zero animations.
  * - IntersectionObserver scans below-the-fold content and coordinates single reveal.
  * - Route navigation triggers re-scan for new route elements without replaying revealed ones.
+ * - Robust RAF cancellation ensures zero memory leaks or unmounted state access.
  */
 export function EntranceMotionProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -26,8 +27,9 @@ export function EntranceMotionProvider({ children }: { children: React.ReactNode
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    let frame2: number | null = null;
     const frame1 = requestAnimationFrame(() => {
-      const frame2 = requestAnimationFrame(() => {
+      frame2 = requestAnimationFrame(() => {
         const unrevealedSections = document.querySelectorAll(
           '[data-trace-motion="section"]:not([data-motion-state="revealed"]), [data-motion-section]:not([data-motion-state="revealed"])',
         );
@@ -37,11 +39,16 @@ export function EntranceMotionProvider({ children }: { children: React.ReactNode
             markElementSeen(el);
           }
         });
+        frame2 = null;
       });
-      return () => cancelAnimationFrame(frame2);
     });
 
-    return () => cancelAnimationFrame(frame1);
+    return () => {
+      cancelAnimationFrame(frame1);
+      if (frame2 !== null) {
+        cancelAnimationFrame(frame2);
+      }
+    };
   }, [pathname]);
 
   return <>{children}</>;
