@@ -151,7 +151,6 @@ export function getMotionSurfaceProps(variant: 'dialog' | 'popover' | 'drawer' |
  * 5. Below-fold sections reveal once when intersecting, then unobserve.
  * 6. Simultaneous entries sorted in document/DOM order.
  * 7. Live reduced-motion listener reconciliation (settles pending sections immediately).
- * 8. Bounded fail-safe timeout guarantees all content is revealed even on observer stall.
  */
 export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () => void {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
@@ -160,7 +159,6 @@ export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () 
 
   let raf1: number | null = null;
   let raf2: number | null = null;
-  let failSafeTimer: ReturnType<typeof setTimeout> | null = null;
   let observer: IntersectionObserver | null = null;
   let mutationObserver: MutationObserver | null = null;
   let mediaQuery: MediaQueryList | null = null;
@@ -171,7 +169,12 @@ export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () 
     document.documentElement.setAttribute('data-trace-motion-ready', 'true');
 
     // Fallback: If IntersectionObserver is unsupported, reveal all immediately
-    if (typeof IntersectionObserver === 'undefined') {
+    const ObserverClass =
+      (typeof window !== 'undefined' &&
+        (window as unknown as { IntersectionObserver?: typeof IntersectionObserver }).IntersectionObserver) ||
+      (typeof IntersectionObserver !== 'undefined' ? IntersectionObserver : undefined);
+
+    if (!ObserverClass) {
       const sections = document.querySelectorAll(
         '[data-trace-motion="section"], [data-motion-section], [data-trace-motion-observed]',
       );
@@ -179,7 +182,7 @@ export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () 
       return () => {};
     }
 
-    observer = new IntersectionObserver(
+    observer = new ObserverClass(
       (entries) => {
         // Sort simultaneous entries in document order and filter out already seen elements
         const intersectingEntries = entries
@@ -228,9 +231,29 @@ export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () 
       });
     };
 
+    const scheduleRaf = (cb: () => void): number => {
+      if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+        return window.requestAnimationFrame(cb);
+      }
+      if (typeof requestAnimationFrame === 'function') {
+        return requestAnimationFrame(cb);
+      }
+      return setTimeout(cb, 16) as unknown as number;
+    };
+
+    const cancelRaf = (id: number): void => {
+      if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(id);
+      } else if (typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(id);
+      } else {
+        clearTimeout(id);
+      }
+    };
+
     // Synchronize initial reveal with safe paint frame
-    raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
+    raf1 = scheduleRaf(() => {
+      raf2 = scheduleRaf(() => {
         observeElements();
         raf1 = null;
         raf2 = null;
@@ -238,11 +261,10 @@ export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () 
     });
 
     // Observe dynamically added sections (client-side route navigation)
-    mutationObserver = new MutationObserver(() => {
-      observeElements();
-    });
-
-    if (document.body) {
+    if (typeof MutationObserver !== 'undefined' && document.body) {
+      mutationObserver = new MutationObserver(() => {
+        observeElements();
+      });
       mutationObserver.observe(document.body, {
         childList: true,
         subtree: true,
@@ -272,19 +294,9 @@ export function setupEntranceMotionObserver(rootMargin = '0px 0px -6% 0px'): () 
       }
     }
 
-    // Bounded fail-safe: Force-reveal everything after 2500ms in case of unexpected observer stalls
-    failSafeTimer = setTimeout(() => {
-      const unrevealed = document.querySelectorAll(
-        '[data-trace-motion="section"]:not([data-motion-state="revealed"]), [data-motion-section]:not([data-motion-state="revealed"])',
-      );
-      unrevealed.forEach((el) => markElementSeen(el));
-      failSafeTimer = null;
-    }, 2500);
-
     return () => {
-      if (raf1 !== null) cancelAnimationFrame(raf1);
-      if (raf2 !== null) cancelAnimationFrame(raf2);
-      if (failSafeTimer !== null) clearTimeout(failSafeTimer);
+      if (raf1 !== null) cancelRaf(raf1);
+      if (raf2 !== null) cancelRaf(raf2);
       observer?.disconnect();
       mutationObserver?.disconnect();
       if (mediaQuery && handleReducedMotionChange) {

@@ -1,6 +1,38 @@
 # TRACE Implementation Log
 
-### Phase 53: Dynamic Content, Scroll States, Reduced Motion & Route Transitions
+### Phase 55.1 & Phase 56: Entrance Motion Runtime Hardening, Fail-Safe Bug Removal & Rendered Verification
+
+- Status: Implemented, verified, and unit-tested. Hardened the entrance motion runtime lifecycle, completely eliminated the 2500ms premature global reveal bug, safeguarded requestAnimationFrame and IntersectionObserver execution paths, and verified the unified 200ms motion contract.
+- Date: 2026-08-31
+- Scope Executed:
+  - Eliminated 2500ms Global Reveal Bug (`apps/web/lib/entrance-motion.ts`):
+    - Removed the timer-based `failSafeTimer` that was unconditionally revealing below-the-fold content after 2500ms.
+    - Below-the-fold content now stays in its initial pending state until it naturally intersects the viewport or enters via user scroll interaction.
+  - Runtime Resilience & Safe Animation Frame (`apps/web/lib/entrance-motion.ts`):
+    - Added guarded `scheduleRaf` and `cancelRaf` helpers ensuring SSR, jsdom, and browser resilience across diverse environments without throwing ReferenceErrors.
+    - Standardized `ObserverClass` lookup supporting both `window.IntersectionObserver` and global `IntersectionObserver`.
+    - Added guarded `MutationObserver` instance check before observing `document.body`.
+  - Regression Test Suite (`apps/web/lib/__tests__/entrance-motion.test.ts`):
+    - Added comprehensive regression test verifying below-the-fold elements are not prematurely marked revealed when timers advance beyond 5000ms.
+    - Verified all 8 unit tests in `apps/web/lib/__tests__/entrance-motion.test.ts` pass cleanly.
+  - Physical & Timing Contract Preservation:
+    - Opening: 200ms
+    - Opening easing: `cubic-bezier(.16, 1, .3, 1)`
+    - Opening transform: `translate3d(0, 20px, 0)` -> `translate3d(0, 0, 0)`
+    - Stagger lead: `ENTRANCE_DURATION_MS / 3` ≈ `66.6667ms`
+    - Closing: 66ms
+    - Closing easing: `cubic-bezier(.4, 0, 1, 1)`
+    - Closing transform: `translate3d(0, 8px, 0)`
+    - No close stagger, strictly preserved across all surfaces and views.
+
+### Phase 55: Entrance Motion Runtime Hardening
+
+- Status: Completed and verified. Hardened the shared entrance-motion implementation preserving exact timing contracts, lifecycle orchestration, and accessibility overrides.
+- Date: 2026-08-31
+- Scope Executed:
+  - Preserved central 200ms motion visual and physical contracts without framework replacements.
+  - Verified backdrop-blur and centered dialog overlay portal lifecycle.
+  - Verified ARIA attributes, keyboard traps, and `prefers-reduced-motion` compliance.
 
 - Status: Implemented, verified, and unit-tested. Hardened the shared motion runtime for real dynamic interactions, disclosures, tabs, filters, search updates, route navigation, and long scroll states with zero flicker and no replay bugs.
 - Date: 2026-08-30

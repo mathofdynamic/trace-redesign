@@ -141,5 +141,103 @@ describe('TRACE Entrance Motion Timing Contract', () => {
         });
       }
     });
+
+    it('does not set a global reveal-all timeout that prematurely marks unrevealed sections revealed', () => {
+      vi.useFakeTimers();
+      const mockAttributes: Record<string, string> = {};
+      const belowFoldAttrs: Record<string, string> = {};
+      const mockBelowFoldEl = {
+        getAttribute: vi.fn((k: string) => belowFoldAttrs[k] || null),
+        setAttribute: vi.fn((k: string, v: string) => {
+          belowFoldAttrs[k] = v;
+        }),
+        getBoundingClientRect: vi.fn().mockReturnValue({
+          top: 1500,
+          bottom: 1800,
+        }),
+      };
+
+      const mockDocElement = {
+        setAttribute: vi.fn((key: string, val: string) => {
+          mockAttributes[key] = val;
+        }),
+        getAttribute: vi.fn((key: string) => mockAttributes[key]),
+      };
+
+      const originalWindow = global.window;
+      const originalDocument = global.document;
+      const originalIntersectionObserver = global.IntersectionObserver;
+
+      const observedElements: unknown[] = [];
+      class MockIntersectionObserver {
+        observe = vi.fn((el) => {
+          observedElements.push(el);
+        });
+        unobserve = vi.fn();
+        disconnect = vi.fn();
+      }
+
+      try {
+        Object.defineProperty(global, 'window', {
+          value: {
+            innerHeight: 900,
+            IntersectionObserver: MockIntersectionObserver,
+            matchMedia: vi.fn().mockReturnValue({
+              matches: false,
+              addEventListener: vi.fn(),
+              removeEventListener: vi.fn(),
+            }),
+            requestAnimationFrame: (cb: () => void) => {
+              cb();
+              return 1;
+            },
+            cancelAnimationFrame: vi.fn(),
+          },
+          writable: true,
+          configurable: true,
+        });
+        Object.defineProperty(global, 'document', {
+          value: {
+            documentElement: mockDocElement,
+            body: {},
+            querySelectorAll: vi.fn().mockReturnValue([mockBelowFoldEl]),
+          },
+          writable: true,
+          configurable: true,
+        });
+        Object.defineProperty(global, 'IntersectionObserver', {
+          value: MockIntersectionObserver,
+          writable: true,
+          configurable: true,
+        });
+
+        const cleanup = setupEntranceMotionObserver();
+
+        // Advance timers past 2500ms and 5000ms
+        vi.advanceTimersByTime(5000);
+
+        // Below-the-fold element MUST NOT have been prematurely marked revealed
+        expect(belowFoldAttrs['data-motion-state']).not.toBe('revealed');
+
+        cleanup();
+      } finally {
+        vi.useRealTimers();
+        Object.defineProperty(global, 'window', {
+          value: originalWindow,
+          writable: true,
+          configurable: true,
+        });
+        Object.defineProperty(global, 'document', {
+          value: originalDocument,
+          writable: true,
+          configurable: true,
+        });
+        Object.defineProperty(global, 'IntersectionObserver', {
+          value: originalIntersectionObserver,
+          writable: true,
+          configurable: true,
+        });
+      }
+    });
   });
 });
