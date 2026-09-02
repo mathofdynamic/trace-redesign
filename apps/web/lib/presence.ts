@@ -24,6 +24,7 @@ export type PresenceState = 'closed' | 'opening' | 'open' | 'closing';
 export interface UsePresenceOptions {
   openDurationMs?: number;
   closeDurationMs?: number;
+  fallbackDurationMs?: number;
   onCloseComplete?: () => void;
 }
 
@@ -34,6 +35,9 @@ export interface UsePresenceReturn {
   isOpen: boolean;
   isClosing: boolean;
   isClosed: boolean;
+  requestClose: () => void;
+  surfaceRef: React.RefObject<HTMLDivElement | null>;
+  handleTransitionEnd: (e: React.TransitionEvent<HTMLElement> | TransitionEvent) => void;
   presenceProps: {
     'data-presence-state': PresenceState;
     'data-trace-presence': PresenceState;
@@ -52,6 +56,14 @@ export function getPresenceProps(state: PresenceState) {
 
 /**
  * usePresence hook controls mounting, opening transition, closing transition, and unmounting.
+ * 
+ * Invariants:
+ * - 200ms Entrance: cubic-bezier(.16, 1, .3, 1), 20px distance
+ * - 66ms Exit: cubic-bezier(.4, 0, 1, 1), 8px distance
+ * - Primary completion via transitionend on main surface shell with bounded fallback timer (140ms)
+ * - Shared requestClose() trigger initiates closing animation and invokes onCloseComplete on finish
+ * - Reopen during close cleanly cancels closing timers and returns to opening
+ * - Reduced motion: 0ms immediate open and close with zero transition waits
  */
 export function usePresence(
   isOpenInput: boolean,
@@ -60,6 +72,7 @@ export function usePresence(
   const {
     openDurationMs = ENTRANCE_DURATION_MS,
     closeDurationMs = EXIT_DURATION_MS,
+    fallbackDurationMs = 140,
     onCloseComplete,
   } = options;
 
@@ -68,7 +81,9 @@ export function usePresence(
     isOpenInput ? (prefersReducedMotion ? 'open' : 'opening') : 'closed',
   );
 
+  const surfaceRef = useRef<HTMLDivElement | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafId1Ref = useRef<number | null>(null);
   const rafId2Ref = useRef<number | null>(null);
   const onCloseCompleteRef = useRef(onCloseComplete);
@@ -78,6 +93,10 @@ export function usePresence(
     if (closeTimerRef.current !== null) {
       clearTimeout(closeTimerRef.current);
       closeTimerRef.current = null;
+    }
+    if (fallbackTimerRef.current !== null) {
+      clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
     }
     if (rafId1Ref.current !== null) {
       cancelAnimationFrame(rafId1Ref.current);
@@ -89,6 +108,70 @@ export function usePresence(
     }
   }, []);
 
+  const finalizeClose = useCallback(() => {
+    cancelPending();
+    setPresenceState('closed');
+    if (typeof onCloseCompleteRef.current === 'function') {
+      onCloseCompleteRef.current();
+    }
+  }, [cancelPending]);
+
+  const handleTransitionEnd = useCallback(
+    (e: React.TransitionEvent<HTMLElement> | TransitionEvent) => {
+      if (presenceState !== 'closing') return;
+
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // Ensure transitionend originates from the surface shell or designated motion container
+      const isExpectedSurface =
+        target === surfaceRef.current ||
+        target.getAttribute('data-trace-motion') === 'surface' ||
+        target.classList.contains('trace-centered-dialog') ||
+        target.classList.contains('trace-modal-backdrop') ||
+        target.classList.contains('trace-select-listbox') ||
+        target.classList.contains('repository-switcher') ||
+        target.classList.contains('trace-modal-backdrop-layer');
+
+      if (!isExpectedSurface) return;
+
+      const prop = e.propertyName;
+      if (
+        prop === 'opacity' ||
+        prop === 'transform' ||
+        prop.includes('opacity') ||
+        prop.includes('transform')
+      ) {
+        finalizeClose();
+      }
+    },
+    [presenceState, finalizeClose],
+  );
+
+  const startClosing = useCallback(() => {
+    cancelPending();
+
+    if (prefersReducedMotion) {
+      finalizeClose();
+      return;
+    }
+
+    setPresenceState('closing');
+
+    // Bounded fallback timer (140ms, between 120ms-160ms) if transitionend does not fire
+    fallbackTimerRef.current = setTimeout(() => {
+      finalizeClose();
+    }, fallbackDurationMs);
+  }, [cancelPending, prefersReducedMotion, finalizeClose, fallbackDurationMs]);
+
+  const requestClose = useCallback(() => {
+    if (presenceState === 'closed' || presenceState === 'closing') {
+      return;
+    }
+    startClosing();
+  }, [presenceState, startClosing]);
+
+  // Sync external isOpenInput changes
   useEffect(() => {
     if (isOpenInput) {
       cancelPending();
@@ -98,10 +181,15 @@ export function usePresence(
         return;
       }
 
-      // Start in opening state to allow initial layout paint
+      // If already open, do not re-trigger opening sequence
+      if (presenceState === 'open') {
+        return;
+      }
+
+      // Start in opening state
       setPresenceState('opening');
 
-      // Double RAF ensures initial transform & opacity are painted before transition starts
+      // Double RAF ensures initial layout paint before transition starts
       if (typeof window !== 'undefined') {
         rafId1Ref.current = requestAnimationFrame(() => {
           rafId2Ref.current = requestAnimationFrame(() => {
@@ -114,34 +202,16 @@ export function usePresence(
         setPresenceState('open');
       }
     } else {
-      cancelPending();
-
-      // If already closed, do nothing
-      if (presenceState === 'closed') {
-        return;
+      // If isOpenInput becomes false from outside while open/opening, start closing sequence
+      if (presenceState === 'open' || presenceState === 'opening') {
+        startClosing();
       }
-
-      if (prefersReducedMotion) {
-        setPresenceState('closed');
-        onCloseCompleteRef.current?.();
-        return;
-      }
-
-      // Enter closing state
-      setPresenceState('closing');
-
-      // Bounded fallback timer for exit animation before unmounting
-      closeTimerRef.current = setTimeout(() => {
-        setPresenceState('closed');
-        closeTimerRef.current = null;
-        onCloseCompleteRef.current?.();
-      }, closeDurationMs);
     }
 
     return () => {
       cancelPending();
     };
-  }, [isOpenInput, closeDurationMs, prefersReducedMotion, cancelPending]);
+  }, [isOpenInput, prefersReducedMotion, cancelPending, startClosing]);
 
   const isMounted = presenceState !== 'closed';
 
@@ -152,6 +222,9 @@ export function usePresence(
     isOpen: presenceState === 'open',
     isClosing: presenceState === 'closing',
     isClosed: presenceState === 'closed',
+    requestClose,
+    surfaceRef,
+    handleTransitionEnd,
     presenceProps: getPresenceProps(presenceState),
   };
 }

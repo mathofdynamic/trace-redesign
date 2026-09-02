@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useRef, useCallback, useContext, createContext } from 'react';
 import { createPortal } from 'react-dom';
-import { EXIT_DURATION_MS } from '../../../../lib/motion-tokens';
-import { usePrefersReducedMotion } from '../../../../lib/use-prefers-reduced-motion';
+import { usePresence, getPresenceProps } from '../../../../lib/presence';
+import type { PresenceState } from '../../../../lib/presence';
 
 export interface OverlayPortalProps {
   children: React.ReactNode;
@@ -46,82 +46,82 @@ export function OverlayPortal({ children }: OverlayPortalProps) {
   );
 }
 
-export type BackdropPresenceState = 'opening' | 'open' | 'closing';
+export interface PresenceContextValue {
+  presenceState: PresenceState;
+  requestClose: () => void;
+  isMounted: boolean;
+  surfaceRef?: React.RefObject<HTMLDivElement | null>;
+  handleTransitionEnd?: (e: React.TransitionEvent<HTMLElement> | TransitionEvent) => void;
+}
 
+export const PresenceContext = createContext<PresenceContextValue | null>(null);
+
+export type BackdropPresenceState = 'opening' | 'open' | 'closing';
 export const BackdropPresenceContext = createContext<BackdropPresenceState>('open');
+
+export interface MotionPresenceProps {
+  isOpen: boolean;
+  onClose?: () => void;
+  children: React.ReactNode;
+}
+
+/**
+ * MotionPresence provides the single lifecycle ownership context for transient surfaces.
+ */
+export function MotionPresence({ isOpen, onClose, children }: MotionPresenceProps) {
+  const presence = usePresence(isOpen, { onCloseComplete: onClose });
+
+  if (!presence.isMounted) return null;
+
+  return (
+    <PresenceContext.Provider value={presence}>
+      {children}
+    </PresenceContext.Provider>
+  );
+}
 
 export interface ModalBackdropProps {
   children: React.ReactNode;
   onClose?: () => void;
+  onRequestClose?: () => void;
+  presenceState?: PresenceState;
   className?: string;
   ariaLabel?: string;
 }
 
 /**
- * ModalBackdrop provides a full-viewport fixed layer with systemic background blur
- * covering the entire page beneath the modal.
- * Coordinates 200ms entrance and 66ms exit before unmounting.
+ * ModalBackdrop provides a full-viewport fixed layer with systemic background blur.
+ * Consumes unified presence state from parent / PresenceContext rather than inventing its own.
  */
 export function ModalBackdrop({
   children,
   onClose,
+  onRequestClose,
+  presenceState: propPresenceState,
   className = '',
   ariaLabel = 'Close dialog',
 }: ModalBackdropProps) {
-  const prefersReduced = usePrefersReducedMotion();
-  const [presenceState, setPresenceState] = useState<BackdropPresenceState>('opening');
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (prefersReduced) {
-      setPresenceState('open');
-      return;
-    }
-    let raf2: number | null = null;
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        setPresenceState('open');
-        raf2 = null;
-      });
-    });
-    return () => {
-      cancelAnimationFrame(raf1);
-      if (raf2 !== null) cancelAnimationFrame(raf2);
-    };
-  }, [prefersReduced]);
-
-  const handleAnimatedClose = useCallback(() => {
-    if (!onClose) return;
-    if (prefersReduced) {
-      onClose();
-      return;
-    }
-    setPresenceState('closing');
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-    closeTimerRef.current = setTimeout(() => {
-      onClose();
-      closeTimerRef.current = null;
-    }, EXIT_DURATION_MS);
-  }, [onClose, prefersReduced]);
-
-  useEffect(() => {
-    return () => {
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current);
-        closeTimerRef.current = null;
-      }
-    };
-  }, []);
+  const context = useContext(PresenceContext);
+  const presenceState = propPresenceState ?? context?.presenceState ?? 'open';
+  const requestClose = onRequestClose ?? context?.requestClose ?? onClose ?? (() => {});
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only close if clicking directly on the backdrop container, not on its contents
-    if (e.target === e.currentTarget && onClose) {
-      handleAnimatedClose();
+    // Only close if clicking directly on the backdrop layer or scrim
+    if (e.target === e.currentTarget) {
+      requestClose();
     }
   };
 
+  const handleScrimClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    requestClose();
+  };
+
+  const backdropPresenceState: BackdropPresenceState =
+    presenceState === 'closed' || presenceState === 'closing' ? 'closing' : presenceState;
+
   return (
-    <BackdropPresenceContext.Provider value={presenceState}>
+    <BackdropPresenceContext.Provider value={backdropPresenceState}>
       <div
         className={`trace-modal-backdrop-layer ${className}`.trim()}
         role="presentation"
@@ -135,7 +135,7 @@ export function ModalBackdrop({
           className="trace-modal-backdrop"
           aria-hidden="true"
           aria-label={ariaLabel}
-          onClick={handleAnimatedClose}
+          onClick={handleScrimClick}
         />
         {children}
       </div>
@@ -145,7 +145,9 @@ export function ModalBackdrop({
 
 export interface CenteredDialogProps {
   children: React.ReactNode;
-  onClose: () => void;
+  onClose?: () => void;
+  onRequestClose?: () => void;
+  presenceState?: PresenceState;
   titleId?: string;
   descriptionId?: string;
   size?: 'sm' | 'md' | 'lg' | 'default';
@@ -162,13 +164,15 @@ const FOCUSABLE_SELECTOR =
  * - Centered viewport placement on desktop
  * - Body scroll lock on mount with restoration on unmount
  * - Trap focus within dialog on Tab
- * - Escape key to close
+ * - Escape key routes to shared requestClose() path
  * - Focus restoration to previous active element on unmount
- * - Physical motion contract (200ms open, 66ms close)
+ * - Consumes presence state and dual data attributes from shared presence owner
  */
 export function CenteredDialog({
   children,
   onClose,
+  onRequestClose,
+  presenceState: propPresenceState,
   titleId,
   descriptionId,
   size = 'default',
@@ -178,7 +182,10 @@ export function CenteredDialog({
 }: CenteredDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
-  const presenceState = useContext(BackdropPresenceContext);
+  const context = useContext(PresenceContext);
+  const legacyPresence = useContext(BackdropPresenceContext);
+  const presenceState = propPresenceState ?? context?.presenceState ?? legacyPresence ?? 'open';
+  const requestClose = onRequestClose ?? context?.requestClose ?? onClose ?? (() => {});
 
   // Save previous active element to restore upon close
   useEffect(() => {
@@ -234,12 +241,13 @@ export function CenteredDialog({
     };
   }, []);
 
-  // Keyboard navigation: Escape to close, Tab to cycle focus
+  // Keyboard navigation: Escape routes to shared requestClose(), Tab cycles focus
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        e.preventDefault();
+        requestClose();
         return;
       }
 
@@ -267,8 +275,14 @@ export function CenteredDialog({
         }
       }
     },
-    [onClose],
+    [requestClose],
   );
+
+  const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
+    if (context?.handleTransitionEnd) {
+      context.handleTransitionEnd(e);
+    }
+  };
 
   const sizeClass =
     size === 'sm'
@@ -293,6 +307,7 @@ export function CenteredDialog({
       data-presence-state={presenceState}
       data-trace-presence={presenceState}
       onKeyDown={handleKeyDown}
+      onTransitionEnd={handleTransitionEnd}
       onClick={(e) => e.stopPropagation()}
     >
       {children}

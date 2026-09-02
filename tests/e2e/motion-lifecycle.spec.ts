@@ -63,30 +63,131 @@ test.describe('TRACE Entrance Motion & Presence Lifecycle E2E', () => {
     }
   });
 
-  test('verifies long page below-the-fold observer latching and no-replay invariant', async ({ page }) => {
+  test('verifies below-the-fold content remains pending indefinitely past 3200ms until scrolled', async ({ page }) => {
     await page.goto('/specification');
     const html = page.locator('html');
     await expect(html).toHaveAttribute('data-trace-motion-ready', 'true');
 
-    // Wait at top for > 1.5s to ensure idle stability
-    await page.waitForTimeout(1500);
-
     const sections = page.locator('[data-trace-motion="section"]');
     const count = await sections.count();
-    expect(count).toBeGreaterThan(1);
+    expect(count).toBeGreaterThan(2);
 
-    // Scroll down to the last section
-    const lastSection = sections.last();
-    await lastSection.scrollIntoViewIfNeeded();
-    await expect(lastSection).toHaveAttribute('data-motion-state', 'revealed');
-
-    // Scroll back up to the top
     const firstSection = sections.first();
-    await firstSection.scrollIntoViewIfNeeded();
+    const lastSection = sections.last();
+
+    // Verify first section is immediately revealed
     await expect(firstSection).toHaveAttribute('data-motion-state', 'revealed');
 
-    // Verify last section remains marked revealed without replay glitch
+    // Idle wait at the top for 3200ms to confirm no global timer auto-reveals below-the-fold content
+    await page.waitForTimeout(3200);
+
+    // Bottom section must remain pending
+    await expect(lastSection).toHaveAttribute('data-motion-state', 'pending');
+
+    // Scroll bottom section into view
+    await lastSection.scrollIntoViewIfNeeded();
+
+    // Observer must now transition bottom section to revealed
     await expect(lastSection).toHaveAttribute('data-motion-state', 'revealed');
+
+    // Scroll back to top
+    await firstSection.scrollIntoViewIfNeeded();
+
+    // Invariant: Latching must keep bottom section revealed without replay glitch
+    await expect(lastSection).toHaveAttribute('data-motion-state', 'revealed');
+  });
+
+  test('verifies overlay modal dual data attributes and Escape key shared requestClose lifecycle', async ({ page }) => {
+    await page.goto('/app/repositories');
+    const html = page.locator('html');
+    await expect(html).toHaveAttribute('data-trace-motion-ready', 'true');
+
+    // Open Adjust Access modal
+    const adjustBtn = page.getByRole('button', { name: /Adjust access/i });
+    await expect(adjustBtn).toBeVisible();
+    await adjustBtn.click();
+
+    // Verify modal backdrop and dialog render with open state
+    const backdrop = page.locator('.trace-modal-backdrop-layer');
+    const dialog = page.locator('.trace-centered-dialog');
+
+    await expect(backdrop).toBeVisible();
+    await expect(dialog).toBeVisible();
+
+    await expect(backdrop).toHaveAttribute('data-presence-state', 'open');
+    await expect(backdrop).toHaveAttribute('data-trace-presence', 'open');
+    await expect(dialog).toHaveAttribute('data-presence-state', 'open');
+    await expect(dialog).toHaveAttribute('data-trace-presence', 'open');
+
+    // Press Escape to trigger shared requestClose()
+    await page.keyboard.press('Escape');
+
+    // Modal must cleanly unmount after 66ms exit transition
+    await expect(dialog).toHaveCount(0);
+    await expect(backdrop).toHaveCount(0);
+  });
+
+  test('verifies overlay modal backdrop click shared requestClose lifecycle', async ({ page }) => {
+    await page.goto('/app/repositories');
+
+    // Open Adjust Access modal
+    const adjustBtn = page.getByRole('button', { name: /Adjust access/i });
+    await adjustBtn.click();
+
+    const backdrop = page.locator('.trace-modal-backdrop-layer');
+    const dialog = page.locator('.trace-centered-dialog');
+    const scrim = page.locator('.trace-modal-backdrop');
+
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAttribute('data-presence-state', 'open');
+
+    // Click on the scrim backdrop
+    await scrim.click({ position: { x: 10, y: 10 }, force: true });
+
+    // Modal must cleanly unmount
+    await expect(dialog).toHaveCount(0);
+    await expect(backdrop).toHaveCount(0);
+  });
+
+  test('verifies overlay modal close button shared requestClose lifecycle', async ({ page }) => {
+    await page.goto('/app/repositories');
+
+    // Open Adjust Access modal
+    const adjustBtn = page.getByRole('button', { name: /Adjust access/i });
+    await adjustBtn.click();
+
+    const backdrop = page.locator('.trace-modal-backdrop-layer');
+    const dialog = page.locator('.trace-centered-dialog');
+    const closeBtn = dialog.locator('.trace-dialog__close');
+
+    await expect(dialog).toBeVisible();
+    await expect(closeBtn).toBeVisible();
+
+    // Click close button
+    await closeBtn.click();
+
+    // Modal must cleanly unmount
+    await expect(dialog).toHaveCount(0);
+    await expect(backdrop).toHaveCount(0);
+  });
+
+  test('verifies instant modal mount and unmount when prefers-reduced-motion is active', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/app/repositories');
+
+    // Open Adjust Access modal
+    const adjustBtn = page.getByRole('button', { name: /Adjust access/i });
+    await adjustBtn.click();
+
+    const dialog = page.locator('.trace-centered-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAttribute('data-presence-state', 'open');
+
+    // Press Escape
+    await page.keyboard.press('Escape');
+
+    // Immediately unmounts with 0ms transition
+    await expect(dialog).toHaveCount(0);
   });
 
   test('verifies mobile 390x844 viewport has no horizontal overflow', async ({ page }) => {
@@ -103,3 +204,4 @@ test.describe('TRACE Entrance Motion & Presence Lifecycle E2E', () => {
     expect(isOverflowing).toBe(false);
   });
 });
+

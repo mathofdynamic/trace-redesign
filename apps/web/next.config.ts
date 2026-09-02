@@ -9,12 +9,8 @@ const rootDir = path.resolve(__dirname, '../..');
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  output: 'standalone',
   eslint: {
     ignoreDuringBuilds: true,
-  },
-  experimental: {
-    cpus: 1,
   },
   transpilePackages: [
     '@trace/auth',

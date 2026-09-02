@@ -1,29 +1,33 @@
 # TRACE Implementation Log
 
-### Phase 55.1 & Phase 56: Entrance Motion Runtime Hardening, Fail-Safe Bug Removal & Rendered Verification
+### Phase 55.1: Finish Entrance Motion & Presence Lifecycle Hardening
 
-- Status: Implemented, verified, and unit-tested. Hardened the entrance motion runtime lifecycle, completely eliminated the 2500ms premature global reveal bug, safeguarded requestAnimationFrame and IntersectionObserver execution paths, and verified the unified 200ms motion contract.
+- Status: Completed, verified, and unit/E2E-tested. Hardened the unified presence lifecycle engine, eliminated duplicate presence ownership across modal backdrops and centered dialogs, established single shared `requestClose()` path, integrated `transitionend` as primary exit completion with bounded 140ms fallback timer, hardened reopen-during-close transitions, and added comprehensive E2E verification.
 - Date: 2026-08-31
 - Scope Executed:
-  - Eliminated 2500ms Global Reveal Bug (`apps/web/lib/entrance-motion.ts`):
-    - Removed the timer-based `failSafeTimer` that was unconditionally revealing below-the-fold content after 2500ms.
-    - Below-the-fold content now stays in its initial pending state until it naturally intersects the viewport or enters via user scroll interaction.
-  - Runtime Resilience & Safe Animation Frame (`apps/web/lib/entrance-motion.ts`):
-    - Added guarded `scheduleRaf` and `cancelRaf` helpers ensuring SSR, jsdom, and browser resilience across diverse environments without throwing ReferenceErrors.
-    - Standardized `ObserverClass` lookup supporting both `window.IntersectionObserver` and global `IntersectionObserver`.
-    - Added guarded `MutationObserver` instance check before observing `document.body`.
-  - Regression Test Suite (`apps/web/lib/__tests__/entrance-motion.test.ts`):
-    - Added comprehensive regression test verifying below-the-fold elements are not prematurely marked revealed when timers advance beyond 5000ms.
-    - Verified all 8 unit tests in `apps/web/lib/__tests__/entrance-motion.test.ts` pass cleanly.
-  - Physical & Timing Contract Preservation:
-    - Opening: 200ms
-    - Opening easing: `cubic-bezier(.16, 1, .3, 1)`
-    - Opening transform: `translate3d(0, 20px, 0)` -> `translate3d(0, 0, 0)`
+  - Unified Presence Lifecycle Engine (`apps/web/lib/presence.ts`):
+    - Upgraded `usePresence(isOpen, options)` to serve as the single source of truth for all transient surfaces.
+    - Integrated `requestClose()` shared function: transitions `presenceState` to `'closing'`, triggers simultaneous 66ms exit on backdrop and dialog surfaces, and invokes `onCloseComplete()` upon completion.
+    - Primary exit completion: listens for `transitionend` on the main surface shell (`surfaceRef` / `.trace-centered-dialog` / `.trace-modal-backdrop` / `[data-trace-motion="surface"]`) filtering specifically for `opacity` and `transform` transitions while rejecting bubble noise.
+    - Bounded fallback timer: configured 140ms fallback timer (between 120ms and 160ms) if `transitionend` does not fire (e.g., in non-rendered test environments or detached nodes), automatically cancelled if `transitionend` fires first.
+    - Hardened Reopen-During-Close: if `isOpenInput` becomes `true` while `presenceState === 'closing'`, pending close timers/listeners are immediately cleared, and state transitions to `'opening'` -> double RAF `'open'`.
+    - Reduced Motion Support: immediate 0ms mount as `'open'` and 0ms unmount as `'closed'` with zero transition waits.
+    - Dual DOM attributes: automatically attaches both `data-presence-state` and `data-trace-presence` to all managed transient surfaces.
+  - Eliminated Duplicate Presence Ownership (`apps/web/app/(app)/app/_components/overlay-portal.tsx`):
+    - Removed independent `useState` / `setTimeout` from `ModalBackdrop`.
+    - `ModalBackdrop` and `CenteredDialog` now consume the shared presence state from `PresenceContext` (or explicit props) provided by `MotionPresence` / parent owner.
+    - Both `ModalBackdrop` and `CenteredDialog` simultaneously receive `data-presence-state="closing"` and `data-trace-presence="closing"` during exit.
+    - Unified `Escape` key, backdrop click, close button (X), and programmatic close through the single `requestClose()` handler.
+  - E2E & Verification Hardening (`tests/e2e/motion-lifecycle.spec.ts`):
+    - Added test verifying below-the-fold content remains `data-motion-state="pending"` past 3200ms of idle waiting until explicitly scrolled into view.
+    - Added tests verifying dual data presence attributes and shared `requestClose()` lifecycle across Escape key, backdrop clicks, and close buttons.
+    - Added test verifying instant 0ms unmount under `prefers-reduced-motion: reduce`.
+  - Invariants Preserved:
+    - Entrance: 200ms duration, `cubic-bezier(.16, 1, .3, 1)`, 20px distance
     - Stagger lead: `ENTRANCE_DURATION_MS / 3` ≈ `66.6667ms`
-    - Closing: 66ms
-    - Closing easing: `cubic-bezier(.4, 0, 1, 1)`
-    - Closing transform: `translate3d(0, 8px, 0)`
-    - No close stagger, strictly preserved across all surfaces and views.
+    - Exit: 66ms duration, `cubic-bezier(.4, 0, 1, 1)`, 8px distance
+    - Close stagger: NONE (all exit together)
+    - Zero horizontal overflow on mobile (390x844).
 
 ### Phase 55: Entrance Motion Runtime Hardening
 
